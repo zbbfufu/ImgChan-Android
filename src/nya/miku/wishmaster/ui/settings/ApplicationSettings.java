@@ -19,8 +19,12 @@
 package nya.miku.wishmaster.ui.settings;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import nya.miku.wishmaster.R;
+import nya.miku.wishmaster.lib.org_json.JSONException;
+import nya.miku.wishmaster.lib.org_json.JSONObject;
 import nya.miku.wishmaster.ui.CompatibilityImpl;
 import nya.miku.wishmaster.ui.FavoritesFragment;
 import nya.miku.wishmaster.ui.downloading.DownloadingService;
@@ -478,6 +482,48 @@ public class ApplicationSettings {
         container.maskPictures = maskPictures();
         container.hideActionBar = hideActionBar();
         container.scrollVolumeButtons = scrollVolumeButtons();
+    }
+
+    public Map<String, Object> getSharedPreferences(){
+        return new HashMap<String, Object>(preferences.getAll());
+    }
+
+    public void setSharedPreferences(JSONObject json){
+        Map<String, Object> preferencesMap = getSharedPreferences();
+        SharedPreferences.Editor editor  = preferences.edit();
+        for (Map.Entry<String, Object> entry : preferencesMap.entrySet()) {
+            String className = entry.getValue().getClass().getSimpleName();
+            try {
+                switch (className){
+                    case "Boolean":
+                        editor.putBoolean(entry.getKey(), json.getBoolean(entry.getKey()));
+                        break;
+                    case "Integer":
+                        editor.putInt(entry.getKey(), json.getInt(entry.getKey()));
+                        break;
+                    case "Long":
+                        editor.putLong(entry.getKey(), json.getLong(entry.getKey()));
+                        break;
+                    case "Float":
+                        editor.putFloat(entry.getKey(), (float) json.getDouble(entry.getKey()));
+                        break;
+                    case "String":
+                        editor.putString(entry.getKey(), json.getString(entry.getKey()));
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Not implemented!");
+                }
+            } catch (JSONException e) {
+                continue;
+            } catch (UnsupportedOperationException e) {
+                continue;
+            }
+        }
+        editor.commit();
+    }
+    
+    public boolean getImportOverwrite(){
+        return preferences.getBoolean(resources.getString(R.string.pref_key_settings_import_overwrite), false);
     }
     
 }
