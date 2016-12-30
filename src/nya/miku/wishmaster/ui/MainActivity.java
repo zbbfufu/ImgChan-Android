@@ -531,6 +531,14 @@ public class MainActivity extends FragmentActivity {
         
         if (shouldReloadBoardFragment) reloadCurrentBoardFragment();
         handleOrientationChange(getResources().getConfiguration(), shouldReloadBoardFragment);
+        
+        if ((MainApplication.getInstance().pagesToOpen != null) && (MainApplication.getInstance().pagesToOpen.size() > 0)){
+            this.tabsAdapter.setSelectedItem(-1);
+            for (TabModel page : MainApplication.getInstance().pagesToOpen){
+                UrlHandler.open(page.pageModel, this, false, page.title);
+            }
+            MainApplication.getInstance().pagesToOpen = null;
+        }
     }
     
     private void clearCache() {

@@ -3,11 +3,9 @@ package nya.miku.wishmaster.ui.settings;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.content.pm.PackageManager;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -22,6 +20,9 @@ import nya.miku.wishmaster.lib.org_json.JSONArray;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 import nya.miku.wishmaster.ui.Database;
 import nya.miku.wishmaster.ui.presentation.Subscriptions;
+import nya.miku.wishmaster.ui.tabs.TabModel;
+
+import static nya.miku.wishmaster.ui.settings.ImportExportConstants.*;
 
 public class SettingsExporter {
     private static final String TAG = "SettingsExporter";
@@ -31,13 +32,56 @@ public class SettingsExporter {
         return (T[]) list.toArray((T[]) Array.newInstance(itemClass, list.size()));
     }
 
+    /**
+     * Преобразует информацию о вкладках в формат JSON
+     *
+     * @return
+     */
+    private static JSONArray getPagesJSON(){
+        List<TabModel> list = MainApplication.getInstance().tabsState.tabsArray;
+        JSONArray result = new JSONArray();
+        String[] fields = {"type", "chanName", "boardName", "boardPage", "catalogType", "threadNumber", "postNumber", "searchRequest", "otherPath"};
+        for (TabModel tab : list){
+            JSONObject page = new JSONObject(tab.pageModel, fields);
+            page.put("title", tab.title);
+            result.put(page);
+        }
+        return result;
+    }
+
+    /**
+     * Экспорт с сохранением в файл
+     * @param dir директория куда будет сохранен файл
+     * @param activity
+     */
     public static void Export(final File dir, final Activity activity) {
+        Export(dir, activity, null);
+    }
+
+    /**
+     * Экспорт без сохранения в файл. Передает результат экспорта через callback
+     *
+     * @param activity
+     * @param callback интерфейс для обратного вызова по завершению экспорта
+     */
+    public static void Export(final Activity activity, final exportComplete callback) {
+        Export(null, activity, callback);
+    }
+
+    /**
+     * @param dir      директория куда будет сохранен файл, может быть null
+     * @param activity
+     * @param callback интерфейс для обратного вызова по завершению экспорта, может быть null
+     */
+    private static void Export(final File dir, final Activity activity, final exportComplete callback) {
         final CancellableTask task = new CancellableTask.BaseCancellableTask();
         final ProgressDialog progressDialog = new ProgressDialog(activity);
+        final Database database = MainApplication.getInstance().database;
         progressDialog.setMessage(activity.getString(R.string.app_settings_exporting));
         progressDialog.setIndeterminate(false);
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        progressDialog.setMax(5);
+        progressDialog.setMax(6);
+        progressDialog.setProgress(0);
         progressDialog.setCanceledOnTouchOutside(false);
         progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override
@@ -61,40 +105,39 @@ public class SettingsExporter {
             }
 
             private String Export() throws Exception {
-                updateProgress(0);
                 JSONObject json = new JSONObject();
-                json.put("version", MainApplication.getInstance().getPackageManager().getPackageInfo(MainApplication.getInstance().getPackageName(), 0).versionCode);
-                json.put("history",
+                json.put(JSON_KEY_VERSION, MainApplication.getInstance().getPackageManager().getPackageInfo(MainApplication.getInstance().getPackageName(), 0).versionCode);
+                json.put(JSON_KEY_HISTORY,
                         new JSONArray(
                                 ListToArray(
-                                        MainApplication.getInstance().database.getHistory(),
+                                        database.getHistory(),
                                         Database.HistoryEntry.class
                                 )
                         )
                 );
                 if (task.isCancelled()) throw new Exception("Interrupted");
-                updateProgress(1);
-                json.put("favorites",
+                updateProgress();
+                json.put(JSON_KEY_FAVORITES,
                         new JSONArray(
                                 ListToArray(
-                                        MainApplication.getInstance().database.getFavorites(),
+                                        database.getFavorites(),
                                         Database.FavoritesEntry.class
                                 )
                         )
                 );
                 if (task.isCancelled()) throw new Exception("Interrupted");
-                updateProgress(2);
-                json.put("hidden",
+                updateProgress();
+                json.put(JSON_KEY_HIDDEN,
                         new JSONArray(
                                 ListToArray(
-                                        MainApplication.getInstance().database.getHidden(),
+                                        database.getHidden(),
                                         Database.HiddenEntry.class
                                 )
                         )
                 );
                 if (task.isCancelled()) throw new Exception("Interrupted");
-                updateProgress(3);
-                json.put("subscriptions",
+                updateProgress();
+                json.put(JSON_KEY_SUBSCRIPTIONS,
                         new JSONArray(
                                 ListToArray(
                                         MainApplication.getInstance().subscriptions.getSubscriptions(),
@@ -103,26 +146,38 @@ public class SettingsExporter {
                         )
                 );
                 if (task.isCancelled()) throw new Exception("Interrupted");
-                updateProgress(4);
-                json.put("preferences", new JSONObject(MainApplication.getInstance().settings.getSharedPreferences()));
+                updateProgress();
+                json.put(JSON_KEY_PREFERENCES, new JSONObject(MainApplication.getInstance().settings.getSharedPreferences()));
+                updateProgress();
+                json.put(JSON_KEY_TABS, getPagesJSON());
                 if (task.isCancelled()) throw new Exception("Interrupted");
-                updateProgress(5);
-                File filename = new File(dir, "Overchan_settings_" + System.currentTimeMillis() + ".json");
-                FileOutputStream outputStream = null;
-                outputStream = new FileOutputStream(filename);
-                outputStream.write(json.toString().getBytes());
+                updateProgress();
+                if (dir != null) {
+                    File filename = new File(dir, "Overchan_settings_" + System.currentTimeMillis() + ".json");
+                    saveToFile(filename, json.toString());
+                    return filename.toString();
+                } else {
+                    if (callback != null) {
+                        callback.onExportComplete(json.toString());
+                    }
+                }
+                return "";
+            }
+
+            private void saveToFile(final File filename, final String s) throws IOException {
+                FileOutputStream outputStream = new FileOutputStream(filename);
+                outputStream.write(s.getBytes());
                 outputStream.close();
-                return filename.toString();
             }
             
-            private void updateProgress(final int progress) {
+            private void updateProgress() {
                 if (task.isCancelled()) return;
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         if (task.isCancelled()) return;
                         try {
-                            progressDialog.setProgress(progress);
+                            progressDialog.incrementProgressBy(1);
                         } catch (Exception e) {
                             Logger.e(TAG, e);
                             return;
@@ -148,5 +203,15 @@ public class SettingsExporter {
                 });
             }
         });
+    }
+
+    /**
+     * Интерфейс для реализации обратного вызова по завершению экспорта
+     */
+    public interface exportComplete {
+        /**
+         * @param json результат экспорта
+         */
+        void onExportComplete(String json);
     }
 }
