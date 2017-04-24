@@ -1,3 +1,21 @@
+/*
+ * Overchan Android (Meta Imageboard Client)
+ * Copyright (C) 2014-2016  miku-nyan <https://github.com/miku-nyan>
+ *     
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package nya.miku.wishmaster.chans.arhivach;
 
 import android.content.Context;
@@ -9,17 +27,19 @@ import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import nya.miku.wishmaster.R;
-import nya.miku.wishmaster.api.AbstractChanModule;
+import nya.miku.wishmaster.api.CloudflareChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.BoardModel;
@@ -43,7 +63,7 @@ import nya.miku.wishmaster.lib.org_json.JSONObject;
  * Created by Kalaver <Kalaver@users.noreply.github.com> on 23.06.2015.
  */
 
-public class ArhivachModule extends AbstractChanModule {
+public class ArhivachModule extends CloudflareChanModule {
     //private static final String TAG = "ArhivachModule";
 
     private static final Pattern INDEX_PAGE_PATTERN = Pattern.compile("index/(\\d+)/?(.*)");
@@ -77,6 +97,11 @@ public class ArhivachModule extends AbstractChanModule {
         return preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) ? ONION_DOMAIN : DEFAULT_DOMAIN;
     }
 
+    @Override
+    protected String getCloudflareCookieDomain() {
+        return DEFAULT_DOMAIN;
+    }
+
     private String getUsingUrl() {
         return (useHttps() ? "https://" : "http://") + getUsingDomain() + "/";
     }
@@ -97,6 +122,7 @@ public class ArhivachModule extends AbstractChanModule {
         onionPref.setDisableDependentsState(true);
         preferenceGroup.addPreference(onionPref);
         httpsPref.setDependency(getSharedKey(PREF_KEY_USE_ONION));
+        addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
     }
 
@@ -123,6 +149,15 @@ public class ArhivachModule extends AbstractChanModule {
                 return isThread ? ((ArhivachThreadReader) in).readPage() : ((ArhivachBoardReader) in).readPage() ;
             } else {
                 if (responseModel.notModified()) return null;
+                byte[] html = null;
+                try {
+                    ByteArrayOutputStream byteStream = new ByteArrayOutputStream(1024);
+                    IOUtils.copyStream(responseModel.stream, byteStream);
+                    html = byteStream.toByteArray();
+                } catch (Exception e) {}
+                if (html != null) {
+                    checkCloudflareError(new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusReason, html), url);
+                }
                 throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusCode + " - " + responseModel.statusReason);
             }
         } catch (Exception e) {
@@ -286,6 +321,8 @@ public class ArhivachModule extends AbstractChanModule {
     public UrlPageModel parseUrl(String url) throws IllegalArgumentException {
         String urlPath  = UrlPathUtils.getUrlPath(url, DOMAINS);
         if (urlPath == null) throw new IllegalArgumentException("wrong domain");
+        urlPath = urlPath.toLowerCase(Locale.US);
+        
         UrlPageModel model = new UrlPageModel();
         model.chanName = getChanName();
         try {

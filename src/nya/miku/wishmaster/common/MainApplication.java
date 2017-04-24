@@ -97,7 +97,7 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.ponyach.PonyachModule",
             "nya.miku.wishmaster.chans.uchan.UchanModule",
             "nya.miku.wishmaster.chans.sich.SichModule",
-            "nya.miku.wishmaster.chans.nullchan.NullchanccModule",
+            "nya.miku.wishmaster.chans.nullchan.NullchanclubModule",
             "nya.miku.wishmaster.chans.nullchan.NullchaneuModule",
             "nya.miku.wishmaster.chans.nullchan.Null_chanModule",
             "nya.miku.wishmaster.chans.dvachnet.DvachnetModule",
@@ -113,6 +113,7 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.tohnochan.TohnoChanModule",
             "nya.miku.wishmaster.chans.chan76.Chan76Module",
             "nya.miku.wishmaster.chans.dfwk.DFWKModule",
+            "nya.miku.wishmaster.chans.newnullchan.NewNullchanModule",
             "nya.miku.wishmaster.chans.anonfm.AnonFmModule",
             "nya.miku.wishmaster.chans.makaba.MakabaModule",
             "nya.miku.wishmaster.chans.arhivach.ArhivachModule",
@@ -122,6 +123,9 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.infinity.BrchanModule",
             "nya.miku.wishmaster.chans.nullchdvach.NullchdvachModule",
             "nya.miku.wishmaster.chans.lampach.LampachModule",
+            "nya.miku.wishmaster.chans.kropyvach.KropyvachModule",
+            "nya.miku.wishmaster.chans.mentachnet.MentachnetModule",
+            "nya.miku.wishmaster.chans.hispachan.HispachanModule",
     };
     
     private static MainApplication instance;

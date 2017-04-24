@@ -239,8 +239,9 @@ public abstract class AbstractVichanModule extends AbstractWakabaModule {
     
     protected AttachmentModel mapAttachment(JSONObject object, String boardName, boolean isSpoiler) {
         String ext = object.optString("ext", "");
-        if (!ext.equals("")) {
+        if (!ext.isEmpty()) {
             AttachmentModel attachment = new AttachmentModel();
+            ext = ext.toLowerCase(Locale.US);
             switch (ext) {
                 case ".jpeg":
                 case ".jpg":
@@ -314,7 +315,7 @@ public abstract class AbstractVichanModule extends AbstractWakabaModule {
                 default: val = pair.getValue();
             }
             if (pair.getKey().equals("file")) {
-                if (model.attachments != null) {
+                if (model.attachments != null && model.attachments.length > 0) {
                     for (int i=0; i<model.attachments.length && i<ATTACHMENT_KEYS.length; ++i) {
                         postEntityBuilder.addFile(ATTACHMENT_KEYS[i], model.attachments[i], model.randomHash);
                     }
@@ -469,23 +470,25 @@ public abstract class AbstractVichanModule extends AbstractWakabaModule {
         try {
             super.downloadFile(url, out, listener, task);
         } catch (HttpWrongStatusCodeException e) {
-            if (url.contains("/thumb/") && e.getStatusCode() == 404) {
+            if (e.getStatusCode() == 404 && url.contains("/thumb/")) {
                 String ext = url.substring(url.lastIndexOf(".")+1).toLowerCase();
-                String file_name = url.substring(0, url.lastIndexOf("."));
+                String fileName = url.substring(0, url.lastIndexOf("."));
                 // jpg -> png -> gif -> jpeg -> throw exception
                 switch (ext) {
                     case "jpg":
-                        downloadFile(file_name + ".png", out, listener, task);
+                        downloadFile(fileName + ".png", out, listener, task);
                         break;
                     case "png":
-                        downloadFile(file_name + ".gif", out, listener, task);
+                        downloadFile(fileName + ".gif", out, listener, task);
                         break;
                     case "gif":
-                        downloadFile(file_name + ".jpeg", out, listener, task);
+                        downloadFile(fileName + ".jpeg", out, listener, task);
                         break;
                     default:
                         throw e;
                 }
+            } else {
+                throw e;
             }
         }
     }
