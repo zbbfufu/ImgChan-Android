@@ -91,7 +91,7 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
                     SimpleBoardModel model = new SimpleBoardModel();
                     model.chan = getChanName();
                     model.boardName = boards.getJSONObject(j).getString("dir");
-                    model.boardDescription = boards.getJSONObject(j).optString("desc", model.boardName);
+                    model.boardDescription = StringEscapeUtils.unescapeHtml4(boards.getJSONObject(j).optString("desc", model.boardName));
                     model.boardCategory = currentCategory;
                     model.nsfw = model.boardName.equals("b") || currentCategory.equalsIgnoreCase("adult");
                     list.add(model);
@@ -321,7 +321,7 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
         @Override
         protected void parseDate(String date) {
             date = date.replace("&#35;", "");
-            date = date.replaceAll("(?:[^\\d]*)(\\d(?:.*))", "$1");
+            date = date.replaceAll("\\D*(\\d(?:.*))", "$1");
             super.parseDate(date);
         }
         

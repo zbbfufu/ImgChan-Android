@@ -27,10 +27,19 @@ import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
 import android.text.InputType;
 import android.text.TextUtils;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.BoardModel;
+import nya.miku.wishmaster.api.models.UrlPageModel;
+import nya.miku.wishmaster.api.util.WakabaReader;
 
 public class NullchanclubModule extends AbstractInstant0chan {
     private static final String CHAN_NAME = "0chan.club";
@@ -104,12 +113,37 @@ public class NullchanclubModule extends AbstractInstant0chan {
         super.addPreferencesOnScreen(preferenceGroup);
     }
     
-    
     @Override
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel model = super.getBoard(shortName, listener, task);
         model.defaultUserName = "Аноним";
         return model;
+    }
+
+    @Override
+    protected WakabaReader getKusabaReader(InputStream stream, UrlPageModel urlModel) {
+        if ((urlModel != null) && (urlModel.chanName != null) && urlModel.chanName.equals("expand")) {
+            stream = new SequenceInputStream(new ByteArrayInputStream("<form id=\"delform\">".getBytes()), stream);
+        }
+        return new NullclubReader(stream, canCloudflare());
+    }
+
+    private static class NullclubReader extends Instant0chanReader {
+        private static final Pattern PATTERN_TIMESTAMP = Pattern.compile("<span[^>]+class=\"timestamp\"[^>]*\">(\\d+)</span>");
+
+        public NullclubReader(InputStream in, boolean canCloudflare) {
+            super(in, canCloudflare);
+        }
+
+        @Override
+        protected void parseDate(String date) {
+            Matcher matcher = PATTERN_TIMESTAMP.matcher(date);
+            if (matcher.find()) {
+                currentPost.timestamp = Integer.parseInt(matcher.group(1)) * 1000L;
+            } else {
+                super.parseDate(date);
+            }
+        }
     }
     
 }
