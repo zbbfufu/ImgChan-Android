@@ -174,7 +174,7 @@ public class NullchaneuModule extends AbstractInstant0chan {
                 if (curUserIdPos == USERID_FILTER.length) {
                     skipUntilSequence(">".toCharArray());
                     String id = readUntilSequence("</span>".toCharArray());
-                    if (!id.isEmpty()) {
+                    if (id.equals("")) {
                         currentPost.name += (" ID:" + id);
                         if (!id.equalsIgnoreCase("Heaven")) {
                             currentPost.color = CryptoUtils.hashIdColor(id);

@@ -160,7 +160,7 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
         opPost.parentThread = model.threadNumber;
         
         String ext = json.optString("file_type", "");
-        if (!ext.isEmpty()) {
+        if (!ext.equals("")) {
             AttachmentModel attachment = new AttachmentModel();
             switch (ext) {
                 case "jpg":
@@ -189,7 +189,7 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
             attachment.height = json.optInt("image_h", -1);
             attachment.size = -1;
             String fileName = json.optString("file", "");
-            if (!fileName.isEmpty()) {
+            if (!fileName.equals("")) {
                 if (ext.equals("you")) {
                     attachment.thumbnail = (useHttps() ? "https" : "http")
                             + "://img.youtube.com/vi/" + fileName + "/default.jpg";

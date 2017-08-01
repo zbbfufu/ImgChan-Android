@@ -209,7 +209,7 @@ public class KurisachModule extends AbstractInstant0chan {
                 replace("\\\"", "\"").replace("\\'", "'");
         model.email = json.optString("email");
         model.trip = json.optString("tripcode");
-        if (!model.trip.isEmpty() && !model.trip.startsWith("!")) model.trip = "!" + model.trip;
+        if (!model.trip.equals("") && !model.trip.startsWith("!")) model.trip = "!" + model.trip;
         model.icons = null;
         model.op = false;
         model.sage = model.email.toLowerCase(Locale.US).equals("sage");
