@@ -117,7 +117,7 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.samachan.SamachanModule",
             "nya.miku.wishmaster.chans.tumbach.TumbachModule",
             "nya.miku.wishmaster.chans.wizchan.WizchanModule",
-            "nya.miku.wishmaster.chans.infinity.BrchanModule",
+            "nya.miku.wishmaster.chans.brchan.BrchanModule",
             "nya.miku.wishmaster.chans.lampach.LampachModule",
             "nya.miku.wishmaster.chans.kropyvach.KropyvachModule",
             "nya.miku.wishmaster.chans.mentachnet.MentachnetModule",
