@@ -104,7 +104,8 @@ public class Chan410Module extends AbstractChanModule {
                     BasicClientCookie c = new BasicClientCookie(board, value);
                     c.setDomain(CHAN410_DOMAIN);
                     c.setPath("/");
-                    c.setExpiryDate(new Date(cookie.optLong("expires")));
+                    long expiry = cookie.optLong("expires");
+                    c.setExpiryDate(expiry > 0 ? new Date(expiry) : null);
                     httpClient.getCookieStore().addCookie(c);
                 }
             }
@@ -116,10 +117,12 @@ public class Chan410Module extends AbstractChanModule {
         List<Cookie> cookies = httpClient.getCookieStore().getCookies();
         for (Cookie cookie : cookies) {
             if (cookie.getName().length() <= 3 && Chan410Boards.ALL_BOARDS_SET.contains(cookie.getName())) {
-                JSONObject cookieValues = new JSONObject();
-                cookieValues.put("value", cookie.getValue());
-                cookieValues.put("expires", cookie.getExpiryDate().getTime());
-                savedCookies.put(cookie.getName(), cookieValues);
+                JSONObject cookieAttributes = new JSONObject();
+                cookieAttributes.put("value", cookie.getValue());
+                if (cookie.getExpiryDate() != null) {
+                    cookieAttributes.put("expires", cookie.getExpiryDate().getTime());
+                }
+                savedCookies.put(cookie.getName(), cookieAttributes);
             }
         }
         preferences.edit().putString(getSharedKey(PREF_KEY_FAPTCHA_COOKIES), savedCookies.toString()).commit();
