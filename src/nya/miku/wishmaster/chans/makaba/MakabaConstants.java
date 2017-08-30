@@ -65,7 +65,7 @@ public class MakabaConstants {
             "Тематика", "Творчество", "Техника и софт", "Игры", "Японская культура", "Разное", "Взрослым", "Политика", "Пробное"
     });
     
-    public static final String[] ATTACHMENT_FORMATS = new String[] { "jpg", "jpeg", "png", "gif", "webm" };
+    public static final String[] ATTACHMENT_FORMATS = new String[] { "jpg", "jpeg", "png", "gif", "webm", "mp4" };
     
     public static final String[] CATALOG_TYPES = { "catalog", "catalog_num" };
     
