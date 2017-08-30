@@ -40,7 +40,10 @@ public class DepresModule extends AbstractVichanModule {
     private static final SimpleBoardModel[] BOARDS = new SimpleBoardModel[] {
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "b", "Лю/b/овь", "", true),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "int", "/Int/eresting", "", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "sp", "Sports", "", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "jp", "Jewish pride", "", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "d", "Depreschan", "", false),
+
     };
     
     public DepresModule(SharedPreferences preferences, Resources resources) {
@@ -59,7 +62,7 @@ public class DepresModule extends AbstractVichanModule {
     
     @Override
     public Drawable getChanFavicon() {
-        return ResourcesCompat.getDrawable(resources, R.drawable.favicon_haruhichan, null);
+        return ResourcesCompat.getDrawable(resources, R.drawable.favicon_depreschan, null);
     }
     
     @Override
@@ -85,11 +88,17 @@ public class DepresModule extends AbstractVichanModule {
     @Override
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel model = super.getBoard(shortName, listener, task);
-        model.defaultUserName = shortName.equals("b") ? "Спасённый" : "Saved";
+        switch (shortName) {
+            case "d":
+            case "int": model.defaultUserName = "Saved"; break;
+            case "sp": model.defaultUserName = "Sportsman"; break;
+            case "jp": model.defaultUserName = "Jude"; break;
+            default: model.defaultUserName = "Спасенный"; break;
+        }
         model.attachmentsMaxCount = 4;
         model.allowNames = !shortName.equals("b");
         model.allowEmails = false;
-        model.allowCustomMark = shortName.equals("int");
+        model.allowCustomMark = false;
         model.customMarkDescription = "Don't show my flag";
         model.attachmentsFormatFilters = ATTACHMENT_FORMATS;
         return model;
@@ -106,6 +115,7 @@ public class DepresModule extends AbstractVichanModule {
     
     @Override
     public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
+        //TODO: Replace 'spoiler' custom mark with 'no_country'
         super.sendPost(model, listener, task);
         return null;
     }
