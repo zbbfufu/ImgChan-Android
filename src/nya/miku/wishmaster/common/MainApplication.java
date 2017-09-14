@@ -84,9 +84,7 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.cirno.CirnoModule",
             "nya.miku.wishmaster.chans.cirno.MikubaModule",
             "nya.miku.wishmaster.chans.dobrochan.DobroModule",
-            "nya.miku.wishmaster.chans.dvach.DvachModule",
             "nya.miku.wishmaster.chans.sevenchan.SevenchanModule",
-            "nya.miku.wishmaster.chans.wakachan.WakachanModule",
             "nya.miku.wishmaster.chans.infinity.InfinityPlModule",
             "nya.miku.wishmaster.chans.cirno.NowereModule",
             "nya.miku.wishmaster.chans.cirno.Chan410Module",
@@ -96,7 +94,6 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.allchan.AllchanModule",
             "nya.miku.wishmaster.chans.ponyach.PonyachModule",
             "nya.miku.wishmaster.chans.uchan.UchanModule",
-            "nya.miku.wishmaster.chans.sich.SichModule",
             "nya.miku.wishmaster.chans.nullchan.NullchanclubModule",
             "nya.miku.wishmaster.chans.nullchan.NullchaneuModule",
             "nya.miku.wishmaster.chans.nullchan.Null_chanModule",
@@ -104,10 +101,7 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.mentachsu.MentachsuModule",
             "nya.miku.wishmaster.chans.synch.SynchModule",
             "nya.miku.wishmaster.chans.inach.InachModule",
-            "nya.miku.wishmaster.chans.clairews.ClairewsModule",
             "nya.miku.wishmaster.chans.kurisach.KurisachModule",
-            "nya.miku.wishmaster.chans.chan10.Chan10Module",
-            "nya.miku.wishmaster.chans.haruhichan.HaruhiModule",
             "nya.miku.wishmaster.chans.vichan.VichanModule",
             "nya.miku.wishmaster.chans.lainchan.LainModule",
             "nya.miku.wishmaster.chans.tohnochan.TohnoChanModule",
@@ -120,12 +114,19 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.samachan.SamachanModule",
             "nya.miku.wishmaster.chans.tumbach.TumbachModule",
             "nya.miku.wishmaster.chans.wizchan.WizchanModule",
-            "nya.miku.wishmaster.chans.infinity.BrchanModule",
-            "nya.miku.wishmaster.chans.nullchdvach.NullchdvachModule",
+            "nya.miku.wishmaster.chans.brchan.BrchanModule",
+            "nya.miku.wishmaster.chans.infinity.LolifoxModule",
             "nya.miku.wishmaster.chans.lampach.LampachModule",
             "nya.miku.wishmaster.chans.kropyvach.KropyvachModule",
             "nya.miku.wishmaster.chans.mentachnet.MentachnetModule",
             "nya.miku.wishmaster.chans.hispachan.HispachanModule",
+            "nya.miku.wishmaster.chans.ernstchan.ErnstModule",
+            "nya.miku.wishmaster.chans.nullchan.NullchanoneModule",
+            "nya.miku.wishmaster.chans.depreschan.DepresModule",
+            "nya.miku.wishmaster.chans.endchan.EndChanModule",
+            "nya.miku.wishmaster.chans.diochan.DiochanModule",
+            "nya.miku.wishmaster.chans.tirech.TirechModule",
+            "nya.miku.wishmaster.chans.tbpchan.TBPchanModule",
     };
     
     private static MainApplication instance;
@@ -299,6 +300,7 @@ public class MainApplication extends Application {
     }
     
     private void clearCaches() {
+        if (isGalleryProcess()) return;
         pagesCache.clearLru();
         bitmapCache.clearLru();
         draftsCache.clearLru();

@@ -75,7 +75,7 @@ public class KrautModule extends CloudflareChanModule {
     private static final String TAG = "KrautModule";
     
     static final String CHAN_NAME = "krautchan.net";
-    private static final String CHAN_DOMAIN = "krautchan.net";
+    private static final String CHAN_DOMAIN = "beta.krautchan.net";
     
     private static final String PREF_KEY_KOMPTURCODE_COOKIE = "PREF_KEY_KOMPTURCODE_COOKIE";
     
