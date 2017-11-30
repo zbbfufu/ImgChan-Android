@@ -63,11 +63,7 @@ import android.preference.PreferenceManager;
  */
 
 @ReportsCrashes(
-        formUri = ACRAConstants.ACRA_FORM_URL,
-        reportType = org.acra.sender.HttpSender.Type.JSON,
-        httpMethod = org.acra.sender.HttpSender.Method.PUT,
-        formUriBasicAuthLogin = ACRAConstants.ACRA_LOGIN,
-        formUriBasicAuthPassword = ACRAConstants.ACRA_PASSWORD,
+        mailTo = "aliceca@users.noreply.github.com",
         mode = org.acra.ReportingInteractionMode.DIALOG,
         resDialogText = R.string.crash_dialog_text,
         resDialogIcon = android.R.drawable.ic_dialog_info,
@@ -270,7 +266,7 @@ public class MainApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        if (ACRAConstants.ACRA_ENABLED) ACRA.init(this);
+        ACRA.init(this);
         if (isGalleryProcess()) return;
         initObjects();
         instance = this;
