@@ -48,7 +48,9 @@ android {
         minifyEnabled true
         proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt'
     }
-    defaultConfig.ndk {
-        moduleName "gif"
+    externalNativeBuild {
+        cmake {
+            path 'jni/CMakeLists.txt'
+        }
     }
 }
