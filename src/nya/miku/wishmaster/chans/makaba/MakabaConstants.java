@@ -20,6 +20,7 @@ package nya.miku.wishmaster.chans.makaba;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Константы, используемые в модуле 2ch.hk
@@ -74,6 +75,11 @@ public class MakabaConstants {
     public static final String PREF_KEY_DOMAIN = "domain";
     public static final String PREF_KEY_USERCODE_COOKIE_DOMAIN = "usercode_domain";
     public static final String PREF_KEY_USERCODE_COOKIE_VALUE = "usercode_cookie";
-    
+
+    public static final String MAILRU_JS_URL = "https://api-nocaptcha.mail.ru/captcha?public_key=";
+    public static final Pattern MAILRU_ID_PATTERN = Pattern.compile("id:\\s*\"([^\"]*)\"");
+    public static final Pattern MAILRU_URL_PATTERN = Pattern.compile("url:\\s*\"([^\"]*)\"");
+    public static final String MAILRU_DEFAULT_CAPTCHA_URL = "https://api-nocaptcha.mail.ru/c/1";
+
     public static final String USERCODE_COOKIE_NAME = "usercode_auth";
 }

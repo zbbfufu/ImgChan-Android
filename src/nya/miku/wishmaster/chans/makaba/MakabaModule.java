@@ -21,6 +21,7 @@ package nya.miku.wishmaster.chans.makaba;
 import static nya.miku.wishmaster.chans.makaba.MakabaConstants.*;
 import static nya.miku.wishmaster.chans.makaba.MakabaJsonMapper.*;
 
+import java.io.InputStream;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -33,6 +34,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.HttpHeaders;
+import cz.msebera.android.httpclient.message.BasicHeader;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.CloudflareChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
@@ -51,6 +55,7 @@ import nya.miku.wishmaster.api.util.UrlPathUtils;
 import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
+import nya.miku.wishmaster.http.streamer.HttpResponseModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
 import nya.miku.wishmaster.http.streamer.HttpWrongStatusCodeException;
 import nya.miku.wishmaster.lib.org_json.JSONArray;
@@ -63,6 +68,8 @@ import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
@@ -88,8 +95,10 @@ public class MakabaModule extends CloudflareChanModule {
     
     private static final String HASHTAG_PREFIX = "\u00A0#";
     
-    /** id текущей капчи*/
-    private String captchaId;
+    /** id текущей mail.ru капчи*/
+    private String captchaMailRuId;
+    
+    private String captchaKey;
     
     /** карта досок из списка mobile.fcgi */
     private Map<String, BoardModel> boardsMap = null;
@@ -460,19 +469,47 @@ public class MakabaModule extends CloudflareChanModule {
     
     @Override
     public CaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
-        String url = domainUrl + "api/captcha/2chaptcha/id?board=" + boardName + (threadNumber != null ? "&thread=" + threadNumber : "");
+        String url = domainUrl + "api/captcha/mailru/id";
         JSONObject response = downloadJSONObject(url, false, listener, task);
         switch (response.optInt("result", -1)) {
             case 1: //Enabled
-                String id = response.optString("id");
-                url = domainUrl + "api/captcha/2chaptcha/image/" + id;
-                CaptchaModel captchaModel = downloadCaptcha(url, listener, task);
-                captchaModel.type = CaptchaModel.TYPE_NORMAL_DIGITS;
-                captchaId = id;
+                UrlPageModel refererPage = new UrlPageModel();
+                refererPage.chanName = CHAN_NAME;
+                refererPage.boardName = boardName;
+                if (threadNumber == null) {
+                    refererPage.type = UrlPageModel.TYPE_BOARDPAGE;
+                    refererPage.boardPage = 0;
+                } else {
+                    refererPage.type = UrlPageModel.TYPE_THREADPAGE;
+                    refererPage.threadNumber = threadNumber;
+                }
+                String refererUrl = buildUrl(refererPage);
+                Header[] customHeaders = new Header[] { new BasicHeader(HttpHeaders.REFERER, refererUrl) };
+                captchaKey = response.optString("id");
+                String jsUrl = MAILRU_JS_URL + captchaKey;
+                Bitmap captchaBitmap = null;
+                HttpRequestModel requestModel = HttpRequestModel.builder().setGET().setCustomHeaders(customHeaders).build();
+                String jsResponse = HttpStreamer.getInstance().getStringFromUrl(jsUrl, requestModel, httpClient, listener, task, true);
+                Matcher mailRuIdMatcher = MAILRU_ID_PATTERN.matcher(jsResponse);
+                if (!mailRuIdMatcher.find()) throw new Exception("Couldn't get Mail.Ru captcha ID");
+                captchaMailRuId = mailRuIdMatcher.group(1);
+
+                Matcher mailRuUrlMatcher = MAILRU_URL_PATTERN.matcher(jsResponse);
+                String captchaUrl = mailRuUrlMatcher.find() ? mailRuUrlMatcher.group(1) : MAILRU_DEFAULT_CAPTCHA_URL;
+                HttpResponseModel responseModel = HttpStreamer.getInstance().getFromUrl(captchaUrl, requestModel, httpClient, listener, task);
+                try {
+                    InputStream imageStream = responseModel.stream;
+                    captchaBitmap = BitmapFactory.decodeStream(imageStream);
+                } finally {
+                    responseModel.release();
+                }
+                CaptchaModel captchaModel = new CaptchaModel();
+                captchaModel.type = CaptchaModel.TYPE_NORMAL;
+                captchaModel.bitmap = captchaBitmap;
                 return captchaModel;
             case 2: //VIP
             case 3: //Disabled
-                captchaId = null;
+                captchaMailRuId = null;
                 return null;
             case 0: //Fail
                 throw new Exception(response.optString("description"));
@@ -483,19 +520,6 @@ public class MakabaModule extends CloudflareChanModule {
     
     @Override
     public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
-        if (captchaId != null) {
-            String checkCaptchaUrl = domainUrl + "api/captcha/2chaptcha/check/" + captchaId + "?value=" + model.captchaAnswer;
-            JSONObject captchaResult;
-            try {
-                captchaResult = downloadJSONObject(checkCaptchaUrl, false, listener, task);
-                if (captchaResult.getInt("result") == 0) {
-                    throw new Exception(captchaResult.getString("description"));
-                }
-            } catch (JSONException e) {
-                Logger.e(TAG, e);
-            }
-        }
-        
         String url = domainUrl + "makaba/posting.fcgi?json=1";
         ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
                 addString("task", "post").
@@ -504,11 +528,11 @@ public class MakabaModule extends CloudflareChanModule {
         
         postEntityBuilder.addString("comment", model.comment);
         
-        if (captchaId != null) {
-            postEntityBuilder.
-                    addString("captcha_type", "2chaptcha").
-                    addString("2chaptcha_id", captchaId).
-                    addString("2chaptcha_value", model.captchaAnswer);
+        if (captchaMailRuId != null) {
+            postEntityBuilder.addString("captcha_id", captchaMailRuId);
+            postEntityBuilder.addString("captcha_value", model.captchaAnswer);
+            postEntityBuilder.addString("captcha_type", "mailru");
+            postEntityBuilder.addString("2chaptcha_id", captchaKey);
         }
         if (task != null && task.isCancelled()) throw new InterruptedException("interrupted");
         
