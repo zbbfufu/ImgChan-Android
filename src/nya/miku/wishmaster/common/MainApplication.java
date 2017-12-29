@@ -48,11 +48,14 @@ import nya.miku.wishmaster.ui.tabs.TabsSwitcher;
 import org.acra.ACRA;
 import org.acra.annotation.ReportsCrashes;
 
+import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.Application;
+import android.content.ComponentCallbacks2;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.os.Build;
 import android.preference.PreferenceManager;
 
 /**
@@ -62,6 +65,7 @@ import android.preference.PreferenceManager;
  *
  */
 
+@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 @ReportsCrashes(
         formUri = ACRAConstants.ACRA_FORM_URL,
         reportType = org.acra.sender.HttpSender.Type.JSON,
@@ -75,7 +79,7 @@ import android.preference.PreferenceManager;
         resDialogCommentPrompt = R.string.crash_dialog_comment_prompt,
         resDialogOkToast = R.string.crash_dialog_ok_toast )
 
-public class MainApplication extends Application {
+public class MainApplication extends Application implements ComponentCallbacks2 {
     
     private static final String[] MODULES = new String[] {
             "nya.miku.wishmaster.chans.fourchan.FourchanModule",
@@ -154,6 +158,8 @@ public class MainApplication extends Application {
     
     public List<ChanModule> chanModulesList;
     private Map<String, Integer> chanModulesIndex;
+    
+    private String processName;
     
     private void registerChanModules() {
         chanModulesIndex = new HashMap<String, Integer>();
@@ -261,7 +267,7 @@ public class MainApplication extends Application {
     
     private boolean isGalleryProcess() {
         try {
-            return getProcessName().endsWith(":Gallery");
+            return processName.endsWith(":Gallery");
         } catch (Exception e) {
             return false;
         }
@@ -270,6 +276,7 @@ public class MainApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        processName = getProcessName();
         if (ACRAConstants.ACRA_ENABLED) ACRA.init(this);
         if (isGalleryProcess()) return;
         initObjects();
@@ -304,6 +311,31 @@ public class MainApplication extends Application {
         pagesCache.clearLru();
         bitmapCache.clearLru();
         draftsCache.clearLru();
+    }
+    
+    @Override
+    public void onTrimMemory(int level) {
+
+        // Determine which lifecycle or system event was raised.
+        switch (level) {
+            case ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW:
+            case ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL:
+            case ComponentCallbacks2.TRIM_MEMORY_MODERATE:
+            case ComponentCallbacks2.TRIM_MEMORY_COMPLETE:
+                try {
+                    getInstance().freeMemoryInternal();
+                } catch (Exception e) {} //если синглтон MainApplication не создан 
+                break;
+
+            default:
+                /*
+                  Release any non-critical data structures.
+
+                  The app received an unrecognized memory level value
+                  from the system. Treat this as a generic low-memory message.
+                */
+                break;
+        }
     }
     
 }
