@@ -50,6 +50,8 @@ import nya.miku.wishmaster.api.util.LazyPreferences;
 import nya.miku.wishmaster.api.util.UrlPathUtils;
 import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
+import nya.miku.wishmaster.http.recaptcha.Recaptcha2;
+import nya.miku.wishmaster.http.recaptcha.Recaptcha2solved;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
 import nya.miku.wishmaster.http.streamer.HttpWrongStatusCodeException;
@@ -66,6 +68,7 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
+import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceGroup;
@@ -90,6 +93,8 @@ public class MakabaModule extends CloudflareChanModule {
     
     /** id текущей капчи*/
     private String captchaId;
+    /** тип текущей капчи*/
+    private int captchaType;
     
     /** карта досок из списка mobile.fcgi */
     private Map<String, BoardModel> boardsMap = null;
@@ -169,6 +174,20 @@ public class MakabaModule extends CloudflareChanModule {
         mobileAPIPref.setDefaultValue(true);
         group.addPreference(mobileAPIPref);
     }
+    
+    private void addCaptchaPreferences(PreferenceGroup group) {
+        final Context context = group.getContext();
+        final ListPreference captchaPreference = new LazyPreferences.ListPreference(context); //captcha_type
+        captchaPreference.setTitle(R.string.pref_captcha_type);
+        captchaPreference.setDialogTitle(R.string.pref_captcha_type);
+        captchaPreference.setKey(getSharedKey(PREF_KEY_CAPTCHA_TYPE));
+        captchaPreference.setEntryValues(CAPTCHA_TYPES_KEYS);
+        captchaPreference.setEntries(CAPTCHA_TYPES);
+        captchaPreference.setDefaultValue(CAPTCHA_TYPE_DEFAULT);
+        int i = Arrays.asList(CAPTCHA_TYPES_KEYS).indexOf(preferences.getString(getSharedKey(PREF_KEY_CAPTCHA_TYPE), CAPTCHA_TYPE_DEFAULT));
+        if (i >= 0) captchaPreference.setSummary(CAPTCHA_TYPES[i]);
+        group.addPreference(captchaPreference);
+    }
 
     public boolean getCaptchaAutoUpdatePreference(){
         return preferences.getBoolean(getSharedKey(PREF_KEY_CAPTCHA_AUTO_UPDATE), false);
@@ -215,10 +234,26 @@ public class MakabaModule extends CloudflareChanModule {
     @Override
     public void addPreferencesOnScreen(final PreferenceGroup preferenceScreen) {
         addMobileAPIPreference(preferenceScreen);
-        addCloudflareRecaptchaFallbackPreference(preferenceScreen);
+        addCaptchaPreferences(preferenceScreen);
         addCaptchaAutoUpdatePreference(preferenceScreen);
         addDomainPreferences(preferenceScreen);
         addProxyPreferences(preferenceScreen);
+    }
+
+    private int getUsingCaptchaType() {
+        String key = preferences.getString(getSharedKey(PREF_KEY_CAPTCHA_TYPE), CAPTCHA_TYPE_DEFAULT);
+        if (Arrays.asList(CAPTCHA_TYPES_KEYS).indexOf(key) == -1) key = CAPTCHA_TYPE_DEFAULT;
+        switch (key) {
+            case "2chaptcha":
+                return CAPTCHA_2CHAPTCHA;
+            case "recaptcha":
+                return preferences.getBoolean(getSharedKey(PREF_KEY_USE_PROXY), false) ?
+                        CAPTCHA_RECAPTCHA_FALLBACK :
+                        CAPTCHA_RECAPTCHA;
+            case "recaptcha-fallback":
+                return CAPTCHA_RECAPTCHA_FALLBACK;
+        }
+        throw new IllegalStateException();
     }
     
     @Override
@@ -460,19 +495,42 @@ public class MakabaModule extends CloudflareChanModule {
     
     @Override
     public CaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
-        String url = domainUrl + "api/captcha/2chaptcha/id?board=" + boardName + (threadNumber != null ? "&thread=" + threadNumber : "");
+        int captchaType = getUsingCaptchaType();
+        String captchaKey;
+        switch(captchaType) {
+            case CAPTCHA_2CHAPTCHA:
+                captchaKey = "2chaptcha";
+                break;
+            case CAPTCHA_RECAPTCHA:
+            case CAPTCHA_RECAPTCHA_FALLBACK:
+                captchaKey = "recaptcha";
+                break;
+            default: captchaKey = CAPTCHA_TYPE_DEFAULT;
+        }
+        
+        String url = domainUrl + "api/captcha/" + captchaKey + "/id?board=" + boardName + (threadNumber != null ? "&thread=" + threadNumber : "");
         JSONObject response = downloadJSONObject(url, false, listener, task);
+        String id = response.optString("id");
         switch (response.optInt("result", -1)) {
             case 1: //Enabled
-                String id = response.optString("id");
-                url = domainUrl + "api/captcha/2chaptcha/image/" + id;
-                CaptchaModel captchaModel = downloadCaptcha(url, listener, task);
-                captchaModel.type = CaptchaModel.TYPE_NORMAL_DIGITS;
-                captchaId = id;
-                return captchaModel;
+                this.captchaType = captchaType;
+                this.captchaId = id;
+                switch (captchaType) {
+                    case CAPTCHA_2CHAPTCHA:
+                        CaptchaModel captchaModel;
+                        url = domainUrl + "api/captcha/" + captchaKey + "/image/" + id;
+                        captchaModel = downloadCaptcha(url, listener, task);
+                        captchaModel.type = CaptchaModel.TYPE_NORMAL_DIGITS;
+                        return captchaModel;
+                    case CAPTCHA_RECAPTCHA:
+                    case CAPTCHA_RECAPTCHA_FALLBACK:
+                        return null;
+                    default:
+                        throw new IllegalStateException();
+                }
             case 2: //VIP
             case 3: //Disabled
-                captchaId = null;
+                this.captchaType = CAPTCHA_DISABLED;
                 return null;
             case 0: //Fail
                 throw new Exception(response.optString("description"));
@@ -483,7 +541,7 @@ public class MakabaModule extends CloudflareChanModule {
     
     @Override
     public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
-        if (captchaId != null) {
+        if (captchaType == CAPTCHA_2CHAPTCHA) {
             String checkCaptchaUrl = domainUrl + "api/captcha/2chaptcha/check/" + captchaId + "?value=" + model.captchaAnswer;
             JSONObject captchaResult;
             try {
@@ -504,12 +562,27 @@ public class MakabaModule extends CloudflareChanModule {
         
         postEntityBuilder.addString("comment", model.comment);
         
-        if (captchaId != null) {
-            postEntityBuilder.
-                    addString("captcha_type", "2chaptcha").
-                    addString("2chaptcha_id", captchaId).
-                    addString("2chaptcha_value", model.captchaAnswer);
+        switch (captchaType) {
+            case CAPTCHA_2CHAPTCHA:
+                postEntityBuilder.
+                        addString("captcha_type", "2chaptcha").
+                        addString("2chaptcha_id", captchaId).
+                        addString("2chaptcha_value", model.captchaAnswer);
+                break;
+            case CAPTCHA_RECAPTCHA:
+            case CAPTCHA_RECAPTCHA_FALLBACK:
+                String response = Recaptcha2solved.pop(captchaId);
+                if (response == null) {
+                    boolean fallback = getUsingCaptchaType() == CAPTCHA_RECAPTCHA_FALLBACK;
+                    throw Recaptcha2.obtain(domainUrl, captchaId, null, CHAN_NAME, fallback);
+                }
+                postEntityBuilder.
+                        addString("captcha_type", "recaptcha").
+                        addString("2chaptcha_id", captchaId).
+                        addString("g-recaptcha-response", response);
+                break;
         }
+        
         if (task != null && task.isCancelled()) throw new InterruptedException("interrupted");
         
         if (model.subject != null) postEntityBuilder.addString("subject", model.subject);
