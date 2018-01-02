@@ -469,7 +469,7 @@ public class MakabaModule extends CloudflareChanModule {
     
     @Override
     public CaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
-        String url = domainUrl + "api/captcha/mailru/id";
+        String url = domainUrl + "api/captcha/mailru/id?board=" + boardName + "&thread=" + threadNumber;
         JSONObject response = downloadJSONObject(url, false, listener, task);
         switch (response.optInt("result", -1)) {
             case 1: //Enabled
