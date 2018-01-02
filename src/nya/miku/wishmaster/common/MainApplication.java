@@ -65,7 +65,6 @@ import android.preference.PreferenceManager;
  *
  */
 
-@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 @ReportsCrashes(
         formUri = ACRAConstants.ACRA_FORM_URL,
         reportType = org.acra.sender.HttpSender.Type.JSON,
@@ -79,7 +78,7 @@ import android.preference.PreferenceManager;
         resDialogCommentPrompt = R.string.crash_dialog_comment_prompt,
         resDialogOkToast = R.string.crash_dialog_ok_toast )
 
-public class MainApplication extends Application implements ComponentCallbacks2 {
+public class MainApplication extends Application {
     
     private static final String[] MODULES = new String[] {
             "nya.miku.wishmaster.chans.fourchan.FourchanModule",
