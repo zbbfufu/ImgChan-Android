@@ -65,7 +65,6 @@ import android.preference.PreferenceManager;
  *
  */
 
-@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 @ReportsCrashes(
         mailTo = "aliceca@users.noreply.github.com",
         mode = org.acra.ReportingInteractionMode.DIALOG,
@@ -75,7 +74,7 @@ import android.preference.PreferenceManager;
         resDialogCommentPrompt = R.string.crash_dialog_comment_prompt,
         resDialogOkToast = R.string.crash_dialog_ok_toast )
 
-public class MainApplication extends Application implements ComponentCallbacks2 {
+public class MainApplication extends Application {
     
     private static final String[] MODULES = new String[] {
             "nya.miku.wishmaster.chans.fourchan.FourchanModule",
@@ -127,6 +126,7 @@ public class MainApplication extends Application implements ComponentCallbacks2 
             "nya.miku.wishmaster.chans.diochan.DiochanModule",
             "nya.miku.wishmaster.chans.tirech.TirechModule",
             "nya.miku.wishmaster.chans.tbpchan.TBPchanModule",
+            "nya.miku.wishmaster.chans.mewchnet.MewchnetModule",
     };
     
     private static MainApplication instance;
