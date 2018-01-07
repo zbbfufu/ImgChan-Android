@@ -66,7 +66,7 @@ import android.preference.PreferenceManager;
  */
 
 @ReportsCrashes(
-        mailTo = "aliceca@users.noreply.github.com",
+        mailTo = ACRAConstants.ACRA_EMAIL,
         mode = org.acra.ReportingInteractionMode.DIALOG,
         resDialogText = R.string.crash_dialog_text,
         resDialogIcon = android.R.drawable.ic_dialog_info,
