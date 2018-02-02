@@ -85,9 +85,6 @@ public class FourchanModule extends CloudflareChanModule {
     
     static final String CHAN_NAME = "4chan.org";
     
-    private static final boolean NEW_RECAPTCHA_DEFAULT = Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD_MR1;
-    
-    private static final String PREF_KEY_NEW_RECAPTCHA = "PREF_KEY_NEW_RECAPTCHA1";
     private static final String PREF_KEY_NEW_RECAPTCHA_FALLBACK = "PREF_KEY_NEW_RECAPTCHA_FALLBACK";
     private static final String PREF_KEY_PASS_TOKEN = "PREF_KEY_PASS_TOKEN";
     private static final String PREF_KEY_PASS_PIN = "PREF_KEY_PASS_PIN";
@@ -98,8 +95,6 @@ public class FourchanModule extends CloudflareChanModule {
     private boolean usingPasscode = false;
     
     private Map<String, BoardModel> boardsMap = null;
-    
-    private Recaptcha recaptcha = null;
     
     private Recaptcha reportRecaptcha = null;
     private String reportCaptchaAnswer = null;
@@ -293,20 +288,12 @@ public class FourchanModule extends CloudflareChanModule {
         Context context = preferenceGroup.getContext();
         addPasscodePreference(preferenceGroup);
         
-        CheckBoxPreference newRecaptchaPref = new LazyPreferences.CheckBoxPreference(context);
-        newRecaptchaPref.setTitle(R.string.fourchan_prefs_new_recaptcha);
-        newRecaptchaPref.setSummary(R.string.fourchan_prefs_new_recaptcha_summary);
-        newRecaptchaPref.setKey(getSharedKey(PREF_KEY_NEW_RECAPTCHA));
-        newRecaptchaPref.setDefaultValue(NEW_RECAPTCHA_DEFAULT);
-        preferenceGroup.addPreference(newRecaptchaPref);
-        
         final CheckBoxPreference fallbackRecaptchaPref = new LazyPreferences.CheckBoxPreference(context);
         fallbackRecaptchaPref.setTitle(R.string.fourchan_prefs_new_recaptcha_fallback);
         fallbackRecaptchaPref.setSummary(R.string.fourchan_prefs_new_recaptcha_fallback_summary);
         fallbackRecaptchaPref.setKey(getSharedKey(PREF_KEY_NEW_RECAPTCHA_FALLBACK));
         fallbackRecaptchaPref.setDefaultValue(false);
         preferenceGroup.addPreference(fallbackRecaptchaPref);
-        fallbackRecaptchaPref.setDependency(getSharedKey(PREF_KEY_NEW_RECAPTCHA));
         
         addPasswordPreference(preferenceGroup);
         addHttpsPreference(preferenceGroup, true);
@@ -326,10 +313,6 @@ public class FourchanModule extends CloudflareChanModule {
     
     private boolean useHttps() {
         return useHttps(true);
-    }
-    
-    private boolean useNewRecaptcha(boolean newThread) {
-        return newThread || preferences.getBoolean(getSharedKey(PREF_KEY_NEW_RECAPTCHA), NEW_RECAPTCHA_DEFAULT);
     }
     
     private boolean newRecaptchaFallback() {
@@ -446,28 +429,11 @@ public class FourchanModule extends CloudflareChanModule {
     }
     
     @Override
-    public CaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
-        if (usingPasscode) return null;
-        if (useNewRecaptcha(threadNumber == null)) {
-            recaptcha = null;
-            return null;
-        } else {
-            recaptcha = Recaptcha.obtain(RECAPTCHA_KEY, task, httpClient, useHttps() ? "https" : "http");
-            CaptchaModel result = new CaptchaModel();
-            result.type = CaptchaModel.TYPE_NORMAL;
-            result.bitmap = recaptcha.bitmap;
-            return result;
-        }
-    }
-    
-    @Override
     public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
         String recaptcha2 = Recaptcha2solved.pop(RECAPTCHA_KEY);
-        if (!usingPasscode) {
-            if (useNewRecaptcha(model.threadNumber == null)) {
-                if (recaptcha2 == null) throw Recaptcha2.obtain(
-                        (useHttps() ? "https://" : "http://") + "4chan.org/", RECAPTCHA_KEY, null, CHAN_NAME, newRecaptchaFallback());
-            } else if (recaptcha == null) throw new Exception("Invalid captcha");
+        if (!usingPasscode && (recaptcha2 == null)) {
+            throw Recaptcha2.obtain(
+                    (useHttps() ? "https://" : "http://") + "4chan.org/", RECAPTCHA_KEY, null, CHAN_NAME, newRecaptchaFallback());
         }
         String url = "https://sys.4chan.org/" + model.boardName + "/post";
         ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
@@ -479,12 +445,7 @@ public class FourchanModule extends CloudflareChanModule {
                 addString("pwd", model.password);
         if (model.threadNumber != null) postEntityBuilder.addString("resto", model.threadNumber);
         if (!usingPasscode) {
-            if (useNewRecaptcha(model.threadNumber == null)) {
-                postEntityBuilder.addString("g-recaptcha-response", recaptcha2);
-            } else {
-                postEntityBuilder.addString("recaptcha_challenge_field", recaptcha.challenge).
-                        addString("recaptcha_response_field", model.captchaAnswer);
-            }
+            postEntityBuilder.addString("g-recaptcha-response", recaptcha2);
         }
         if (model.attachments != null && model.attachments.length != 0) postEntityBuilder.addFile("upfile", model.attachments[0]);
         if (model.custommark) postEntityBuilder.addString("spoiler", "on");
