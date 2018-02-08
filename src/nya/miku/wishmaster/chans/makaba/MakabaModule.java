@@ -258,9 +258,7 @@ public class MakabaModule extends CloudflareChanModule {
             case "2chaptcha":
                 return CAPTCHA_2CHAPTCHA;
             case "recaptcha":
-                return preferences.getBoolean(getSharedKey(PREF_KEY_USE_PROXY), false) ?
-                        CAPTCHA_RECAPTCHA_FALLBACK :
-                        CAPTCHA_RECAPTCHA;
+                return CAPTCHA_RECAPTCHA;
             case "recaptcha-fallback":
                 return CAPTCHA_RECAPTCHA_FALLBACK;
             case "mailru":
