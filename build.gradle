@@ -26,7 +26,6 @@ dependencies {
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
-
     packagingOptions {
         exclude 'META-INF/INDEX.LIST'
         exclude 'META-INF/LICENSE'
@@ -51,6 +50,12 @@ android {
     externalNativeBuild {
         cmake {
             path 'jni/CMakeLists.txt'
+        }
+    }
+    defaultConfig {}
+    productFlavors {
+        unofficial {
+            applicationId 'unofficial.nya.miku.wishmaster'
         }
     }
 }
