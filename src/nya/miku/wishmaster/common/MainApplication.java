@@ -130,6 +130,7 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.tirech.TirechModule",
             "nya.miku.wishmaster.chans.tbpchan.TBPchanModule",
             "nya.miku.wishmaster.chans.mewchnet.MewchnetModule",
+            "nya.miku.wishmaster.chans.kakashinenpo.KakashiNenpoModule",
     };
     
     private static MainApplication instance;
