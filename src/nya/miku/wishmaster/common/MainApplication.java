@@ -121,7 +121,6 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.infinity.LolifoxModule",
             "nya.miku.wishmaster.chans.lampach.LampachModule",
             "nya.miku.wishmaster.chans.kropyvach.KropyvachModule",
-            "nya.miku.wishmaster.chans.mentachnet.MentachnetModule",
             "nya.miku.wishmaster.chans.hispachan.HispachanModule",
             "nya.miku.wishmaster.chans.ernstchan.ErnstModule",
             "nya.miku.wishmaster.chans.nullchan.NullchanoneModule",
