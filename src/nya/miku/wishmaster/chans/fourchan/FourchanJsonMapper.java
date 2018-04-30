@@ -133,7 +133,7 @@ public class FourchanJsonMapper {
             attachment.isSpoiler = object.optInt("spoiler") == 1;
             long tim = object.optLong("tim");
             if (tim != 0) {
-                attachment.thumbnail = "t.4cdn.org/" + boardName + "/" + Long.toString(tim) + "s.jpg";
+                attachment.thumbnail = "i.4cdn.org/" + boardName + "/" + Long.toString(tim) + "s.jpg";
                 attachment.path = "i.4cdn.org/" + boardName + "/" + Long.toString(tim) + ext;
                 model.attachments = new AttachmentModel[] { attachment };
             }
