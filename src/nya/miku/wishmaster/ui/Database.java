@@ -59,7 +59,17 @@ public class Database {
     private static final String COL_URL = "url";
     private static final String COL_DATE = "date";
     private static final String COL_FILEPATH = "filepath";
-    
+
+    private static final String COL_TYPE = "type";
+    private static final String COL_SIZE = "size";
+    private static final String COL_THUMBNAIL = "thumbnail";
+    private static final String COL_PATH = "path";
+    private static final String COL_WIDTH = "width";
+    private static final String COL_HEIGHT = "height";
+    private static final String COL_ORIG_NAME = "name";
+    private static final String COL_HASH = "hash";
+
+
     private static final String NULL = "NULL";
     
     private final DBHelper dbHelper; 
@@ -576,27 +586,106 @@ public class Database {
     /* *********************** PLAYLIST *********************** */
 
     public class PlaylistEntry {
+        public final String hash;
         public final String chan;
         public final String board;
-        public final String boardPage;
+        public final String boardpage;
         public final String thread;
         public final String title;
         public final String url;
-        private PlaylistEntry(String chan, String board, String boardPage, String thread, String title, String url) {
+        public final String type;
+        public final String size;
+        public final String thumbnail;
+        public final String path;
+        public final String width;
+        public final String height;
+        public final String originalName;
+
+        public PlaylistEntry(
+            String hash, String chan, String board, String boardpage, String thread, String title, String url,
+            String type, String size, String thumbnail, String path, String width, String height, String originalName
+        ) {
+            this.hash = hash;
             this.chan = chan;
             this.board = board;
-            this.boardPage = boardPage;
+            this.boardpage = boardpage;
             this.thread = thread;
             this.title = title;
             this.url = url;
+            this.type = type;
+            this.size = size;
+            this.thumbnail = thumbnail;
+            this.path = path;
+            this.width = width;
+            this.height = height;
+            this.originalName = originalName;
         }
+    }
+
+    public void addAttachementToPlaylist(
+        String hash, String chan, String board, String boardpage, String thread, String title, String url,
+        String type, String size, String thumbnail, String path, String width, String height, String originalName
+    ) {
+        ContentValues values = new ContentValues(14);
+        values.put(COL_HASH, fixNull(hash));
+        values.put(COL_CHAN, fixNull(chan));
+        values.put(COL_BOARD, fixNull(board));
+        values.put(COL_BOARDPAGE, fixNull(boardpage));
+        values.put(COL_THREAD, fixNull(thread));
+        values.put(COL_TITLE, fixNull(title));
+        values.put(COL_URL, fixNull(url));
+        values.put(COL_TYPE, fixNull(type));
+        values.put(COL_SIZE, fixNull(size));
+        values.put(COL_THUMBNAIL, fixNull(thumbnail));
+        values.put(COL_PATH, fixNull(path));
+        values.put(COL_WIDTH, fixNull(width));
+        values.put(COL_HEIGHT, fixNull(height));
+        values.put(COL_ORIG_NAME, fixNull(originalName));
+        dbHelper.getWritableDatabase().insert(TABLE_PLAYLIST, null, values);
     }
 
     public List<PlaylistEntry> getCurrentPlaylist() {
         List<PlaylistEntry> list = new ArrayList<PlaylistEntry>();
-        //Kittens
-        list.add(new PlaylistEntry("4chan.org", "an", "1", "2803497", "/kot/ - Cat General ", "http://i.4cdn.org/an/1536013684621.jpg"));
-        list.add(new PlaylistEntry("4chan.org", "an", "1", "2803497", "Test", "http://i.4cdn.org/an/1536125349384.jpg"));
+
+        Cursor c = dbHelper.getReadableDatabase().query(TABLE_PLAYLIST, null, null, null, null, null, BaseColumns._ID + " desc", "200");
+        if (c != null && c.moveToFirst()) {
+
+            int hashIndex           = c.getColumnIndex( COL_CHAN );
+            int chanIndex           = c.getColumnIndex( COL_HASH );
+            int boardIndex          = c.getColumnIndex( COL_BOARD );
+            int boardpageIndex      = c.getColumnIndex( COL_BOARDPAGE );
+            int threadIndex         = c.getColumnIndex( COL_THREAD );
+            int titleIndex          = c.getColumnIndex( COL_TITLE );
+            int urlIndex            = c.getColumnIndex( COL_URL );
+            int typeIndex           = c.getColumnIndex( COL_TYPE );
+            int sizeIndex           = c.getColumnIndex( COL_SIZE );
+            int thumbnailIndex      = c.getColumnIndex( COL_THUMBNAIL );
+            int pathIndex           = c.getColumnIndex( COL_PATH );
+            int widthIndex          = c.getColumnIndex( COL_WIDTH );
+            int heightIndex         = c.getColumnIndex( COL_HEIGHT );
+            int originalNameIndex   = c.getColumnIndex( COL_ORIG_NAME );
+
+            do {
+                list.add( new PlaylistEntry(
+                    c.getString( hashIndex ),
+                    c.getString( chanIndex ),
+                    c.getString( boardIndex ),
+                    c.getString( boardpageIndex ),
+                    c.getString( threadIndex ),
+                    c.getString( titleIndex ),
+                    c.getString( urlIndex ),
+                    c.getString( typeIndex ),
+                    c.getString( sizeIndex ),
+                    c.getString( thumbnailIndex ),
+                    c.getString( pathIndex ),
+                    c.getString( widthIndex ),
+                    c.getString( heightIndex ),
+                    c.getString( originalNameIndex )
+                ));
+            } while (c.moveToNext());
+        }
+        if (c != null) c.close();
+
         return list;
     }
 
@@ -626,6 +715,12 @@ public class Database {
                     new String[] { "text", "text", "text", "text", "text", "text", "integer" }));
             db.execSQL(createTable(TABLE_FAVORITES, new String[] { COL_CHAN, COL_BOARD, COL_BOARDPAGE, COL_THREAD, COL_TITLE, COL_URL }));
             db.execSQL(createTable(TABLE_SAVED, new String[] { COL_CHAN, COL_TITLE, COL_FILEPATH }));
+            db.execSQL(createTable(TABLE_PLAYLIST,
+                    new String[] {
+                            COL_HASH,
+                            COL_CHAN, COL_BOARD, COL_BOARDPAGE, COL_THREAD, COL_TITLE, COL_URL,
+                            COL_TYPE, COL_SIZE, COL_THUMBNAIL, COL_PATH, COL_WIDTH, COL_HEIGHT, COL_ORIG_NAME
+            }));
         }
 
         @Override
@@ -635,6 +730,7 @@ public class Database {
                 db.execSQL(dropTable(TABLE_HISTORY));
                 db.execSQL(dropTable(TABLE_FAVORITES));
                 db.execSQL(dropTable(TABLE_SAVED));
+                db.execSQL(dropTable(TABLE_PLAYLIST));
                 onCreate(db);
             }
         }
@@ -683,7 +779,11 @@ public class Database {
         public void recreatePlaylist() {
             getWritableDatabase().execSQL(dropTable(TABLE_PLAYLIST));
             getWritableDatabase().execSQL(createTable(TABLE_PLAYLIST,
-                    new String[] { COL_CHAN, COL_BOARD, COL_BOARDPAGE, COL_THREAD, COL_TITLE, COL_URL }));
+                    new String[] {
+                        COL_HASH,
+                        COL_CHAN, COL_BOARD, COL_BOARDPAGE, COL_THREAD, COL_TITLE, COL_URL,
+                        COL_TYPE, COL_SIZE, COL_THUMBNAIL, COL_PATH, COL_WIDTH, COL_HEIGHT, COL_ORIG_NAME
+                    }));
         }
     }
 }

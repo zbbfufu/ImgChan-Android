@@ -48,6 +48,7 @@ import nya.miku.wishmaster.ui.AppearanceUtils;
 import nya.miku.wishmaster.ui.Attachments;
 import nya.miku.wishmaster.ui.CompatibilityImpl;
 import nya.miku.wishmaster.ui.CompatibilityUtils;
+import nya.miku.wishmaster.ui.Database;
 import nya.miku.wishmaster.ui.ReverseImageSearch;
 import nya.miku.wishmaster.ui.downloading.DownloadingService;
 import nya.miku.wishmaster.ui.presentation.BoardFragment;
@@ -115,7 +116,9 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     private static final int BINDING_FLAGS = Context.BIND_AUTO_CREATE | Context.BIND_IMPORTANT;
     
     private static final int REQUEST_HANDLE_INTERACTIVE_EXCEPTION = 1;
-    
+
+    private Database database;
+
     private LayoutInflater inflater;
     private ExecutorService tnDownloadingExecutor;
     
@@ -284,7 +287,9 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 System.exit(0);
             }
         }, BINDING_FLAGS);
-        
+
+        database = new Database(this);
+
         GalleryExceptionHandler.init();
     }
     
@@ -360,22 +365,27 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         this.menu = menu;
-        MenuItem itemUpdate = menu.add(Menu.NONE, R.id.menu_update, 1, R.string.menu_update);
-        MenuItem itemSave = menu.add(Menu.NONE, R.id.menu_save_attachment, 2, R.string.menu_save_attachment);
+        int order = 1;
+        MenuItem itemAddPlaylistItem = menu.add(Menu.NONE, R.id.menu_add_playlist, order++, R.string.menu_add_playlist);
+        MenuItem itemUpdate = menu.add(Menu.NONE, R.id.menu_update, order++, R.string.menu_update);
+        MenuItem itemSave = menu.add(Menu.NONE, R.id.menu_save_attachment, order++, R.string.menu_save_attachment);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            itemAddPlaylistItem.setIcon(ThemeUtils.getActionbarIcon(getTheme(), getResources(), R.attr.actionAddPlaylistItem));
             itemUpdate.setIcon(ThemeUtils.getActionbarIcon(getTheme(), getResources(), R.attr.actionRefresh));
             itemSave.setIcon(ThemeUtils.getActionbarIcon(getTheme(), getResources(), R.attr.actionSave));
+            CompatibilityImpl.setShowAsActionIfRoom(itemAddPlaylistItem);
             CompatibilityImpl.setShowAsActionIfRoom(itemUpdate);
             CompatibilityImpl.setShowAsActionIfRoom(itemSave);
         } else {
+            itemAddPlaylistItem.setIcon(R.drawable.sidebar_newtab_light);
             itemUpdate.setIcon(R.drawable.ic_menu_refresh);
             itemSave.setIcon(android.R.drawable.ic_menu_save);
         }
-        menu.add(Menu.NONE, R.id.menu_open_external, 3, R.string.menu_open).setIcon(R.drawable.ic_menu_set_as);
-        menu.add(Menu.NONE, R.id.menu_share, 4, R.string.menu_share).setIcon(android.R.drawable.ic_menu_share);
-        menu.add(Menu.NONE, R.id.menu_share_link, 5, R.string.menu_share_link).setIcon(android.R.drawable.ic_menu_share);
-        menu.add(Menu.NONE, R.id.menu_reverse_search, 6, R.string.menu_reverse_search).setIcon(android.R.drawable.ic_menu_search);
-        menu.add(Menu.NONE, R.id.menu_open_browser, 7, R.string.menu_open_browser).setIcon(R.drawable.ic_menu_browser);
+        menu.add(Menu.NONE, R.id.menu_open_external, order++, R.string.menu_open).setIcon(R.drawable.ic_menu_set_as);
+        menu.add(Menu.NONE, R.id.menu_share, order++, R.string.menu_share).setIcon(android.R.drawable.ic_menu_share);
+        menu.add(Menu.NONE, R.id.menu_share_link, order++, R.string.menu_share_link).setIcon(android.R.drawable.ic_menu_share);
+        menu.add(Menu.NONE, R.id.menu_reverse_search, order++, R.string.menu_reverse_search).setIcon(android.R.drawable.ic_menu_search);
+        menu.add(Menu.NONE, R.id.menu_open_browser, order++, R.string.menu_open_browser).setIcon(R.drawable.ic_menu_browser);
         updateMenu();
         
         return true;
@@ -390,6 +400,8 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         }
         GalleryItemViewTag tag = (GalleryItemViewTag) current.getTag();
         boolean externalVideo = tag.attachmentModel.type == AttachmentModel.TYPE_VIDEO && settings.doNotDownloadVideos();
+        menu.findItem(R.id.menu_add_playlist).setVisible(externalVideo ||
+                (currentLoaded && tag.attachmentModel.type != AttachmentModel.TYPE_OTHER_NOTFILE));
         menu.findItem(R.id.menu_update).setVisible(!currentLoaded);
         menu.findItem(R.id.menu_save_attachment).setVisible(externalVideo ||
                 (currentLoaded && tag.attachmentModel.type != AttachmentModel.TYPE_OTHER_NOTFILE));
@@ -405,6 +417,9 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.menu_add_playlist:
+                addAttachmentToPlaylist();
+                return true;
             case R.id.menu_update:
                 updateItem();
                 return true;
@@ -675,7 +690,32 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_HANDLE_INTERACTIVE_EXCEPTION && resultCode == RESULT_OK) updateItem();
     }
-    
+
+    private void addAttachmentToPlaylist() {
+        GalleryItemViewTag tag = getCurrentTag();
+        if (tag == null) return;
+
+        AttachmentModel attModel = tag.attachmentModel;
+
+        //Database database = MainApplication.getInstance().database;
+        database.addAttachementToPlaylist(
+            tag.attachmentHash,
+            boardModel.chan,
+            boardModel.boardName,
+            null,
+            null,
+            null,
+            null,
+            Integer.toString(attModel.type),
+            Integer.toString(attModel.size),
+            attModel.thumbnail,
+            attModel.path,
+            Integer.toString(attModel.width),
+            Integer.toString(attModel.height),
+            attModel.originalName
+        );
+    }
+
     private void updateItem() {
         AttachmentModel attachment = attachments.get(currentPosition).getLeft();
         if (settings.scrollThreadFromGallery() && !firstScroll) remote.tryScrollParent(attachments.get(currentPosition).getRight());

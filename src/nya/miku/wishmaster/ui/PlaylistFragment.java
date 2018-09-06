@@ -19,7 +19,6 @@
 package nya.miku.wishmaster.ui;
 
 import android.content.res.Resources;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -113,7 +112,7 @@ public class PlaylistFragment extends Fragment implements AdapterView.OnItemClic
         PlaylistEntry entry = (PlaylistEntry) v.getTag();
         switch (item.getItemId()) {
             case R.id.context_menu_remove_playlist:
-                MainApplication.getInstance().database.removeFromPlaylist(entry.chan, entry.board, entry.boardPage, entry.thread);
+                MainApplication.getInstance().database.removeFromPlaylist(entry.chan, entry.board, entry.boardpage, entry.thread);
                 for (Pair<ListView,String> p : listViews) ((PlaylistAdapter) p.getLeft().getAdapter()).remove(entry);
                 return true;
             case R.id.context_menu_open_browser:
