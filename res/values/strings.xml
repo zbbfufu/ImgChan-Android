@@ -85,7 +85,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="tabs_favorites">Favorites</string>
     <string name="tabs_history">History</string>
     <string name="tabs_autoupdate">Auto-update</string>
-    
+    <string name="tabs_playlist">Playlist</string>
+
     <string name="tabs_tracker_title">Auto Update</string>
     <string name="tabs_tracker_title_unread">New Posts</string>
     <string name="tabs_tracker_updating">Updating now</string>
@@ -126,7 +127,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="favorites_chans">Imageboards</string>
     <string name="favorites_boards">Boards</string>
     <string name="favorites_threads">Threads</string>
-    
+
+    <string name="playlist_empty">Current playlist is empty</string>
+    <string name="playlist_all">Current playlist</string>
+
     <string name="boardslist_format">/%1$s - %2$s</string>
     <string name="boardslist_hint">Board code</string>
     <string name="boardslist_btn_go">GO</string>
@@ -160,6 +164,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_board_gallery">Gallery</string>
     <string name="menu_clear_history">Clear history</string>
     <string name="menu_clear_favorites">Remove all bookmarks</string>
+    <string name="menu_clear_playlist">Clear playlist</string>
     <string name="menu_save_attachment">Save</string>
     <string name="menu_share">Share</string>
     <string name="menu_share_link">Share link</string>
@@ -173,6 +178,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_copy_url">Copy link</string>
     <string name="context_menu_add_favorites">Add to favorites</string>
     <string name="context_menu_remove_favorites">Remove from favorites</string>
+    <string name="context_menu_remove_playlist">Remove from playlist</string>
     <string name="context_menu_remove_history">Remove from history</string>
     <string name="context_menu_open_browser">Open browser</string>
     <string name="context_menu_pin">Pin the tab</string>
@@ -204,7 +210,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_quickaccess_custom_board">Add custom board</string>
     <string name="context_menu_save_captcha">Save captcha</string>
     <string name="context_menu_web_search">Web search</string>
-    
+
     <string name="share_via">Share via</string>
     <string name="share_no_tabs">No open tabs</string>
     
@@ -351,7 +357,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="app_update_update_error">Cannot check for updates</string>
     <string name="app_update_download_error">Cannot download update</string>
     <string name="app_update_install_error">Update install error</string>
-    
+
     <string name="custom_themes_title">Custom themes</string>
     <string name="custom_themes_local">(Select file)</string>
     <string name="custom_themes_loading">Loading</string>
@@ -412,7 +418,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <string name="kohl_prefs_unix_filenames">Unix filenames</string>
     <string name="kohl_prefs_unix_filenames_summary">Save post timestamp instead of internal file name</string>
-    
+
     <string name="makaba_catalog_standart">Sort by Bump order</string>
     <string name="makaba_catalog_last_reply">Sort by Last Reply</string>
     <string name="makaba_catalog_num">Sort by Creation date</string>
@@ -433,7 +439,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="ponyach_prefs_captcha">Captcha type</string>
     
     <string name="infinity_tor_message">To post on 8chan over Tor, you must use the .onion domain.</string>
-    
+
     <string name="fourchan_prefs_new_recaptcha_fallback">Recaptcha 2.0 fallback</string>
     <string name="fourchan_prefs_new_recaptcha_fallback_summary">Use the Recaptcha 2.0 in compatibility mode</string>
     

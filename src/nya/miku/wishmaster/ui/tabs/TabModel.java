@@ -69,7 +69,7 @@ public class TabModel implements Serializable {
     @Tag(13) public boolean autoupdateError;
     /** true, если есть непрочитанные ответы на отвлеживаемые посты */
     @Tag(14) public boolean unreadSubscriptions;
-    /** true, если вкладка незакрываемая */
+    /** true, если вкладка незакрываемая *//** true, если вкладка незакрываемая */
     @Tag(15) public boolean isPinned;
 
     /** статус автообновления вкладки */
@@ -83,5 +83,6 @@ public class TabModel implements Serializable {
     public static final int POSITION_NEWTAB = -1;
     public static final int POSITION_FAVORITES = -2;
     public static final int POSITION_HISTORY = -3;
+    public static final int POSITION_PLAYLIST = -4;
     public static final int DEFAULT_TOP = Integer.MAX_VALUE;
 }

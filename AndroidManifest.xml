@@ -82,7 +82,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="ii.yakuji.moe" />
                 <data android:host="014chan.org" />
                 <data android:host="www.014chan.org" />
-                
+
                 <data android:host="horochan.ru" />
                 
                 <data android:host="allchan.su" />
@@ -92,12 +92,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 
                 <data android:host="420chan.org" />
                 <data android:host="boards.420chan.org" />
-                
+
                 <data android:host="syn-ch.com" />
                 <data android:host="syn-ch.org" />
                 <data android:host="syn-ch.ru" />
                 <data android:host="syn-ch.com.ua" />
-                
+
                 <data android:host="chuck.dfwk.ru" />
                 
                 <data android:host="4chan.org" />
@@ -123,16 +123,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="www.kohlkanal.net" />
                 <data android:host="www.kohlchan.top" />
                 <data android:host="www.kohlchanvwpfx6hthoti5fvqsjxgcwm3tmddvpduph5fqntv5affzfqd.onion" />
-                
+
                 <data android:host="ernstchan.xyz" />
                 <data android:host="www.ernstchan.xyz" />
                 
                 <data android:host="7chan.org" />
-                
+
                 <data android:host="pl.vichan.net" />
                 <data android:host="vichan.org" />
                 <data android:host="2ms63yt7ax2bvbkaren5xp7hsuu4httz554bk6wzwwh6zzfxtchqakqd.onion" />
-                
+
                 <data android:host="sushigirl.us" />
                 <data android:host="www.sushigirl.us" />
 
@@ -143,7 +143,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="www.dva-ch.net" />
                 <data android:host="2ch.rip" />
                 <data android:host="www.2ch.rip" />
-                
+
                 <data android:host="ochan.ru" />
                 <data android:host="www.ochan.ru" />
                 
@@ -153,7 +153,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 
                 <data android:host="tohno-chan.com" />
                 <data android:host="www.tohno-chan.com" />
-                
+
                 <data android:host="dobrochan.ru" />
                 <data android:host="dobrochan.com" />
                 <data android:host="dobrochan.org" />
@@ -162,7 +162,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="www.dobrochan.com" />
                 <data android:host="www.dobrochan.org" />
                 <data android:host="www.dobrochan.net" />
-                
+
                 <data android:host="anon.fm" />
                 
                 <data android:host="2ch.hk" />

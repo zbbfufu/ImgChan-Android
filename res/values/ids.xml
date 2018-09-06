@@ -40,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <item name="menu_board_gallery" type="id"/>
     <item name="menu_clear_history" type="id"/>
     <item name="menu_clear_favorites" type="id"/>
+    <item name="menu_clear_playlist" type="id"/>
     <item name="menu_save_attachment" type="id"/>
     <item name="menu_open_external" type="id"/>
     <item name="menu_share" type="id"/>
@@ -53,6 +54,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <item name="context_menu_favorites_from_fragment" type="id"/>
     <item name="context_menu_remove_history" type="id"/>
     <item name="context_menu_remove_favorites" type="id"/>
+    <item name="context_menu_remove_playlist" type="id"/>
     <item name="context_menu_open_browser" type="id"/>
     <item name="context_menu_pin" type="id"/>
     <item name="context_menu_autoupdate_background" type="id"/>

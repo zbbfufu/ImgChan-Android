@@ -48,6 +48,7 @@ public class Database {
     private static final String TABLE_HIDDEN = "hiddenitems";
     private static final String TABLE_HISTORY = "history";
     private static final String TABLE_FAVORITES = "favorites";
+    private static final String TABLE_PLAYLIST = "playlist";
     private static final String TABLE_SAVED = "saved";
     private static final String COL_CHAN = "chan";
     private static final String COL_BOARD = "board";
@@ -472,7 +473,7 @@ public class Database {
         if (c != null) c.close();
         return list;
     }
-    
+
     public List<String> getFavoriteBoards(ChanModule chan) {
         List<String> list = new ArrayList<>();
         Cursor c =
@@ -571,6 +572,44 @@ public class Database {
         if (c != null) c.close();
         return list;
     }
+
+    /* *********************** PLAYLIST *********************** */
+
+    public class PlaylistEntry {
+        public final String chan;
+        public final String board;
+        public final String boardPage;
+        public final String thread;
+        public final String title;
+        public final String url;
+        private PlaylistEntry(String chan, String board, String boardPage, String thread, String title, String url) {
+            this.chan = chan;
+            this.board = board;
+            this.boardPage = boardPage;
+            this.thread = thread;
+            this.title = title;
+            this.url = url;
+        }
+    }
+
+    public List<PlaylistEntry> getCurrentPlaylist() {
+        List<PlaylistEntry> list = new ArrayList<PlaylistEntry>();
+        //Kittens
+        list.add(new PlaylistEntry("4chan.org", "an", "1", "2803497", "/kot/ - Cat General ", "http://i.4cdn.org/an/1536013684621.jpg"));
+        list.add(new PlaylistEntry("4chan.org", "an", "1", "2803497", "Test", "http://i.4cdn.org/an/1536125349384.jpg"));
+        return list;
+    }
+
+    public void removeFromPlaylist(String chan, String board, String boardPage, String thread) {
+        dbHelper.getWritableDatabase().delete(TABLE_PLAYLIST,
+                COL_CHAN + " = ? AND " + COL_BOARD + " = ? AND " + COL_BOARDPAGE + " = ? AND " + COL_THREAD + " = ?",
+                new String[] { fixNull(chan), fixNull(board), fixNull(boardPage), fixNull(thread) });
+    }
+
+    public void clearPlaylist() {
+        dbHelper.recreatePlaylist();
+    }
+
     
     /* *********************** DB HELPER *********************** */
     
@@ -639,6 +678,12 @@ public class Database {
         public void recreateHidden() {
             getWritableDatabase().execSQL(dropTable(TABLE_HIDDEN));
             getWritableDatabase().execSQL(createTable(TABLE_HIDDEN, new String[] { COL_CHAN, COL_BOARD, COL_THREAD, COL_POST }));
+		}
+
+        public void recreatePlaylist() {
+            getWritableDatabase().execSQL(dropTable(TABLE_PLAYLIST));
+            getWritableDatabase().execSQL(createTable(TABLE_PLAYLIST,
+                    new String[] { COL_CHAN, COL_BOARD, COL_BOARDPAGE, COL_THREAD, COL_TITLE, COL_URL }));
         }
     }
 }

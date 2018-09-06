@@ -5,6 +5,7 @@
 *.so
 
 bin/
+out/
 obj/
 gen/
 proguard/
@@ -15,3 +16,4 @@ local.properties
 .externalNativeBuild/*
 build/*
 *.iml
+.externalNativeBuild/

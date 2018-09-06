@@ -24,6 +24,7 @@ import nya.miku.wishmaster.common.MainApplication;
 import nya.miku.wishmaster.ui.FavoritesFragment;
 import nya.miku.wishmaster.ui.HistoryFragment;
 import nya.miku.wishmaster.ui.NewTabFragment;
+import nya.miku.wishmaster.ui.PlaylistFragment;
 import nya.miku.wishmaster.ui.presentation.BoardFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -96,6 +97,9 @@ public class TabsSwitcher {
                 break;
             case TabModel.POSITION_FAVORITES:
                 newFragment = new FavoritesFragment();
+                break;
+            case TabModel.POSITION_PLAYLIST:
+                newFragment = new PlaylistFragment();
                 break;
             default:
                 newFragment = new NewTabFragment();
