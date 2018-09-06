@@ -61,6 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <attr name="iconItemPrevious" format="reference" />
         <attr name="iconItemNext" format="reference" />
         <attr name="actionRefresh" format="reference" />
+        <attr name="actionAddPlaylistItem" format="reference" />
         <attr name="actionAddPost" format="reference" />
         <attr name="actionAddAttachment" format="reference" />
         <attr name="actionAddGallery" format="reference" />

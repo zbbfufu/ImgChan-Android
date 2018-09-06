@@ -48,6 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="iconBtnClose">@drawable/ic_action_remove_light</item>
         <item name="iconBtnPin">@drawable/ic_action_pin_light</item>
         <item name="actionRefresh">@drawable/ic_action_refresh_light</item>
+        <item name="actionAddPlaylistItem">@drawable/sidebar_newtab_light</item>
         <item name="actionAddPost">@drawable/ic_action_edit_light</item>
         <item name="actionAddAttachment">@drawable/ic_action_new_attachment_light</item>
         <item name="actionAddGallery">@drawable/ic_action_new_picture_light</item>
@@ -68,6 +69,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="iconBtnClose">@drawable/ic_action_remove_dark</item>
         <item name="iconBtnPin">@drawable/ic_action_pin_dark</item>
         <item name="actionRefresh">@drawable/ic_action_refresh_dark</item>
+        <item name="actionAddPlaylistItem">@drawable/sidebar_newtab_dark</item>
         <item name="actionAddPost">@drawable/ic_action_edit_dark</item>
         <item name="actionAddAttachment">@drawable/ic_action_new_attachment_dark</item>
         <item name="actionAddGallery">@drawable/ic_action_new_picture_dark</item>
