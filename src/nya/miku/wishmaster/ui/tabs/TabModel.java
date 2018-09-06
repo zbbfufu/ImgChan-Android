@@ -78,4 +78,5 @@ public class TabModel implements Serializable {
     public static final int POSITION_NEWTAB = -1;
     public static final int POSITION_FAVORITES = -2;
     public static final int POSITION_HISTORY = -3;
+    public static final int POSITION_PLAYLIST = -4;
 }

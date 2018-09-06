@@ -27,9 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/tab_height" 
+        android:layout_height="@dimen/tab_height"
         android:orientation="horizontal"
-        android:weightSum="3" >
+        android:weightSum="4" >
         <ImageView
             style="@style/SelectableItem"
             android:id="@+id/sidebar_btn_newtab"
@@ -62,8 +62,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:src="?attr/sidebarBtnFavorites"
             android:focusable="true"
             android:nextFocusLeft="@id/sidebar_btn_history"
+            android:nextFocusRight="@+id/sidebar_btn_playlist"
             android:nextFocusDown="@id/sidebar_tabs_list"
             android:contentDescription="@string/tabs_favorites" />
+        <ImageView
+            style="@style/SelectableItem"
+            android:id="@+id/sidebar_btn_playlist"
+            android:layout_height="match_parent"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:src="?attr/sidebarBtnPlaylist"
+            android:focusable="true"
+            android:nextFocusLeft="@id/sidebar_btn_favorites"
+            android:nextFocusDown="@id/sidebar_tabs_list"
+            android:contentDescription="@string/tabs_playlist" />
     </LinearLayout>
     
     <ImageView

@@ -256,8 +256,8 @@ public class MainApplication extends Application {
         
         Wifi.register(this);
     }
-    
-    private String getProcessName() {
+
+    private String getProcessNameLocal() {
         int myPid = android.os.Process.myPid();
         for (RunningAppProcessInfo process : ((ActivityManager) getSystemService(ACTIVITY_SERVICE)).getRunningAppProcesses()) {
             if (myPid == process.pid) return process.processName;

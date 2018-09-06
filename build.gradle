@@ -1,10 +1,10 @@
 buildscript {
     repositories {
         mavenCentral()
-        jcenter()
+        google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath 'com.android.tools.build:gradle:3.1.0'
     }
 }
 
@@ -24,8 +24,17 @@ dependencies {
 }
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+    compileSdkVersion 28
+    buildToolsVersion "28.0.2"
+
+    // Encapsulates your external native build configurations.
+    externalNativeBuild {
+        // Encapsulates your CMake build configurations.
+        ndkBuild {
+            // Provides a relative path to your CMake build script.
+            path "jni/Android.mk"
+        }
+    }
 
     packagingOptions {
         exclude 'META-INF/INDEX.LIST'

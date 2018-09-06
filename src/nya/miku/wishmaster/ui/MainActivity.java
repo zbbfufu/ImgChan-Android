@@ -384,7 +384,12 @@ public class MainActivity extends FragmentActivity {
         initDrawer();
         
         View[] sidebarButtons =
-            new View[] { findViewById(R.id.sidebar_btn_newtab), findViewById(R.id.sidebar_btn_history), findViewById(R.id.sidebar_btn_favorites) };
+            new View[] {
+                    findViewById(R.id.sidebar_btn_newtab),
+                    findViewById(R.id.sidebar_btn_history),
+                    findViewById(R.id.sidebar_btn_favorites),
+                    findViewById(R.id.sidebar_btn_playlist)
+            };
         hiddenTabsSection = new HiddenTabsSection(sidebarButtons);
         
         DragSortListView list = (DragSortListView)findViewById(R.id.sidebar_tabs_list);
@@ -623,6 +628,7 @@ public class MainActivity extends FragmentActivity {
         private View btnNewTab;
         private View btnHistory;
         private View btnFavorites;
+        private View btnPlaylist;
         public HiddenTabsSection(View[] views) {
             for (View view : views) {
                 view.setOnClickListener(this);
@@ -636,6 +642,9 @@ public class MainActivity extends FragmentActivity {
                     case R.id.sidebar_btn_history:
                         btnHistory = view;
                         break;
+                    case R.id.sidebar_btn_playlist:
+                        btnPlaylist = view;
+                        break;
                 }
             }
         }
@@ -644,6 +653,7 @@ public class MainActivity extends FragmentActivity {
             setSelectedBackground(btnNewTab, selectedPosition == TabModel.POSITION_NEWTAB);
             setSelectedBackground(btnHistory, selectedPosition == TabModel.POSITION_HISTORY);
             setSelectedBackground(btnFavorites, selectedPosition == TabModel.POSITION_FAVORITES);
+            setSelectedBackground(btnPlaylist, selectedPosition == TabModel.POSITION_PLAYLIST);
         }
         
         @Override
@@ -659,6 +669,9 @@ public class MainActivity extends FragmentActivity {
                     break;
                 case R.id.sidebar_btn_history:
                     position = TabModel.POSITION_HISTORY;
+                    break;
+                case R.id.sidebar_btn_playlist:
+                    position = TabModel.POSITION_PLAYLIST;
                     break;
             }
             tabsAdapter.setDraggingItem(-1);
