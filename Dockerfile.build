@@ -1,0 +1,19 @@
+FROM lakoo/android-ndk:latest
+LABEL MAINTAINER='Julien Furgerot <julien.furgerot@gmail.com>'
+
+RUN mkdir -p /opt
+
+ARG GRADLE_VERSION=4.4.1
+ENV PATH ${PATH}:/opt/gradle/bin:${ANDROID_NDK_HOME}
+
+# Install make, required to build native part with ndk-build
+RUN apt-get update && apt-get install -y --no-install-recommends make && apt-cache clean
+
+# Install gradle
+RUN cd /opt && \
+    wget -q --output-document=gradle.zip https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip && \
+	unzip gradle.zip && \
+    mv gradle-${GRADLE_VERSION} gradle && \
+	rm -f gradle.zip
+
+WORKDIR /build
