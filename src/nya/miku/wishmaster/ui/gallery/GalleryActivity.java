@@ -764,8 +764,6 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
         if (tag == null) return;
 
         AttachmentModel attModel = tag.attachmentModel;
-
-        //Database database = MainApplication.getInstance().database;
         database.addAttachementToPlaylist(
             tag.attachmentHash,
             boardModel.chan,

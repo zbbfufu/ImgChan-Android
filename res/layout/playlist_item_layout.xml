@@ -27,16 +27,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                  android:paddingStart="3dp"
 >
 
-    <TextView android:id="@+id/playlist_item_title"
+    <TextView android:id="@+id/playlist_item_name"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
               android:layout_marginTop="8dp"
               android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <ImageView
-            android:id="@+id/playlist_item_image"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/filedialog_file_image" />
+            android:id="@+id/playlist_item_thumbnail_image"
+            android:layout_width="@dimen/post_thumbnail_size"
+            android:layout_height="@dimen/post_thumbnail_size"
+            android:layout_gravity="center"
+            android:adjustViewBounds="true"
+            android:scaleType="centerInside"
+            android:contentDescription="@string/postitem_contentdescription_thumbnail_image"
+            android:visibility="visible" />
 
 </TwoLineListItem>
