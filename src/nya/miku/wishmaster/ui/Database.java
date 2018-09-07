@@ -650,8 +650,8 @@ public class Database {
         Cursor c = dbHelper.getReadableDatabase().query(TABLE_PLAYLIST, null, null, null, null, null, BaseColumns._ID + " desc", "200");
         if (c != null && c.moveToFirst()) {
 
-            int hashIndex           = c.getColumnIndex( COL_CHAN );
-            int chanIndex           = c.getColumnIndex( COL_HASH );
+            int hashIndex           = c.getColumnIndex( COL_HASH );
+            int chanIndex           = c.getColumnIndex( COL_CHAN );
             int boardIndex          = c.getColumnIndex( COL_BOARD );
             int boardpageIndex      = c.getColumnIndex( COL_BOARDPAGE );
             int threadIndex         = c.getColumnIndex( COL_THREAD );

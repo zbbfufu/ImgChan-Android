@@ -19,6 +19,7 @@
 package nya.miku.wishmaster.ui;
 
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -197,18 +198,20 @@ public class PlaylistFragment extends Fragment implements AdapterView.OnItemClic
             PlaylistEntry item = getItem(position);
             View v = convertView == null ? inflater.inflate(R.layout.playlist_item_layout, parent, false) : convertView;
 
-            TextView tv1 = (TextView) v.findViewById(R.id.playlist_item_title);
+            TextView tv1 = (TextView) v.findViewById(R.id.playlist_item_name);
             tv1.setSingleLine();
             tv1.setEllipsize(TextUtils.TruncateAt.END);
-            tv1.setText(item.title);
+            tv1.setText(item.originalName);
             ChanModule chan = MainApplication.getInstance().getChanModule(item.chan);
             if (chan != null) {
                 tv1.setCompoundDrawablesWithIntrinsicBounds(chan.getChanFavicon(), null, null, null);
                 tv1.setCompoundDrawablePadding(drawablePadding);
             }
 
-            ImageView im = (ImageView) v.findViewById(R.id.playlist_item_image);
-            //im.setImageURI(Uri.parse(item.url));
+            ImageView im = (ImageView) v.findViewById(R.id.playlist_item_thumbnail_image);
+            // chan.fixRelativeUrl(item.path)
+			// todo get bmp from URL
+            //im.setImageBitmap( bmp );
 
             v.setTag(item);
             return v;
