@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -272,8 +273,8 @@ public class MakabaModule extends CloudflareChanModule {
     }
 
    private boolean checkPasscode(String boardName, ProgressListener listener, CancellableTask task) {
-       setPasscodeCookie();
        if (preferences.getString(getSharedKey(PREF_KEY_NOCAPTCHA_COOKIE_VALUE), "").equals("")) return false;
+       setPasscodeCookie();
        String captchaUrl = domainUrl + "api/captcha/" +  getUsingCaptchaKey() + "/id?board=" + boardName;
        JSONObject jsonResponse = null;
        try {
@@ -323,8 +324,12 @@ public class MakabaModule extends CloudflareChanModule {
         String passcodeDomain = "";
         for (Cookie cookie : httpClient.getCookieStore().getCookies()) {
             if (cookie.getName().equals(USERCODE_NOCAPTCHA_COOKIE_NAME) && cookie.getDomain().contains(domain)) {
-                passcodeCookie = cookie.getValue();
-                passcodeDomain = cookie.getDomain();
+                if (!passcode.equals("")) {
+                    passcodeCookie = cookie.getValue();
+                    passcodeDomain = cookie.getDomain();
+                }
+                ((BasicClientCookie)cookie).setExpiryDate(new Date(0));
+                httpClient.getCookieStore().clearExpired(new Date());
                 break;
             }
         }
@@ -705,33 +710,35 @@ public class MakabaModule extends CloudflareChanModule {
         if (model.captchaAnswer.equals("") && !usercode_nocaptcha.equals("")) {
             postEntityBuilder.addString("usercode", usercode_nocaptcha);
         }
-        switch (captchaType) {
-            case CAPTCHA_2CHAPTCHA:
-                postEntityBuilder.
+        if (usercode_nocaptcha.equals("")) {
+            switch (captchaType) {
+                case CAPTCHA_2CHAPTCHA:
+                    postEntityBuilder.
                         addString("captcha_type", "2chaptcha").
                         addString("2chaptcha_id", captchaId).
                         addString("2chaptcha_value", model.captchaAnswer);
-                break;
-            case CAPTCHA_RECAPTCHA:
-            case CAPTCHA_RECAPTCHA_FALLBACK:
-                String response = Recaptcha2solved.pop(captchaId);
-                if (response == null) {
-                    boolean fallback = getUsingCaptchaType() == CAPTCHA_RECAPTCHA_FALLBACK;
-                    throw Recaptcha2.obtain(domainUrl, captchaId, null, CHAN_NAME, fallback);
-                }
-                postEntityBuilder.
+                    break;
+                case CAPTCHA_RECAPTCHA:
+                case CAPTCHA_RECAPTCHA_FALLBACK:
+                    String response = Recaptcha2solved.pop(captchaId);
+                    if (response == null) {
+                        boolean fallback = getUsingCaptchaType() == CAPTCHA_RECAPTCHA_FALLBACK;
+                        throw Recaptcha2.obtain(domainUrl, captchaId, null, CHAN_NAME, fallback);
+                    }
+                    postEntityBuilder.
                         addString("captcha_type", "recaptcha").
                         addString("2chaptcha_id", captchaId).
                         addString("g-recaptcha-response", response);
-                break;
-            case CAPTCHA_MAILRU:
-                if (captchaMailRuId != null) {
-                    postEntityBuilder.addString("captcha_id", captchaMailRuId);
-                    postEntityBuilder.addString("captcha_value", model.captchaAnswer);
-                    postEntityBuilder.addString("captcha_type", "mailru");
-                    postEntityBuilder.addString("2chaptcha_id", captchaId);
-                }
-                break;
+                    break;
+                case CAPTCHA_MAILRU:
+                    if (captchaMailRuId != null) {
+                        postEntityBuilder.addString("captcha_id", captchaMailRuId);
+                        postEntityBuilder.addString("captcha_value", model.captchaAnswer);
+                        postEntityBuilder.addString("captcha_type", "mailru");
+                        postEntityBuilder.addString("2chaptcha_id", captchaId);
+                    }
+                    break;
+            }
         }
         if (task != null && task.isCancelled()) throw new InterruptedException("interrupted");
         

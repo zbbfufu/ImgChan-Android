@@ -96,5 +96,5 @@ public class MakabaConstants {
     public static final String MAILRU_DEFAULT_CAPTCHA_URL = "https://api-nocaptcha.mail.ru/c/1";
 
     public static final String USERCODE_COOKIE_NAME = "usercode_auth";
-    public static final String USERCODE_NOCAPTCHA_COOKIE_NAME = "usercode_nocaptcha";
+    public static final String USERCODE_NOCAPTCHA_COOKIE_NAME = "passcode_auth";
 }
