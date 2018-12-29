@@ -68,9 +68,9 @@ public class ArhivachModule extends CloudflareChanModule {
 
     private static final Pattern INDEX_PAGE_PATTERN = Pattern.compile("index/(\\d+)/?(.*)");
     static final String CHAN_NAME = "Arhivach.org";
-    private static final String DEFAULT_DOMAIN = "arhivach.org";
+    private static final String DEFAULT_DOMAIN = "arhivach.tk";
     private static final String ONION_DOMAIN = "arhivachovtj2jrp.onion";
-    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN };
+    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN, "arhivach.org" };
 
     private static final String PREF_KEY_USE_ONION = "PREF_KEY_USE_ONION";
 
