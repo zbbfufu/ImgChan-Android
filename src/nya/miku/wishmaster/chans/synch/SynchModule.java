@@ -19,6 +19,7 @@
 package nya.miku.wishmaster.chans.synch;
 
 import java.util.List;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.nio.charset.Charset;
@@ -79,6 +80,7 @@ public class SynchModule extends AbstractVichanModule {
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "old", "Чулан", "Остальные", false),
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "test", "Старая школа", "Остальные", false),
     };
+    private static final String[] BOARDS_WITH_CAPTCHA = new String[] { "b" };
     private static final String[] ATTACHMENT_FORMATS = new String[] {
         "jpg", "png", "bmp", "svg", "swf", "mp3", "m4a", "flac", "zip", "rar", "tar", "gz", "txt", "pdf", "torrent", "webm"
     };
@@ -209,11 +211,13 @@ public class SynchModule extends AbstractVichanModule {
         ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().
                 setCharset(Charset.forName("UTF-8")).setDelegates(listener, task);
 
-        String recaptchaResponse = Recaptcha2solved.pop(RECAPTCHA_PUBLIC_KEY);
-        if (recaptchaResponse == null) {
-            throw Recaptcha2.obtain(getUsingUrl(), RECAPTCHA_PUBLIC_KEY, null, CHAN_NAME, false);
+        if (Arrays.asList(BOARDS_WITH_CAPTCHA).contains(model.boardName)) {
+            String recaptchaResponse = Recaptcha2solved.pop(RECAPTCHA_PUBLIC_KEY);
+            if (recaptchaResponse == null) {
+                throw Recaptcha2.obtain(getUsingUrl(), RECAPTCHA_PUBLIC_KEY, null, CHAN_NAME, false);
+            }
+            postEntityBuilder.addString("g-recaptcha-response", recaptchaResponse);
         }
-        postEntityBuilder.addString("g-recaptcha-response", recaptchaResponse);
 
         for (Pair<String, String> pair : fields) {
             if (pair.getKey().equals("spoiler") && !model.custommark) continue;
