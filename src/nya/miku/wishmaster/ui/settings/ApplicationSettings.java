@@ -334,6 +334,10 @@ public class ApplicationSettings {
         return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_videoplayer), true);
     }
     
+    public boolean useWebViewVideoPlayer() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_webview_videoplayer), false);
+    }
+
     public boolean doNotDownloadVideos() {
         return !useInternalVideoPlayer() && preferences.getBoolean(resources.getString(R.string.pref_key_do_not_download_videos), false);
     }
