@@ -774,7 +774,11 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                     setSvg(tag, file);
                     break;
                 case AttachmentModel.TYPE_VIDEO:
-                    setVideo(tag, file);
+                    if (settings.useWebViewVideoPlayer()) {
+                        setWebView(tag, file);
+                    } else {
+                        setVideo(tag, file);
+                    }
                     break;
                 case AttachmentModel.TYPE_AUDIO:
                     setAudio(tag, file);

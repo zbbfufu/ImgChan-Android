@@ -533,6 +533,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_gallery_nativegif_summary">Бібліотека libgif</string>
     <string name="pref_gallery_videoplayer_title">Переглядач відео</string>
     <string name="pref_gallery_videoplayer_summary">Не працює на ранніх версіях Android</string>
+    <string name="pref_gallery_webview_videoplayer_title">Використовувати WebView для відео</string>
+    <string name="pref_gallery_webview_videoplayer_summary">Використовувати WebView замість VideoView як вбудованого відеоплеєра</string>
     <string name="pref_do_not_download_videos_title">Не звантажувати відео</string>
     <string name="pref_do_not_download_videos_summary">Відкривати відео не кешуючи</string>
     <string name="pref_gallery_audioplayer_title">Аудіоплеєр</string>
