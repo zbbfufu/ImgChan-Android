@@ -70,8 +70,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <style name="TextAppearance_Small.Medium" parent="@android:style/TextAppearance.Medium"> <item name="android:textSize">13sp</item> </style>
     <style name="TextAppearance_Small.Large" parent="@android:style/TextAppearance.Large"> <item name="android:textSize">16sp</item> </style>
     
-    <style name="TextAppearance_Medium.Small" parent="@android:style/TextAppearance.Small"> <item name="android:textSize">14sp</item> </style>
-    <style name="TextAppearance_Medium.Medium" parent="@android:style/TextAppearance.Medium"> <item name="android:textSize">16sp</item> </style>
+    <style name="TextAppearance_Medium.Small" parent="@android:style/TextAppearance.Small"> <item name="android:textSize">13sp</item> </style>
+    <style name="TextAppearance_Medium.Medium" parent="@android:style/TextAppearance.Medium"> <item name="android:textSize">15sp</item> </style>
     <style name="TextAppearance_Medium.Large" parent="@android:style/TextAppearance.Large"> <item name="android:textSize">18sp</item> </style>
     
     <style name="TextAppearance_Large.Small" parent="@android:style/TextAppearance.Small"> <item name="android:textSize">15sp</item> </style>
