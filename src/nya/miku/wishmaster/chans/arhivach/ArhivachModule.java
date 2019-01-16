@@ -107,13 +107,13 @@ public class ArhivachModule extends CloudflareChanModule {
     }
 
     private boolean useHttps() {
-        return !preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) && useHttps(false);
+        return !preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) && useHttps(true);
     }
 
     @Override
     public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
         Context context = preferenceGroup.getContext();
-        CheckBoxPreference httpsPref = addHttpsPreference(preferenceGroup, false);
+        CheckBoxPreference httpsPref = addHttpsPreference(preferenceGroup, true);
         CheckBoxPreference onionPref = new LazyPreferences.CheckBoxPreference(context);
         onionPref.setTitle(R.string.pref_use_onion);
         onionPref.setSummary(R.string.pref_use_onion_summary);
