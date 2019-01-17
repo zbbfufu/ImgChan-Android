@@ -41,11 +41,17 @@ public class ApplicationSettings {
     private final boolean isTablet;
     private final boolean isSFW;
     
+    private void initHiddenPreferences() {
+        if (!preferences.contains(resources.getString(R.string.pref_key_quickaccess_json)))
+            preferences.edit().putString(resources.getString(R.string.pref_key_quickaccess_json), "[{}]").commit();
+    }
+
     public ApplicationSettings(SharedPreferences preferences, Resources resources) {
         this.preferences = preferences;
         this.resources = resources;
         this.isTablet = (resources.getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE;
         this.isSFW = !R.class.getPackage().getName().endsWith(".wishmaster");
+        initHiddenPreferences();
     }
     
     public File getDefaultDownloadDir() {
