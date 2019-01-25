@@ -522,6 +522,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_gallery_nativegif_summary">Use a native library libgif</string>
     <string name="pref_gallery_videoplayer_title">Built-in video player</string>
     <string name="pref_gallery_videoplayer_summary">May not work on older versions of Android</string>
+    <string name="pref_gallery_webview_videoplayer_title">Use WebView video player</string>
+    <string name="pref_gallery_webview_videoplayer_summary">Use WebView instead of VideoView as built-in video player</string>
     <string name="pref_do_not_download_videos_title">Do not download videos</string>
     <string name="pref_do_not_download_videos_summary">Open video files directly not downloading into cache</string>
     <string name="pref_gallery_audioplayer_title">Built-in audio player</string>
@@ -589,9 +591,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     </string-array>
     <string name="pref_font_size_title">Text size</string>
     <string-array name="pref_font_size_choices">
+        <item>Micro</item>
+        <item>Very small</item>
         <item>Small</item>
         <item>Medium</item>
         <item>Large</item>
+        <item>Very large</item>
         <item>Huge</item>
     </string-array>
     <string name="pref_sidepanel_hide_title">Hide Tabs panel</string>
@@ -627,4 +632,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="newtab_select_local_directory">Specify directory location</string>
     <string name="pref_scroll_to_active_tab_summary">Scroll to the active tab when closing inactive tab</string>
     <string name="pref_scroll_to_active_tab_title">Scroll to the active tab</string>
+    <string name="pref_makaba_passcode">Passcode</string>
 </resources>

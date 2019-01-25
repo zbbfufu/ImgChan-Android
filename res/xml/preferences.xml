@@ -68,6 +68,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:defaultValue="@string/pref_font_size_value_default" />
         
         <EditTextPreference
+            android:defaultValue=""
             android:key="@string/pref_key_cut_posts"
             android:title="@string/pref_cut_posts_title"
             android:hint="@string/pref_cut_posts_hint"
@@ -136,21 +137,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:key="@string/pref_key_gallery_scroll_thread"
                 android:title="@string/pref_gallery_scroll_thread_title"
                 android:summary="@string/pref_gallery_scroll_thread_summary" />
-            
+
             <CheckBoxPreference
                 android:defaultValue="true"
                 android:key="@string/pref_key_gallery_videoplayer"
                 android:title="@string/pref_gallery_videoplayer_title"
-                android:summary="@string/pref_gallery_videoplayer_summary"
-                android:disableDependentsState="true" />
+                android:summary="@string/pref_gallery_videoplayer_summary" />
+            
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="@string/pref_key_gallery_webview_videoplayer"
+                android:title="@string/pref_gallery_webview_videoplayer_title"
+                android:summary="@string/pref_gallery_webview_videoplayer_summary"
+                android:dependency="@string/pref_key_gallery_videoplayer" />
             
             <CheckBoxPreference
                 android:defaultValue="false"
                 android:key="@string/pref_key_do_not_download_videos"
                 android:title="@string/pref_do_not_download_videos_title"
-                android:summary="@string/pref_do_not_download_videos_summary"
-                android:dependency="@string/pref_key_gallery_videoplayer" />
-            
+                android:summary="@string/pref_do_not_download_videos_summary" />
+
             <CheckBoxPreference
                 android:defaultValue="true"
                 android:key="@string/pref_key_gallery_audioplayer"

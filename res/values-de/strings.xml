@@ -523,6 +523,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_gallery_nativegif_summary">Eine native Bibliothek libgif verwenden</string>
     <string name="pref_gallery_videoplayer_title">Built-in video-player</string> 
     <string name="pref_gallery_videoplayer_summary">Kann manchmal nicht in älteren Versionen von Android arbeiten</string>
+    <string name="pref_gallery_webview_videoplayer_title">WebView für Video verwenden</string>
+    <string name="pref_gallery_webview_videoplayer_summary">Verwenden Sie WebView anstelle von VideoView als eingebetteten Videoplayer</string>
     <string name="pref_do_not_download_videos_title">Videos nicht herunterladen</string>
     <string name="pref_do_not_download_videos_summary">Video-Dateien direkt öffnen, in den Cache nicht herunterladen</string>
     <string name="pref_gallery_audioplayer_title">Built-in audio-player</string>
@@ -590,9 +592,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     </string-array>
     <string name="pref_font_size_title">Textgröße</string>
     <string-array name="pref_font_size_choices">
+        <item>Mikro</item>
+        <item>Sehr klein</item>
         <item>Klein</item>
         <item>Mittelgroß</item>
         <item>Groß</item>
+        <item>Sehr groß</item>
         <item>Riesig</item>
     </string-array>
     <string name="pref_sidepanel_hide_title">Tabs Panel nicht zeigen</string>
@@ -628,4 +633,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="newtab_select_local_directory">Speicherort angeben</string>
     <string name="pref_scroll_to_active_tab_title">Blättern Sie zur aktiven Registerkarte</string>
     <string name="pref_scroll_to_active_tab_summary">Blättern Sie zum aktiven Tab, wenn Sie die inaktive Registerkarte schließen</string>
+    <string name="pref_makaba_passcode">Passcode</string>
 </resources>
