@@ -22,7 +22,5 @@ import nya.miku.wishmaster.BuildConfig;
 
 public class ACRAConstants {
     public static final boolean ACRA_ENABLED = !BuildConfig.DEBUG;
-    public static final String ACRA_FORM_URL = "https://miku-nyan.cloudant.com/acra-wishmaster/_design/acra-storage/_update/report";
-    public static final String ACRA_LOGIN = "iryniedidebeyedstindstat";
-    public static final String ACRA_PASSWORD = "2we28q8dPREeLbIYSLpQF5fi";
+    public static final String ACRA_EMAIL = "";
 }
