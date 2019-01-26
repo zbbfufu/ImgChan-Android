@@ -79,6 +79,7 @@ public class MainApplication extends Application {
     private static final String[] MODULES = new String[] {
             "nya.miku.wishmaster.chans.fourchan.FourchanModule",
             "nya.miku.wishmaster.chans.krautchan.KrautModule",
+            "nya.miku.wishmaster.chans.kohlchan.KohlchanModule",
             "nya.miku.wishmaster.chans.infinity.InfinityModule",
             "nya.miku.wishmaster.chans.cirno.CirnoModule",
             "nya.miku.wishmaster.chans.cirno.MikubaModule",
