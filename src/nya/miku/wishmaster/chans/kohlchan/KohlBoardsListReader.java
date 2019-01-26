@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,10 +36,7 @@ import nya.miku.wishmaster.api.models.SimpleBoardModel;
 import nya.miku.wishmaster.api.util.RegexUtils;
 
 public class KohlBoardsListReader implements Closeable {
-    /*private static final List<String> SFW_BOARDS = Arrays.asList(new String[] {
-            "a", "c", "co", "e", "f", "fe", "fit", "jp", "k", "l", "li", "m", "n", "ng",
-            "p", "ph", "prog", "sp", "t", "trv", "tv", "v", "w", "wk", "wp", "z", "zp" 
-    });*/
+    private static final List<String> NSFW_BOARDS = Arrays.asList(new String[] { "b", "int", "s" });
     
     private final Reader _in;
     private StringBuilder readBuffer = new StringBuilder();
@@ -54,7 +52,6 @@ public class KohlBoardsListReader implements Closeable {
     
     private static final char[] CLOSE = ">".toCharArray();
     private static final char[] LI_CLOSE = "</li>".toCharArray();
-    //private static final char[] SPAN_CLOSE = "</span>".toCharArray();
     private static final char[] LEGEND_CLOSE = "</legend>".toCharArray();
     
     private static final Pattern BOARD_PATTERN = Pattern.compile("/(\\w+)/(?:\\s+-\\s+(.*))?", Pattern.DOTALL);
@@ -111,6 +108,7 @@ public class KohlBoardsListReader implements Closeable {
                             StringEscapeUtils.unescapeHtml4(boardMatcher.group(2)) :
                             model.boardName;
                     model.boardCategory = currentCategory;
+                    model.nsfw = NSFW_BOARDS.indexOf(model.boardName) != -1;
                     boards.add(model);
                 }
         }
@@ -159,37 +157,5 @@ public class KohlBoardsListReader implements Closeable {
     public void close() throws IOException {
         _in.close();
     }
-    /*
-    public static BoardModel getDefaultBoardModel(String boardName, String description, String category) {
-        BoardModel bm = new BoardModel();
-        bm.chan = KohlchanModule.CHAN_NAME;
-        bm.boardName = boardName;
-        bm.boardDescription = description;
-        bm.boardCategory = category;
-        //bm.nsfw = SFW_BOARDS.indexOf(boardName) == -1;
-        bm.uniqueAttachmentNames = true;
-        bm.timeZoneId = "Europe/Berlin";
-        bm.defaultUserName = "Bernd";
-        bm.bumpLimit = 500;
-        bm.readonlyBoard = false;
-        bm.requiredFileForNewThread = true;
-        bm.allowDeletePosts = true;
-        bm.allowDeleteFiles = false;
-        //bm.allowNames = !boardName.equals("b") && !boardName.equals("int") && !boardName.equals("vip") && !boardName.equals("trv");
-        bm.allowSubjects = true;
-        bm.allowSage = true;
-        bm.allowEmails = false;
-        bm.allowCustomMark = false;
-        bm.allowRandomHash = false;
-        bm.allowIcons = false;
-        bm.attachmentsMaxCount = 4;
-        bm.attachmentsFormatFilters = ATTACHMENT_FORMATS;
-        bm.markType = BoardModel.MARK_BBCODE;
-        bm.firstPage = 1;
-        bm.lastPage = BoardModel.LAST_PAGE_UNDEFINED;
-        bm.searchAllowed = false;
-        bm.catalogAllowed = false;
-        //bm.catalogTypeDescriptions = new String[] { boardName.equals("int") ? "Catalog" : "Katalog" };
-        return bm;
-    }*/
+    
 }

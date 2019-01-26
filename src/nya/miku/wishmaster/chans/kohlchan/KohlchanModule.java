@@ -24,6 +24,10 @@ import android.graphics.drawable.Drawable;
 import android.support.v4.content.res.ResourcesCompat;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.AbstractVichanModule;
@@ -35,13 +39,18 @@ import nya.miku.wishmaster.api.models.SimpleBoardModel;
 import nya.miku.wishmaster.api.models.UrlPageModel;
 import nya.miku.wishmaster.api.util.ChanModels;
 import nya.miku.wishmaster.common.IOUtils;
+import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
 import nya.miku.wishmaster.http.streamer.HttpWrongStatusCodeException;
 
 public class KohlchanModule extends AbstractVichanModule {
+    private static final String TAG = "KohlchanModule";
+    
     static final String CHAN_NAME = "kohlchan.net";
+    private static final String[] ATTACHMENT_FORMATS = new String[] {
+            "jpg", "jpeg", "bmp", "gif", "png", "mp3", "ogg", "flac", "opus", "webm", "mp4", "7z", "zip", "pdf", "epub", "txt" };
     
     public KohlchanModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -106,11 +115,26 @@ public class KohlchanModule extends AbstractVichanModule {
             if (responseModel != null) responseModel.release();
         }
     }
+
+    @Override
+    protected Map<String, SimpleBoardModel> getBoardsMap(ProgressListener listener, CancellableTask task) throws Exception {
+        try {
+            return super.getBoardsMap(listener, task);
+        } catch (Exception e) {
+            Logger.e(TAG, e);
+            return Collections.emptyMap();
+        }
+    }
     
     @Override
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel model = super.getBoard(shortName, listener, task);
+        model.defaultUserName = "Bernd";
+        model.timeZoneId = "Europe/Berlin";
         model.attachmentsMaxCount = 4;
+        model.allowNames = false;
+        model.allowEmails = false;
+        model.attachmentsFormatFilters = ATTACHMENT_FORMATS;
         return model;
     }
     
