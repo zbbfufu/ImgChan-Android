@@ -39,6 +39,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.CloudflareChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
@@ -67,13 +68,14 @@ import nya.miku.wishmaster.lib.org_json.JSONObject;
 
 public class NewNullchanModule extends CloudflareChanModule {
 
-    static final String CHAN_NAME = "0chan.hk";
-    private static final String CHAN_DOMAIN = "0chan.hk";
+    static final String CHAN_NAME = "0chan.pl";
+    private static final String CHAN_DOMAIN = "0chan.pl";
     private static final String[] DOMAINS = new String[] { CHAN_DOMAIN };
 
     private static final Pattern BOARD_PATTERN = Pattern.compile("(\\w+)");
     private static final Pattern THREADPAGE_PATTERN = Pattern.compile("(\\w+)/(\\d+)(?:#(\\d+))?");
     private static final String CAPTCHA_BASE64_PREFIX = "data:image/png;base64,";
+    private static final String DISCLAIMER_COOKIE_NAME = "disclaimer";
     
     private static String sessionId = null;
     private static HashMap<String, String> captchas = null;
@@ -135,7 +137,7 @@ public class NewNullchanModule extends CloudflareChanModule {
 
     @Override
     public String getDisplayingName() {
-        return "Øчан (0chan.hk)";
+        return "Øчан (0chan.pl)";
     }
 
     @Override
@@ -152,6 +154,18 @@ public class NewNullchanModule extends CloudflareChanModule {
 
     private boolean useHttps() {
         return useHttps(true);
+    }
+
+    @Override
+    protected void initHttpClient() {
+        super.initHttpClient();
+        setDisclaimerCookie();
+    }
+
+    private void setDisclaimerCookie() {
+        BasicClientCookie c = new BasicClientCookie(DISCLAIMER_COOKIE_NAME, "1");
+        c.setDomain(".".concat(getUsingDomain()));
+        httpClient.getCookieStore().addCookie(c);
     }
 
     private String getUsingDomain() {
