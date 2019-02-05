@@ -55,6 +55,7 @@ import android.preference.Preference;
 import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
 import android.text.InputFilter;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.widget.Toast;
 import nya.miku.wishmaster.R;
@@ -84,24 +85,23 @@ import nya.miku.wishmaster.http.streamer.HttpStreamer;
 public class PonyachModule extends AbstractWakabaModule {
     private static final String CHAN_NAME = "ponyach";
     private static final String DEFAULT_DOMAIN = "ponyach.ru";
-    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, "ponyach.cf", "ponyach.ga", "ponyach.ml",
-            "cafe-asylum.cf", "cafe-bb.cf", "cafe-bb.ga", "cafe-bb.gq", "cafe-bb.ml", "cafe-bb.tk" };
+    private static final String DOMAINS_HINT = "ponyach.ru, ponyach.ga, ponyach.gq, ponyach.tk";
+    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, "ponyach.ga","ponyach.gq", "ponyach.tk" };
     
     private static final DateFormat DATE_FORMAT;
     static {
         DateFormatSymbols symbols = new DateFormatSymbols();
         symbols.setMonths(new String[] {
                 "Янв", "Фев", "Мар", "Апр", "Май", "Июнь", "Июль", "Авг", "Снт", "Окт", "Ноя", "Дек" });
-        DATE_FORMAT = new SimpleDateFormat("dd MMMM yyyy HH:mm:ss", symbols);
+        DATE_FORMAT = new SimpleDateFormat("dd MMMM yyyy HH:mm", symbols);
         DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT+3"));
     }
     
     private static final SimpleBoardModel[] BOARDS = new SimpleBoardModel[] {
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "b", "/b/ - was never good", "", true),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "cafe", "2chru.cafe/b", "", true),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "d", "Жалобы и предложения", "", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "test", "Полигон", "", false),
-            //ChanModels.obtainSimpleBoardModel(CHAN_NAME, "r34", "r34", "", true),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "r34", "r34", "", true)
         };
     
     private static final String RECAPTCHA_KEY = "6Lfp8AYUAAAAABmsvywGiiNyAIkpymMeZPvLUj30";
@@ -132,11 +132,6 @@ public class PonyachModule extends AbstractWakabaModule {
     }
     
     @Override
-    protected String[] getAllDomains() {
-        return DOMAINS;
-    }
-    
-    @Override
     protected boolean canHttps() {
         return true;
     }
@@ -145,6 +140,20 @@ public class PonyachModule extends AbstractWakabaModule {
     protected String getUsingDomain() {
         String domain = preferences.getString(getSharedKey(PREF_KEY_DOMAIN), DEFAULT_DOMAIN);
         return TextUtils.isEmpty(domain) ? DEFAULT_DOMAIN : domain;
+    }
+    
+    @Override
+    protected String[] getAllDomains() {
+        String domain = getUsingDomain();
+        for (String d : DOMAINS) {
+            if (domain.equals(d)) return DOMAINS;
+        }
+        String[] domains = new String[DOMAINS.length + 1];
+        for (int i=0; i<DOMAINS.length; ++i) {
+            domains[i] = DOMAINS[i];
+        }
+        domains[DOMAINS.length] = domain;
+        return domains;
     }
     
     @Override
@@ -227,13 +236,14 @@ public class PonyachModule extends AbstractWakabaModule {
         });
         preferenceGroup.addPreference(passcodePref);
         
-        ListPreference domainPref = new LazyPreferences.ListPreference(context);
+        EditTextPreference domainPref = new EditTextPreference(context);
         domainPref.setTitle(R.string.pref_domain);
+        domainPref.setSummary(resources.getString(R.string.pref_domain_summary, DOMAINS_HINT));
         domainPref.setDialogTitle(R.string.pref_domain);
         domainPref.setKey(getSharedKey(PREF_KEY_DOMAIN));
-        domainPref.setEntryValues(DOMAINS);
-        domainPref.setEntries(DOMAINS);
-        domainPref.setDefaultValue(DEFAULT_DOMAIN);
+        domainPref.getEditText().setHint(DEFAULT_DOMAIN);
+        domainPref.getEditText().setSingleLine();
+        domainPref.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         domainPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -245,7 +255,6 @@ public class PonyachModule extends AbstractWakabaModule {
         
         addHttpsPreference(preferenceGroup, useHttpsDefaultValue());
         addProxyPreferences(preferenceGroup);
-        domainPref.setSummary(domainPref.getEntry());
     }
     
     @Override
@@ -256,8 +265,8 @@ public class PonyachModule extends AbstractWakabaModule {
             private final Pattern aHrefPattern = Pattern.compile("<a\\s+href=\"(.*?)\"", Pattern.DOTALL);
             private final Pattern attachmentSizePattern = Pattern.compile("([\\d\\.]+)[KM]B");
             private final Pattern attachmentPxSizePattern = Pattern.compile("(\\d+)x(\\d+)");
-            private final char[] dateFilter = "<span class=\"mobile_date dast-date\">".toCharArray();
-            private final char[] attachmentFilter = "<span class=\"filesize fs_".toCharArray();
+            private final char[] dateFilter = "class=\"mobile_date dast-date\" data-shortformat=\"".toCharArray();
+            private final char[] attachmentFilter = "class=\"filesize fs_".toCharArray();
             private ArrayList<AttachmentModel> myAttachments = new ArrayList<>();
             private int curDatePos = 0;
             private int curAttachmentPos = 0;
@@ -266,7 +275,7 @@ public class PonyachModule extends AbstractWakabaModule {
                 if (ch == dateFilter[curDatePos]) {
                     ++curDatePos;
                     if (curDatePos == dateFilter.length) {
-                        parsePonyachDate(readUntilSequence("</span>".toCharArray()).trim());
+                        parsePonyachDate(readUntilSequence("\"".toCharArray()).trim());
                         curDatePos = 0;
                     }
                 } else {

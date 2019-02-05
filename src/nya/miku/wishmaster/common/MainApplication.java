@@ -79,6 +79,7 @@ public class MainApplication extends Application {
     private static final String[] MODULES = new String[] {
             "nya.miku.wishmaster.chans.fourchan.FourchanModule",
             "nya.miku.wishmaster.chans.krautchan.KrautModule",
+            "nya.miku.wishmaster.chans.kohlchan.KohlchanModule",
             "nya.miku.wishmaster.chans.infinity.InfinityModule",
             "nya.miku.wishmaster.chans.cirno.CirnoModule",
             "nya.miku.wishmaster.chans.cirno.MikubaModule",
@@ -117,7 +118,6 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.infinity.LolifoxModule",
             "nya.miku.wishmaster.chans.lampach.LampachModule",
             "nya.miku.wishmaster.chans.kropyvach.KropyvachModule",
-            "nya.miku.wishmaster.chans.mentachnet.MentachnetModule",
             "nya.miku.wishmaster.chans.hispachan.HispachanModule",
             "nya.miku.wishmaster.chans.ernstchan.ErnstModule",
             "nya.miku.wishmaster.chans.nullchan.NullchanoneModule",
@@ -127,6 +127,7 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.tirech.TirechModule",
             "nya.miku.wishmaster.chans.tbpchan.TBPchanModule",
             "nya.miku.wishmaster.chans.mewchnet.MewchnetModule",
+            "nya.miku.wishmaster.chans.kakashinenpo.KakashiNenpoModule",
     };
     
     private static MainApplication instance;
