@@ -124,7 +124,7 @@ public class Recaptcha2fallback extends InteractiveException {
                     final Bitmap challengeBitmap = BitmapFactory.decodeStream(imageStream);
                     
                     final String message;
-                    Matcher messageMatcher = Pattern.compile("imageselect-message(?:.*?)>(.*?)</div>").matcher(htmlChallenge);
+                    Matcher messageMatcher = Pattern.compile("imageselect-desc(?:.*?)>(.*?)</div>").matcher(htmlChallenge);
                     if (messageMatcher.find()) message = RegexUtils.removeHtmlTags(messageMatcher.group(1)); else message = null;
                     
                     final Bitmap candidateBitmap;
