@@ -50,7 +50,6 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.preference.EditTextPreference;
-import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
@@ -69,7 +68,6 @@ import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
 import nya.miku.wishmaster.api.models.UrlPageModel;
 import nya.miku.wishmaster.api.util.ChanModels;
-import nya.miku.wishmaster.api.util.LazyPreferences;
 import nya.miku.wishmaster.api.util.ReplacingReader;
 import nya.miku.wishmaster.api.util.WakabaReader;
 import nya.miku.wishmaster.common.Async;
@@ -132,6 +130,11 @@ public class PonyachModule extends AbstractWakabaModule {
     }
     
     @Override
+    protected boolean canCloudflare() {
+        return true;
+    }
+    
+    @Override
     protected boolean canHttps() {
         return true;
     }
@@ -161,7 +164,6 @@ public class PonyachModule extends AbstractWakabaModule {
         super.initHttpClient();
         loadPhpCookies();
     }
-    
     
     private void loadPhpCookies() {
         loadPhpCookies(getUsingDomain());
@@ -254,6 +256,7 @@ public class PonyachModule extends AbstractWakabaModule {
         preferenceGroup.addPreference(domainPref);
         
         addHttpsPreference(preferenceGroup, useHttpsDefaultValue());
+        addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
     }
     
