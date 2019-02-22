@@ -35,7 +35,6 @@ import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
 import nya.miku.wishmaster.lib.base64.Base64;
-import nya.miku.wishmaster.ui.AppearanceUtils;
 import nya.miku.wishmaster.ui.CompatibilityUtils;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -184,12 +183,6 @@ public class Recaptcha2fallback extends InteractiveException {
                             final LinearLayout selector = new LinearLayout(activity);
                             selector.setLayoutParams(new FrameLayout.LayoutParams(
                                     FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-                            AppearanceUtils.callWhenLoaded(imageView, new Runnable() {
-                                @Override
-                                public void run() {
-                                    selector.setLayoutParams(new FrameLayout.LayoutParams(imageView.getWidth(), imageView.getHeight()));
-                                }
-                            });
                             selector.setOrientation(LinearLayout.VERTICAL);
                             selector.setWeightSum(maxY);
                             for (int y=0; y<maxY; ++y) {
