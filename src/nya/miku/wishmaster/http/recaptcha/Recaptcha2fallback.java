@@ -155,6 +155,7 @@ public class Recaptcha2fallback extends InteractiveException {
                                 candidateView.setImageBitmap(candidateBitmap);
                                 int picSize = (int) (activity.getResources().getDisplayMetrics().density * 50 + 0.5f);
                                 candidateView.setLayoutParams(new LinearLayout.LayoutParams(picSize, picSize));
+                                candidateView.setAdjustViewBounds(true);
                                 candidateView.setScaleType(ImageView.ScaleType.FIT_XY);
                                 rootLayout.addView(candidateView);
                             }
@@ -175,6 +176,7 @@ public class Recaptcha2fallback extends InteractiveException {
                             final ImageView imageView = new ImageView(activity);
                             imageView.setLayoutParams(new FrameLayout.LayoutParams(
                                     FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+                            imageView.setAdjustViewBounds(true);
                             imageView.setScaleType(ImageView.ScaleType.FIT_XY);
                             imageView.setImageBitmap(challengeBitmap);
                             frame.addView(imageView);
