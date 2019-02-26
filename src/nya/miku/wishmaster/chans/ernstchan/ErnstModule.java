@@ -43,7 +43,6 @@ import nya.miku.wishmaster.api.AbstractWakabaModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.BoardModel;
-import nya.miku.wishmaster.api.models.CaptchaModel;
 import nya.miku.wishmaster.api.models.DeletePostModel;
 import nya.miku.wishmaster.api.models.PostModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
@@ -60,14 +59,12 @@ import nya.miku.wishmaster.http.streamer.HttpStreamer;
 import nya.miku.wishmaster.http.streamer.HttpWrongStatusCodeException;
 
 public class ErnstModule extends AbstractWakabaModule {
-    private static final String CHAN_NAME = "ernstchan.com";
-    private static final String CHAN_DOMAIN = "ernstchan.com";
+    private static final String CHAN_NAME = "ernstchan.xyz";
+    private static final String CHAN_DOMAIN = "ernstchan.xyz";
     private static final SimpleBoardModel[] BOARDS = new SimpleBoardModel[] {
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "b", "Passierschein A38", null, true),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "int", "No shittings during wörktime", null, false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "c", "Computer & Programmieren", null, false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "a", "Anime & Manga", null, false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "fefe", "Fefes Blog", null, true),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "meta", "Board functioning", null, false),
     };
     
     private static final Pattern THREADPAGE_PATTERN = Pattern.compile("([^/]+)/thread/(\\d+)[^#]*(?:#(\\d+))?");
@@ -117,7 +114,7 @@ public class ErnstModule extends AbstractWakabaModule {
         model.requiredFileForNewThread = true;
         model.allowDeletePosts = true;
         model.allowDeleteFiles = false;
-        model.allowNames = !shortName.equals("b") && !shortName.equals("int") && !shortName.equals("fefe");
+        model.allowNames = false;
         model.allowSubjects = true;
         model.allowSage = true;
         model.allowEmails = false;
@@ -201,13 +198,6 @@ public class ErnstModule extends AbstractWakabaModule {
     }
     
     @Override
-    public CaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
-        String captchaUrl = getUsingUrl() +  "captcha.pl?key=" + (threadNumber == null ? "mainpage" : ("res" + threadNumber)) +
-                "&dummy=" + (threadNumber == null ? "" : Long.toString(Math.round(Math.random()*1000000))) + "&board=" + boardName;
-        return downloadCaptcha(captchaUrl, listener, task);
-    }
-    
-    @Override
     public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
         String url = getUsingUrl() + "/wakaba.pl";
         ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
@@ -217,7 +207,6 @@ public class ErnstModule extends AbstractWakabaModule {
         if (model.sage) postEntityBuilder.addString("field2", "sage");
         postEntityBuilder.
                 addString("gb2", "thread").
-                addString("field1", model.name).
                 addString("field3", model.subject).
                 addString("field4", model.comment).
                 addString("captcha", model.captchaAnswer).
