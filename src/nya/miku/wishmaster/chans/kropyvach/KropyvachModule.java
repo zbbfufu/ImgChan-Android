@@ -109,8 +109,6 @@ public class KropyvachModule extends AbstractVichanModule {
         if (attachment != null && attachment.thumbnail != null) {
             switch (attachment.type) {
                 case AttachmentModel.TYPE_VIDEO:
-                attachment.thumbnail = null;
-                break;
                 case AttachmentModel.TYPE_IMAGE_STATIC:
                 case AttachmentModel.TYPE_IMAGE_GIF:
                 case AttachmentModel.TYPE_IMAGE_SVG:
