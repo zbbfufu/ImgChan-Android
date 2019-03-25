@@ -22,6 +22,8 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.res.ResourcesCompat;
+import java.util.Arrays;
+import java.util.Comparator;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.AbstractVichanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
@@ -29,6 +31,7 @@ import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.AttachmentModel;
 import nya.miku.wishmaster.api.models.BoardModel;
 import nya.miku.wishmaster.api.models.DeletePostModel;
+import nya.miku.wishmaster.api.models.PostModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
 import nya.miku.wishmaster.api.util.ChanModels;
@@ -132,5 +135,19 @@ public class KropyvachModule extends AbstractVichanModule {
     @Override
     protected String getReportFormValue(DeletePostModel model) {
         return "Поскаржитися";
+    }
+
+    @Override
+    public PostModel[] getPostsList(String boardName, String threadNumber, ProgressListener listener, CancellableTask task, PostModel[] oldList) throws Exception {
+        PostModel[] result = super.getPostsList(boardName, threadNumber, listener, task, oldList);
+        Arrays.sort(result, new Comparator<PostModel>() {
+            @Override
+            public int compare(PostModel p1, PostModel p2) {
+                int n1 = Integer.parseInt(p1.number);
+                int n2 = Integer.parseInt(p2.number);
+                return (n1 == n2) ? 0 : (n1 > n2) ? 1 : -1;
+            }
+        });
+        return result;
     }
 }
