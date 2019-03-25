@@ -103,8 +103,17 @@ public class KropyvachModule extends AbstractVichanModule {
     @Override
     protected AttachmentModel mapAttachment(JSONObject object, String boardName, boolean isSpoiler) {
         AttachmentModel attachment = super.mapAttachment(object, boardName, isSpoiler);
-        if ((attachment != null) && (attachment.type == AttachmentModel.TYPE_VIDEO)) {
-            attachment.thumbnail = null;
+        if (attachment != null && attachment.thumbnail != null) {
+            switch (attachment.type) {
+                case AttachmentModel.TYPE_VIDEO:
+                attachment.thumbnail = null;
+                break;
+                case AttachmentModel.TYPE_IMAGE_STATIC:
+                case AttachmentModel.TYPE_IMAGE_GIF:
+                case AttachmentModel.TYPE_IMAGE_SVG:
+                attachment.thumbnail = attachment.thumbnail.substring(0, attachment.thumbnail.lastIndexOf('.')) + ".png";
+                break;
+            }
         }
         return attachment;
     }
