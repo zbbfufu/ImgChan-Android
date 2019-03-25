@@ -150,4 +150,11 @@ public class KropyvachModule extends AbstractVichanModule {
         });
         return result;
     }
+
+    @Override
+    protected PostModel mapPostModel(JSONObject object, String boardName) {
+        PostModel result = super.mapPostModel(object, boardName);
+        result.comment = result.comment.replaceAll("(<a [^>]*href=\"[^#\"]*)(\"[^>]*>&gt;&gt;([0-9]*)</a>)", "$1#$3$2");
+        return result;
+    }
 }
