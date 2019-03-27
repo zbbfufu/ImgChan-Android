@@ -129,11 +129,6 @@ public class GenericThemeEntry implements Parcelable {
     
     public void setTo(Context context, int... applyStyles) {
         setBaseStyle(context, themeId, fontSizeStyleId);
-        if (customAttrs != null) {
-            Resources.Theme theme = context.getTheme();
-            if (themeId == BASE_THEME_LIGHT) theme.applyStyle(R.style.Custom_Theme_Light, true);
-            else if (themeId == BASE_THEME_DARK) theme.applyStyle(R.style.Custom_Theme_Dark, true);
-        }
         if (applyStyles != null) {
             Resources.Theme theme = context.getTheme();
             for (int i : applyStyles) {
