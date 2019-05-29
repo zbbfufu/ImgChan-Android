@@ -97,7 +97,7 @@ import android.app.Activity;
                     Async.runAsync(new Runnable() {
                         @Override
                         public void run() {
-                            String url = e.getCheckCaptchaUrlFormat() + Recaptcha2solved.pop(e.getRecaptchaPublicKey());
+                            String url = e.getCheckCaptchaUrlPrefix() + Recaptcha2solved.pop(e.getRecaptchaPublicKey());
                             Cookie cfCookie = CloudflareChecker.getInstance().
                                     checkRecaptcha(e, (ExtendedHttpClient) chan.getHttpClient(), cfTask, url);
                             if (cfCookie != null) {
