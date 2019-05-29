@@ -29,7 +29,9 @@ import android.support.v4.content.res.ResourcesCompat;
 import android.text.InputType;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import nya.miku.wishmaster.R;
@@ -52,11 +54,16 @@ public class KohlchanModule extends AbstractLynxChanModule {
     private static final String DISPLAYING_NAME = "Kohlchan";
     private static final String DEFAULT_DOMAIN = "kohlchan.net";
     private static final String PREF_KEY_DOMAIN = "domain";
-    private String domain = DEFAULT_DOMAIN;
-
+    private static final List<String> DOMAINS_LIST = Arrays.asList(new String[] {
+            DEFAULT_DOMAIN, "kohlchan.mett.ru", "kohlchankxguym67.onion", "fastkohlp6h2seef.onion"
+    });
+    private static final String DOMAINS_HINT = "kohlchan.net, kohlchan.mett.ru, kohlchankxguym67.onion, fastkohlp6h2seef.onion (1 hop)";
+    
     private static final String[] ATTACHMENT_FORMATS = new String[] {
             "jpg", "jpeg", "bmp", "gif", "png", "mp3", "ogg", "flac", "opus", "webm", "mp4", "7z", "zip", "pdf", "epub", "txt" };
     
+    private String domain;
+
     public KohlchanModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
     }
@@ -66,6 +73,11 @@ public class KohlchanModule extends AbstractLynxChanModule {
         return CHAN_NAME;
     }
     
+    @Override
+    protected void initHttpClient() {
+        updateDomain(preferences.getString(getSharedKey(PREF_KEY_DOMAIN), DEFAULT_DOMAIN));
+    }
+
     @Override
     protected String getUsingDomain() {
         return domain;
@@ -86,6 +98,7 @@ public class KohlchanModule extends AbstractLynxChanModule {
         EditTextPreference domainPref = new EditTextPreference(context);
         domainPref.setTitle(R.string.pref_domain);
         domainPref.setDialogTitle(R.string.pref_domain);
+        domainPref.setSummary(resources.getString(R.string.pref_domain_summary, DOMAINS_HINT));
         domainPref.setKey(getSharedKey(PREF_KEY_DOMAIN));
         domainPref.getEditText().setHint(DEFAULT_DOMAIN);
         domainPref.getEditText().setSingleLine();
@@ -98,6 +111,19 @@ public class KohlchanModule extends AbstractLynxChanModule {
     public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
         addDomainPreferences(preferenceGroup);
         super.addPreferencesOnScreen(preferenceGroup);
+    }
+
+    @Override
+    protected String[] getAllDomains() {
+        String curDomain = getUsingDomain();
+        String[] domains;
+        if (DOMAINS_LIST.contains(curDomain)) {
+            domains = DOMAINS_LIST.toArray(new String[DOMAINS_LIST.size()]);
+        } else {
+            domains = DOMAINS_LIST.toArray(new String[DOMAINS_LIST.size() + 1]);
+            domains[DOMAINS_LIST.size()] = curDomain;
+        }
+        return domains;
     }
 
     private void updateDomain(String domain) {
