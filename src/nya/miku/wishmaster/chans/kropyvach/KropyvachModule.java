@@ -18,10 +18,16 @@
 
 package nya.miku.wishmaster.chans.kropyvach;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.preference.EditTextPreference;
+import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
+import android.text.InputType;
+import android.text.TextUtils;
+
 import java.util.Arrays;
 import java.util.Comparator;
 import nya.miku.wishmaster.R;
@@ -39,7 +45,8 @@ import nya.miku.wishmaster.lib.org_json.JSONObject;
 
 public class KropyvachModule extends AbstractVichanModule {
     private static final String CHAN_NAME = "kropyva.ch";
-    private static final String DEFAULT_DOMAIN = "kropyva.ch";
+    private static final String DEFAULT_DOMAIN = "www.kropyva.ch";
+    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, "kropyva.ch" };
     private static final String[] ATTACHMENT_FORMATS = new String[] { "jpg", "jpeg", "png", "gif", "webm" };
     private static final SimpleBoardModel[] BOARDS = new SimpleBoardModel[] {
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "a", "Аніме", "", false),
@@ -48,12 +55,16 @@ public class KropyvachModule extends AbstractVichanModule {
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "c", "Кіно", "", false),
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "f", "Фап", "", true),
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "g", "Відеоігри", "", false),
-        ChanModels.obtainSimpleBoardModel(CHAN_NAME, "i", "International", "", false),
-        ChanModels.obtainSimpleBoardModel(CHAN_NAME, "m", "Музика", "", false),
+        ChanModels.obtainSimpleBoardModel(CHAN_NAME, "i", "International", "", false), 
+        ChanModels.obtainSimpleBoardModel(CHAN_NAME, "k", "Кропиватика", "", false),
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "l", "Література", "", false),
-        ChanModels.obtainSimpleBoardModel(CHAN_NAME, "p", "Політика", "", false),
-        ChanModels.obtainSimpleBoardModel(CHAN_NAME, "t", "Тренування", "", false),
+        ChanModels.obtainSimpleBoardModel(CHAN_NAME, "m", "Музика", "", false),
+        ChanModels.obtainSimpleBoardModel(CHAN_NAME, "p", "Політика", "", true),
+        ChanModels.obtainSimpleBoardModel(CHAN_NAME, "t", "Технології", "", false),
+        ChanModels.obtainSimpleBoardModel(CHAN_NAME, "u", "Українська мова", "", false),
     };
+    
+    private static final String PREF_KEY_DOMAIN = "PREF_KEY_DOMAIN";
     
     public KropyvachModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -81,7 +92,32 @@ public class KropyvachModule extends AbstractVichanModule {
     
     @Override
     protected String getUsingDomain() {
-        return DEFAULT_DOMAIN;
+        String domain = preferences.getString(getSharedKey(PREF_KEY_DOMAIN), DEFAULT_DOMAIN);
+        return TextUtils.isEmpty(domain) ? DEFAULT_DOMAIN : domain;
+    }
+    
+    @Override
+    protected String[] getAllDomains() {
+        String domain = getUsingDomain();
+        for (String d : DOMAINS) if (domain.equals(d)) return DOMAINS;
+        String[] domains = new String[DOMAINS.length + 1];
+        for (int i=0; i<DOMAINS.length; ++i) domains[i] = DOMAINS[i];
+        domains[DOMAINS.length] = domain;
+        return domains;
+    }
+
+    @Override
+    public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
+        Context context = preferenceGroup.getContext();
+        EditTextPreference domainPref = new EditTextPreference(context);
+        domainPref.setTitle(R.string.pref_domain);
+        domainPref.setDialogTitle(R.string.pref_domain);
+        domainPref.setKey(getSharedKey(PREF_KEY_DOMAIN));
+        domainPref.getEditText().setHint(DEFAULT_DOMAIN);
+        domainPref.getEditText().setSingleLine();
+        domainPref.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        preferenceGroup.addPreference(domainPref);
+        super.addPreferencesOnScreen(preferenceGroup);
     }
     
     @Override
@@ -97,7 +133,7 @@ public class KropyvachModule extends AbstractVichanModule {
     @Override
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel model = super.getBoard(shortName, listener, task);
-        model.bumpLimit = 150;
+        model.bumpLimit = 250;
         model.attachmentsMaxCount = 4;
         model.attachmentsFormatFilters = ATTACHMENT_FORMATS;
         return model;
