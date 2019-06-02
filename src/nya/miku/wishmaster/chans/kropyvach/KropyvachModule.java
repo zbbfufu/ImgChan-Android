@@ -28,8 +28,17 @@ import android.support.v4.content.res.ResourcesCompat;
 import android.text.InputType;
 import android.text.TextUtils;
 
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
+
+import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.HttpHeaders;
+import cz.msebera.android.httpclient.entity.mime.content.ByteArrayBody;
+import cz.msebera.android.httpclient.message.BasicHeader;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.AbstractVichanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
@@ -40,7 +49,11 @@ import nya.miku.wishmaster.api.models.DeletePostModel;
 import nya.miku.wishmaster.api.models.PostModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
+import nya.miku.wishmaster.api.models.UrlPageModel;
 import nya.miku.wishmaster.api.util.ChanModels;
+import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
+import nya.miku.wishmaster.http.streamer.HttpRequestModel;
+import nya.miku.wishmaster.http.streamer.HttpStreamer;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
 public class KropyvachModule extends AbstractVichanModule {
@@ -64,6 +77,7 @@ public class KropyvachModule extends AbstractVichanModule {
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "u", "Українська мова", "", false),
     };
     
+    private static final String[] ATTACHMENT_KEYS = new String[] { "file", "file2", "file3", "file4", "file5" };
     private static final String PREF_KEY_DOMAIN = "PREF_KEY_DOMAIN";
     
     public KropyvachModule(SharedPreferences preferences, Resources resources) {
@@ -134,6 +148,7 @@ public class KropyvachModule extends AbstractVichanModule {
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel model = super.getBoard(shortName, listener, task);
         model.bumpLimit = 250;
+        model.allowCustomMark = true;
         model.attachmentsMaxCount = 4;
         model.attachmentsFormatFilters = ATTACHMENT_FORMATS;
         return model;
@@ -154,10 +169,76 @@ public class KropyvachModule extends AbstractVichanModule {
         }
         return attachment;
     }
-    
+
     @Override
     public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
-        super.sendPost(model, listener, task);
+        UrlPageModel urlModel = new UrlPageModel();
+        urlModel.chanName = getChanName();
+        urlModel.boardName = model.boardName;
+        if (model.threadNumber == null) {
+            urlModel.type = UrlPageModel.TYPE_BOARDPAGE;
+            urlModel.boardPage = UrlPageModel.DEFAULT_FIRST_PAGE;
+        } else {
+            urlModel.type = UrlPageModel.TYPE_THREADPAGE;
+            urlModel.threadNumber = model.threadNumber;
+        }
+        String url = buildUrl(urlModel);
+        List<Pair<String, String>> fields = VichanAntiBot.getFormValues(url, task, httpClient);
+
+        if (task != null && task.isCancelled()) throw new Exception("interrupted");
+
+        ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().
+                setCharset(Charset.forName("UTF-8")).setDelegates(listener, task);
+
+        String key;
+        for (Pair<String, String> pair : fields) {
+            key = pair.getKey();
+            if (key.equals("op_stickers") && !model.custommark) continue;
+            String val;
+            switch (key) {
+                case "name": val = model.name; break;
+                case "email": val = getSendPostEmail(model); break;
+                case "subject": val = model.subject; break;
+                case "body": val = model.comment; break;
+                case "password": val = model.password; break;
+                default: val = pair.getValue();
+            }
+            if (key.equals("file")) {
+                if (model.attachments != null && model.attachments.length > 0) {
+                    for (int i=0; i<model.attachments.length; ++i) {
+                        postEntityBuilder.addFile(ATTACHMENT_KEYS[i], model.attachments[i], model.randomHash);
+                    }
+                } else {
+                    postEntityBuilder.addPart(key, new ByteArrayBody(new byte[0], ""));
+                }
+            } else {
+                postEntityBuilder.addString(key, val);
+            }
+        }
+        postEntityBuilder.addString("json_response", "1");
+
+        Header[] customHeaders = new Header[] { new BasicHeader(HttpHeaders.REFERER, url) };
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build()).setCustomHeaders(customHeaders).setNoRedirect(true).build();
+        JSONObject json = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, false);
+        if (json.has("error")) {
+            String errorMessage = json.optString("error", "Unknown Error");
+            throw new Exception(errorMessage);
+        } else {
+            String id = json.optString("id", "");
+            if (!id.equals("")) {
+                urlModel = new UrlPageModel();
+                urlModel.chanName = getChanName();
+                urlModel.type = UrlPageModel.TYPE_THREADPAGE;
+                urlModel.boardName = model.boardName;
+                if (model.threadNumber == null) {
+                    urlModel.threadNumber = id;
+                } else {
+                    urlModel.threadNumber = model.threadNumber;
+                    urlModel.postNumber = id;
+                }
+                return buildUrl(urlModel);
+            }
+        }
         return null;
     }
     
