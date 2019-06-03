@@ -156,12 +156,12 @@ public class GalleryBackend extends Service {
         }
         
         @Override
-        public String getAttachment(int contextId, GalleryAttachmentInfo attachment, GalleryGetterCallback callback) {
+        public String getAttachment(int contextId, GalleryAttachmentInfo attachment, boolean localOnly, GalleryGetterCallback callback) {
             GalleryBackend service = this.service.get();
             if (service == null) return null;
             
             try {
-                File file = service.contexts.get(contextId).getFile(attachment.hash, attachment.attachment, callback);
+                File file = service.contexts.get(contextId).getFile(attachment.hash, attachment.attachment, localOnly, callback);
                 if (file == null) return null;
                 return file.getPath();
             } catch (Exception e) {
@@ -271,17 +271,17 @@ public class GalleryBackend extends Service {
             return bmp;
         }
         
-        public File getFile(String attachmentHash, AttachmentModel attachmentModel, GalleryGetterCallback callback) throws RemoteException {
+        public File getFile(String attachmentHash, AttachmentModel attachmentModel, boolean localOnly, GalleryGetterCallback callback) throws RemoteException {
             AsyncCallback asyncCallback = new AsyncCallback(callback);
             try {
                 Async.runAsync(asyncCallback);
-                return getFile(attachmentHash, attachmentModel, asyncCallback);
+                return getFile(attachmentHash, attachmentModel, localOnly, asyncCallback);
             } finally {
                 asyncCallback.stop();
             }
         }
         
-        public File getFile(String attachmentHash, AttachmentModel attachmentModel, final AsyncCallback callback) throws RemoteException {
+        public File getFile(String attachmentHash, AttachmentModel attachmentModel, boolean localOnly, final AsyncCallback callback) throws RemoteException {
             File file = fileCache.get(FileCache.PREFIX_ORIGINALS + attachmentHash + Attachments.getAttachmentExtention(attachmentModel));
             if (file != null) {
                 String filename = file.getAbsolutePath();
@@ -320,6 +320,8 @@ public class GalleryBackend extends Service {
                     if (localFile != null && localFile.hasFile(localName)) {
                         fromLocal = IOUtils.modifyInputStream(localFile.openStream(localName), null, callback);
                         IOUtils.copyStream(fromLocal, out);
+                    } else if (localOnly) {
+                        return null;
                     } else {
                         chan.downloadFile(attachmentModel.path, out, callback, callback);
                     }
