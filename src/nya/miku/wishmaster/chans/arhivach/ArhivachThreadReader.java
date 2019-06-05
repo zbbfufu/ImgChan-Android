@@ -355,8 +355,8 @@ public class ArhivachThreadReader  implements Closeable {
             String ext = model.path.substring(model.path.lastIndexOf('.') + 1).toLowerCase(Locale.US);
             if (ext.equals("png") || ext.equals("jpg") || ext.equals("jpeg")) model.type = AttachmentModel.TYPE_IMAGE_STATIC;
             else if (ext.equals("gif")) model.type = AttachmentModel.TYPE_IMAGE_GIF;
-            else if (ext.equals("webm")) model.type = AttachmentModel.TYPE_VIDEO;
-            else if (ext.equals("mp3") || ext.equals("ogg")) model.type = AttachmentModel.TYPE_VIDEO;
+            else if (ext.equals("webm") || ext.equals("mp4")) model.type = AttachmentModel.TYPE_VIDEO;
+            else if (ext.equals("mp3") || ext.equals("ogg")) model.type = AttachmentModel.TYPE_AUDIO;
             ++currentThread.attachmentsCount;
             currentAttachments.add(model);
         }
