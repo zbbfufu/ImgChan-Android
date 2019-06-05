@@ -35,6 +35,8 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import nya.miku.wishmaster.api.models.AttachmentModel;
 import nya.miku.wishmaster.api.models.BadgeIconModel;
 import nya.miku.wishmaster.api.models.PostModel;
@@ -108,7 +110,7 @@ public class ArhivachThreadReader  implements Closeable {
 
             "class=\"post_id\"".toCharArray(),
 
-            "class=\"post_subject\">".toCharArray(),
+            "<h1 class=\"post_subject\">".toCharArray(),
 
             "id=\"".toCharArray(),
 
@@ -144,7 +146,7 @@ public class ArhivachThreadReader  implements Closeable {
 
             "</span>".toCharArray(),
 
-            "</".toCharArray(),
+            "</h1>".toCharArray(),
 
             "\"".toCharArray(),
 
@@ -241,7 +243,7 @@ public class ArhivachThreadReader  implements Closeable {
             if (currentPost.email == null) currentPost.email = "";
             if (currentPost.trip == null) currentPost.trip = "";
             currentPost.comment = CryptoUtils.fixCloudflareEmails(currentPost.comment);
-            currentPost.subject = CryptoUtils.fixCloudflareEmails(currentPost.subject);
+            currentPost.subject = StringEscapeUtils.unescapeHtml4(CryptoUtils.fixCloudflareEmails(currentPost.subject));
             postsBuf.add(currentPost);
         }
         initPostModel();
