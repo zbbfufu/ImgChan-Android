@@ -346,7 +346,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
 
     private AttachmentModel mapAttachment(JSONObject object) {
         AttachmentModel model = new AttachmentModel();
-        model.originalName = object.optString("originalName");
+        model.originalName = StringEscapeUtils.unescapeHtml4(object.optString("originalName"));
         model.thumbnail = object.optString("thumb");
         model.path = object.optString("path");
         model.height = object.optInt("height", -1);
