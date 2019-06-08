@@ -638,4 +638,9 @@ public class FourchanModule extends CloudflareChanModule {
         throw new IllegalArgumentException("fail to parse");
     }
     
+    @Override
+    public String fixRelativeUrl(String url) {
+        if (url.startsWith("//")) return (useHttps() ? "https:" : "http:") + url;
+        return super.fixRelativeUrl(url);
+    }
 }
