@@ -85,6 +85,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
     }
 
     private static final Pattern RED_TEXT_MARK_PATTERN = Pattern.compile("<span class=\"redText\">(.*?)</span>");
+    private static final Pattern ORANGE_TEXT_MARK_PATTERN = Pattern.compile("<span class=\"orangeText\">(.*?)</span>");
     private static final Pattern GREEN_TEXT_MARK_PATTERN = Pattern.compile("<span class=\"greenText\">(.*?)</span>");
     private static final Pattern REPLY_NUMBER_PATTERN = Pattern.compile("&gt&gt(\\d+)");
     protected Map<String, BoardModel> boardsMap = null;
@@ -306,11 +307,12 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         model.subject = StringEscapeUtils.unescapeHtml4(object.optString("subject"));
         model.comment = object.optString("markdown", object.optString("message"));
         model.comment = RegexUtils.replaceAll(model.comment, RED_TEXT_MARK_PATTERN, "<font color=\"red\"><b>$1</b></font>");
+        model.comment = RegexUtils.replaceAll(model.comment, ORANGE_TEXT_MARK_PATTERN, "<font color=\"#FFA500\">$1</font>");
         model.comment = RegexUtils.replaceAll(model.comment, GREEN_TEXT_MARK_PATTERN, "<span class=\"quote\">$1</span>");
         model.comment = RegexUtils.replaceAll(model.comment, REPLY_NUMBER_PATTERN, "&gt;&gt;$1");
         String banMessage = object.optString("banMessage", "");
         if (!banMessage.equals(""))
-            model.comment = model.comment + "<br/><em><font color=\"red\">("+banMessage+")</font></em>";
+            model.comment = model.comment + "<br/><em><font color=\"red\">"+banMessage+"</font></em>";
         String flag = object.optString("flag", "");
         if (!flag.equals("")) {
             BadgeIconModel icon = new BadgeIconModel();
