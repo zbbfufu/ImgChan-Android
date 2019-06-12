@@ -18,13 +18,17 @@
 
 package nya.miku.wishmaster.chans.newnullchan;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.preference.EditTextPreference;
 import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
+import android.text.InputType;
+import android.text.TextUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -71,13 +75,14 @@ import nya.miku.wishmaster.lib.org_json.JSONObject;
 public class NewNullchanModule extends CloudflareChanModule {
 
     static final String CHAN_NAME = "0chan.pl";
-    private static final String CHAN_DOMAIN = "0chan.pl";
-    private static final String[] DOMAINS = new String[] { CHAN_DOMAIN };
+    private static final String DEFAULT_DOMAIN = "www.0chan.pl";
+    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, "0chan.pl" };
 
     private static final Pattern BOARD_PATTERN = Pattern.compile("(\\w+)");
     private static final Pattern THREADPAGE_PATTERN = Pattern.compile("(\\w+)/(\\d+)(?:#(\\d+))?");
     private static final String CAPTCHA_BASE64_PREFIX = "data:image/png;base64,";
     private static final String DISCLAIMER_COOKIE_NAME = "disclaimer";
+    private static final String PREF_KEY_DOMAIN = "domain";
     
     private static String sessionId = null;
     private static HashMap<String, String> captchas = null;
@@ -147,8 +152,21 @@ public class NewNullchanModule extends CloudflareChanModule {
         return ResourcesCompat.getDrawable(resources, R.drawable.favicon_0chan, null);
     }
 
+    private void addDomainPreference(PreferenceGroup group) {
+        Context context = group.getContext();
+        EditTextPreference domainPref = new EditTextPreference(context);
+        domainPref.setTitle(R.string.pref_domain);
+        domainPref.setDialogTitle(R.string.pref_domain);
+        domainPref.setKey(getSharedKey(PREF_KEY_DOMAIN));
+        domainPref.getEditText().setHint(DEFAULT_DOMAIN);
+        domainPref.getEditText().setSingleLine();
+        domainPref.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        group.addPreference(domainPref);
+    }
+
     @Override
     public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
+        addDomainPreference(preferenceGroup);
         addHttpsPreference(preferenceGroup, true);
         addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
@@ -166,12 +184,23 @@ public class NewNullchanModule extends CloudflareChanModule {
 
     private void setDisclaimerCookie() {
         BasicClientCookie c = new BasicClientCookie(DISCLAIMER_COOKIE_NAME, "1");
-        c.setDomain(".".concat(getUsingDomain()));
+        c.setDomain(getUsingDomain());
+        c.setPath("/");
         httpClient.getCookieStore().addCookie(c);
     }
 
     private String getUsingDomain() {
-        return CHAN_DOMAIN;
+        String domain = preferences.getString(getSharedKey(PREF_KEY_DOMAIN), DEFAULT_DOMAIN);
+        return TextUtils.isEmpty(domain) ? DEFAULT_DOMAIN : domain;
+    }
+
+    private String[] getAllDomains() {
+        String domain = getUsingDomain();
+        for (String d : DOMAINS) if (domain.equals(d)) return DOMAINS;
+        String[] domains = new String[DOMAINS.length + 1];
+        for (int i=0; i<DOMAINS.length; ++i) domains[i] = DOMAINS[i];
+        domains[DOMAINS.length] = domain;
+        return domains;
     }
 
     private String getUsingUrl() {
@@ -531,7 +560,7 @@ public class NewNullchanModule extends CloudflareChanModule {
 
     @Override
     public UrlPageModel parseUrl(String url) throws IllegalArgumentException {
-        String path = UrlPathUtils.getUrlPath(url, DOMAINS);
+        String path = UrlPathUtils.getUrlPath(url, getAllDomains());
         if (path == null) throw new IllegalArgumentException("wrong domain");
         path = path.toLowerCase(Locale.US);
 
