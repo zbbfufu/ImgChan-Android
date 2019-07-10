@@ -2206,6 +2206,8 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                                 if (tag.commentView.getHeight() < fragment().staticSettings.itemHeight) {
                                     return true;
                                 }
+                                tag.showFullTextView.measure(0, 0);
+                                tag.commentView.setMaxHeight(fragment().staticSettings.itemHeight - tag.showFullTextView.getMeasuredHeight());
                                 tag.showFullTextView.setVisibility(View.VISIBLE);
                                 tag.showFullTextIsVisible = true;
                                 tag.showFullTextView.setOnClickListener(new View.OnClickListener() {
