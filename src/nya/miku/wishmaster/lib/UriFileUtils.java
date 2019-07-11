@@ -9,6 +9,8 @@
 package nya.miku.wishmaster.lib;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 
 import android.app.Activity;
 import android.content.ContentUris;
@@ -18,9 +20,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.BaseColumns;
+import android.provider.OpenableColumns;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.support.v4.content.FileProvider;
+import nya.miku.wishmaster.common.IOUtils;
 import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.ui.CompatibilityImpl;
 
@@ -164,4 +168,37 @@ public class UriFileUtils {
         return null;
     }
     
+    public static String getContentName(Context context, Uri uri) {
+        Cursor cursor = null;
+        try {
+            cursor = context.getContentResolver().query(uri, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+            }
+        } catch (Exception e) {
+            Logger.e(TAG, e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null;
+    }
+
+    public static boolean saveContent(Context context, Uri uri, File file) {
+        InputStream from = null;
+        FileOutputStream to = null;
+        try {
+            from = context.getContentResolver().openInputStream(uri);
+            to = new FileOutputStream(file, false);
+            IOUtils.copyStream(from, to);
+            return true;
+        } catch (Exception e) {
+            Logger.e(TAG, e);
+        } finally {
+            IOUtils.closeQuietly(from);
+            IOUtils.closeQuietly(to);
+        }
+        return false;
+    }
 }
