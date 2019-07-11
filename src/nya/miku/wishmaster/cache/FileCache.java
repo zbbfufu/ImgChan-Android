@@ -48,6 +48,7 @@ import nya.miku.wishmaster.ui.CompatibilityImpl;
 public class FileCache {
     private static final String TAG = "FileCache";
     
+    public static final String PREFIX_ATTACHMENTS = "attachments/";
     public static final String PREFIX_ORIGINALS = "orig_";
     /*package*/ static final String PREFIX_BITMAPS = "thumb_";
     
