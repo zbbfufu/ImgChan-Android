@@ -1598,8 +1598,6 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         
         private int currentCount;
         
-        private int[] hackListViewPosition = null; //смещение скроллинга, если в последних есть сокращённый длинный пост ("Показать весь текст")
-        
         private BoardFragment fragment() {
             return fragmentRef.get();
         }
@@ -1767,26 +1765,8 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         public void notifyDataSetChanged() {
             try {
                 currentCount = fragment().presentationModel.presentationList.size();
-                if (fragment().pageType != TYPE_THREADSLIST && fragment().staticSettings.itemHeight != 0) {
-                    boolean needHack = false;
-                    for (int i=0, len=fragment().listView.getChildCount(); i<len; ++i) {
-                        View v = fragment().listView.getChildAt(i);
-                        if (v.getTag() instanceof PostViewTag && ((PostViewTag) v.getTag()).showFullTextIsVisible) {
-                            needHack = true;
-                            break;
-                        }
-                    }
-                    if (needHack) {
-                        View v = fragment().listView.getChildAt(0);
-                        int position = fragment().listView.getPositionForView(v);
-                        hackListViewPosition = new int[] { position, v.getTop() };
-                    } else {
-                        hackListViewPosition = null;
-                    }
-                }
             } catch (Exception e) {
                 Logger.e(TAG, e);
-                hackListViewPosition = null;
             }
             super.notifyDataSetChanged();
         }
@@ -2198,10 +2178,6 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                             @Override
                             public boolean onPreDraw() {
                                 if (fragment() == null) return false;
-                                if (hackListViewPosition != null) {
-                                    fragment().listView.setSelectionFromTop(hackListViewPosition[0], hackListViewPosition[1]);
-                                    hackListViewPosition = null;
-                                }
                                 tag.commentView.getViewTreeObserver().removeOnPreDrawListener(this);
                                 if (tag.commentView.getHeight() < fragment().staticSettings.itemHeight) {
                                     return true;
