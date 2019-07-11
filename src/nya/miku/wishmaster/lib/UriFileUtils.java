@@ -21,9 +21,12 @@ import android.provider.BaseColumns;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.support.v4.content.FileProvider;
+import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.ui.CompatibilityImpl;
 
 public class UriFileUtils {
+    private static final String TAG = "UriFileUtils";
+
     /**
      * Get a file path from a Uri. This will get the the path for Storage Access
      * Framework Documents, as well as the _data field for the MediaStore and
@@ -151,6 +154,8 @@ public class UriFileUtils {
                 final int column_index = cursor.getColumnIndexOrThrow(column);
                 return cursor.getString(column_index);
             }
+        } catch (Exception e) {
+            Logger.e(TAG, e);
         } finally {
             if (cursor != null) {
                 cursor.close();
