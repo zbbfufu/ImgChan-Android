@@ -40,6 +40,7 @@ import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.AbstractLynxChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
+import nya.miku.wishmaster.api.models.BoardModel;
 import nya.miku.wishmaster.api.models.DeletePostModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.UrlPageModel;
@@ -161,6 +162,12 @@ public class EndChanModule extends AbstractLynxChanModule {
         return ResourcesCompat.getDrawable(resources, R.drawable.favicon_endchan, null);
     }
 
+    @Override
+    public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
+        BoardModel model = super.getBoard(shortName, listener, task);
+        model.allowRandomHash = false;
+        return model;
+    }
 
     private String checkFileIdentifier(File file, String mime, ProgressListener listener, CancellableTask task) {
         String hash;
@@ -191,7 +198,36 @@ public class EndChanModule extends AbstractLynxChanModule {
         return os.toString();
     }
 
+    private boolean validateCaptcha(String captchaAnswer, ProgressListener listener, CancellableTask task) throws Exception {
+        if (lastCaptchaId == null) return false;
+        String url = getUsingUrl() + ".api/solveCaptcha";
+
+        JSONObject jsonPayload = new JSONObject();
+        JSONObject jsonParameters = new JSONObject();
+        jsonPayload.put("captchaId", lastCaptchaId);
+        jsonParameters.put("captchaId", lastCaptchaId);
+        jsonParameters.put("answer", captchaAnswer);
+        jsonPayload.put("parameters", jsonParameters);
+        JSONEntry payload = new JSONEntry(jsonPayload);
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(payload).setNoRedirect(true).build();
+        String response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, listener, task, true);
+        JSONObject result = new JSONObject(response);
+        String status = result.optString("status");
+        if ("ok".equals(status)) {
+            return true;
+        } else {
+            throw new Exception(result.getString("data"));
+        }
+    }
+
     public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
+        boolean captchaSolved = false;
+        if (model.captchaAnswer != null) {
+            captchaSolved = validateCaptcha(model.captchaAnswer, listener, task);
+        } else if (lastCaptchaId == null) {
+            getNewCaptcha(null, null, listener, task);
+        }
+
         String url = getUsingUrl() + ".api/" + (model.threadNumber == null ? "newThread" : "replyThread");
 
         JSONObject jsonPayload = new JSONObject();
@@ -205,8 +241,8 @@ public class EndChanModule extends AbstractLynxChanModule {
         jsonParameters.put("email", model.sage ? "sage" : model.email);
         if (model.threadNumber != null)
             jsonParameters.put("threadId", model.threadNumber);
-        if (model.captchaAnswer != null && model.captchaAnswer.length() > 0)
-            jsonParameters.put("captcha", model.captchaAnswer);
+        if (captchaSolved)
+            jsonParameters.put("captcha", lastCaptchaId);
         if (model.icon > 0)
             jsonParameters.put("flag", flagsMap.get(model.boardName).get(model.icon - 1));
         if (model.attachments != null && model.attachments.length > 0) {
@@ -253,6 +289,8 @@ public class EndChanModule extends AbstractLynxChanModule {
             if (errorMessage.length() > 0) {
                 throw new Exception(errorMessage);
             }
+        } else if (result.isNull("data") && status.length() > 0) {
+            throw new Exception(status);
         }
         throw new Exception("Unknown Error");
     }

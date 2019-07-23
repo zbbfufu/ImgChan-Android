@@ -446,22 +446,27 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
 
     protected ExtendedCaptchaModel downloadCaptcha(String captchaUrl, ProgressListener listener, CancellableTask task) throws Exception {
         Bitmap captchaBitmap = null;
-        HttpRequestModel requestModel = HttpRequestModel.DEFAULT_GET;
-        HttpResponseModel responseModel = HttpStreamer.getInstance().getFromUrl(captchaUrl, requestModel, httpClient, listener, task);
         String captchaId = null;
-        for (Header header : responseModel.headers) {
-            if (header != null && "Set-Cookie".equalsIgnoreCase(header.getName())) {
-                String cookie = header.getValue();
-                if (cookie.contains("captchaid")) {
-                    try {
-                        captchaId = cookie.split(";")[0].split("=")[1];
-                    } catch (Exception e) {
-                    }
-                }
-                if (captchaId != null) break;
-            }
-        }
+        HttpRequestModel requestModel = HttpRequestModel.builder().setGET().setNoRedirect(true).build();
+        HttpResponseModel responseModel = HttpStreamer.getInstance().getFromUrl(captchaUrl, requestModel, httpClient, listener, task);
         try {
+            for (Header header : responseModel.headers) {
+                if (header != null && "Set-Cookie".equalsIgnoreCase(header.getName())) {
+                    String cookie = header.getValue();
+                    if (cookie.contains("captchaid")) {
+                        try {
+                            captchaId = cookie.split(";")[0].split("=")[1];
+                        } catch (Exception e) {
+                        }
+                    }
+                    if (captchaId != null) break;
+                }
+            }
+            if (responseModel.statusCode == 301 || responseModel.statusCode == 302) {
+                captchaUrl = fixRelativeUrl(responseModel.locationHeader);
+                responseModel.release();
+                responseModel = HttpStreamer.getInstance().getFromUrl(captchaUrl, requestModel, httpClient, listener, task);
+            }
             InputStream imageStream = responseModel.stream;
             captchaBitmap = BitmapFactory.decodeStream(imageStream);
         } finally {
@@ -476,7 +481,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
 
     @Override
     public CaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
-        String captchaUrl = getUsingUrl() + "captcha.js?d=" + Double.toString(Math.random());
+        String captchaUrl = getUsingUrl() + "captcha.js?d=" + Math.random();
         return downloadCaptcha(captchaUrl, listener, task);
     }
 
