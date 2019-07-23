@@ -21,6 +21,7 @@ package nya.miku.wishmaster.chans.endchan;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
@@ -48,6 +49,7 @@ import nya.miku.wishmaster.api.models.UrlPageModel;
 import nya.miku.wishmaster.common.IOUtils;
 import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.http.JSONEntry;
+import nya.miku.wishmaster.http.interactive.SimpleCaptchaException;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
 import nya.miku.wishmaster.lib.MimeTypes;
@@ -336,6 +338,52 @@ public class EndChanModule extends AbstractLynxChanModule {
                 Logger.e(TAG, "Incorrect delete content result");
             }
         } else if (result.optString("status").equals("error")) {
+            String errorMessage = result.optString("data");
+            if (errorMessage.length() > 0) {
+                throw new Exception(errorMessage);
+            }
+        }
+        throw new Exception("Unknown Error");
+    }
+
+    @Override
+    public String reportPost(DeletePostModel model, final ProgressListener listener, final CancellableTask task) throws Exception {
+        String url = getUsingUrl() + ".api/" + "reportContent";
+        if (lastCaptchaId == null) {
+            throw new SimpleCaptchaException() {
+                private static final long serialVersionUID = 1L;
+                @Override
+                protected Bitmap getNewCaptcha() throws Exception {
+                    return EndChanModule.this.getNewCaptcha(null, null, listener, task).bitmap;
+                }
+                @Override
+                protected void storeResponse(String response) {
+                    lastCaptchaAnswer = response;
+                }
+            };
+        }
+        JSONObject jsonPayload = new JSONObject();
+        JSONObject jsonParameters = new JSONObject();
+        jsonPayload.put("captchaId", lastCaptchaId);
+        jsonParameters.put("reason", model.reportReason);
+        jsonParameters.put("captcha", lastCaptchaAnswer);
+        //jsonParameters.put("global", false);
+        JSONArray jsonArray = new JSONArray();
+        JSONObject post = new JSONObject();
+        post.put("board", model.boardName);
+        post.put("thread", model.threadNumber);
+        if (!model.postNumber.equals(model.threadNumber)) post.put("post", model.postNumber);
+        jsonArray.put(post);
+        jsonParameters.put("postings", jsonArray);
+        jsonPayload.put("parameters", jsonParameters);
+        JSONEntry payload = new JSONEntry(jsonPayload);
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(payload).setNoRedirect(true).build();
+        String response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, null, task, true);
+        lastCaptchaId = null;
+        lastCaptchaAnswer = null;
+        JSONObject result = new JSONObject(response);
+        if (result.optString("status").equals("ok")) return null;
+        if (result.optString("status").equals("error")) {
             String errorMessage = result.optString("data");
             if (errorMessage.length() > 0) {
                 throw new Exception(errorMessage);
