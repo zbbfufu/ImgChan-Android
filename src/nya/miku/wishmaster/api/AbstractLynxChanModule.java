@@ -138,10 +138,23 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         JSONObject boardsJson = downloadJSONObject(url, (oldBoardsList != null && boardsMap != null), listener, task);
         if (boardsJson == null) return oldBoardsList;
         JSONArray boards = boardsJson.getJSONArray("boards");
-        BoardModel model;
+        SimpleBoardModel model;
         for (int i = 0, len = boards.length(); i < len; ++i) {
-            model = mapBoardModel(boards.getJSONObject(i));
-            list.add(new SimpleBoardModel(model));
+            try {
+                model = new SimpleBoardModel();
+                model.chan = getChanName();
+                model.boardName = boards.getJSONObject(i).getString("boardUri");
+                model.boardDescription = boards.getJSONObject(i).optString("boardName", model.boardName);
+                try {
+                    String settings = boards.getJSONObject(i).getJSONArray("specialSettings").toString();
+                    model.nsfw = !settings.contains("\"sfw\"");
+                } catch (Exception e) {
+                    model.nsfw = true;
+                }
+                list.add(model);
+            } catch (Exception e) {
+                Logger.e(TAG, "Incorrect element in boards list");
+            }
         }
         return list.toArray(new SimpleBoardModel[list.size()]);
     }
@@ -149,25 +162,31 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
     @Override
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         if (boardsMap == null) {
-            boardsMap = new HashMap<String, BoardModel>();
+            boardsMap = new HashMap<>();
         }
         BoardModel model;
         if (boardsMap.containsKey(shortName)) {
             model = boardsMap.get(shortName);
         } else {
-            model = mapBoardModel(listener, task, getDefaultBoardModel(shortName));
-            boardsMap.put(shortName, model);
+            String url = getUsingUrl() + shortName + "/1.json";
+            JSONObject boardJson;
+            try {
+                boardJson = downloadJSONObject(url, false, listener, task);
+            } catch (Exception e) {
+                boardJson = new JSONObject();
+            }
+            model = mapBoardModel(boardJson);
+            boardsMap.put(model.boardName, model);
         }
         return model;
     }
 
-    private BoardModel mapBoardModel(ProgressListener listener, CancellableTask task, BoardModel model) throws Exception {
-        String url = getUsingUrl() + model.boardName + "/1.json";
-        JSONObject boardJson = downloadJSONObject(url, false, listener, task);
-        model.boardDescription = boardJson.optString("boardName", model.boardName);
-        model.attachmentsMaxCount = boardJson.optInt("maxFileCount", 5);
-        model.lastPage = boardJson.optInt("pageCount", BoardModel.LAST_PAGE_UNDEFINED);
-        JSONArray settingsJson = boardJson.optJSONArray("settings");
+    protected BoardModel mapBoardModel(JSONObject json) {
+        BoardModel model = getDefaultBoardModel(json.getString("boardUri"));
+        model.boardDescription = json.optString("boardName", model.boardName);
+        model.attachmentsMaxCount = json.optInt("maxFileCount", 5);
+        model.lastPage = json.optInt("pageCount", BoardModel.LAST_PAGE_UNDEFINED);
+        JSONArray settingsJson = json.optJSONArray("settings");
         ArrayList<String> settings = new ArrayList<String>();
         if (settingsJson != null) {
             for(int i = 0, len = settingsJson.length(); i < len; ++i) settings.add(settingsJson.getString(i));
@@ -180,7 +199,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         model.uniqueAttachmentNames = settings.contains("uniqueFiles");
         model.attachmentsMaxCount = settings.contains("textBoard") ? 0 : model.attachmentsMaxCount;
         try {
-            JSONArray flags = boardJson.getJSONArray("flagData");
+            JSONArray flags = json.getJSONArray("flagData");
             if (flags.length() > 0) {
                 String[] icons = new String[flags.length() + 1];
                 icons[0] = "No flag";
@@ -195,18 +214,6 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
                 model.iconDescriptions = icons;
             }
         } catch (Exception e) {}
-        return model;
-    }
-
-    private BoardModel mapBoardModel(JSONObject object) {
-        BoardModel model = getDefaultBoardModel(object.optString("boardUri"));
-        model.boardDescription = object.optString("boardName", model.boardName);
-        try {
-            String settings = object.getJSONArray("specialSettings").toString();
-            model.nsfw = !settings.contains("\"sfw\"");
-        } catch (Exception e) {
-            model.nsfw = true;
-        }
         return model;
     }
 
@@ -246,6 +253,11 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         String url = getUsingUrl() + boardName + "/" + page + ".json";
         JSONObject response = downloadJSONObject(url, oldList != null, listener, task);
         if (response == null) return oldList;
+        try {
+            BoardModel board = mapBoardModel(response);
+            if (boardsMap == null) boardsMap = new HashMap<>();
+            boardsMap.put(board.boardName, board);
+        } catch (Exception e) {}
         JSONArray threads = response.getJSONArray("threads");
         ThreadModel[] result = new ThreadModel[threads.length()];
         for (int i = 0, len = threads.length(); i < len; ++i) {
