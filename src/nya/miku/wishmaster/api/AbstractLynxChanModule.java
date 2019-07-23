@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -71,6 +72,7 @@ import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
+import nya.miku.wishmaster.lib.MimeTypes;
 import nya.miku.wishmaster.lib.org_json.JSONArray;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
@@ -81,7 +83,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         CHAN_DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         CHAN_DATEFORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
-
+    private static final Pattern MIME_TYPE_PATTERN = Pattern.compile("-(application|audio|image|text|video)(.+)");
     private static final Pattern RED_TEXT_MARK_PATTERN = Pattern.compile("<span class=\"redText\">(.*?)</span>");
     private static final Pattern ORANGE_TEXT_MARK_PATTERN = Pattern.compile("<span class=\"orangeText\">(.*?)</span>");
     private static final Pattern GREEN_TEXT_MARK_PATTERN = Pattern.compile("<span class=\"greenText\">(.*?)</span>");
@@ -193,6 +195,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         model.boardDescription = json.optString("boardName", model.boardName);
         model.attachmentsMaxCount = json.optInt("maxFileCount", 5);
         model.lastPage = json.optInt("pageCount", BoardModel.LAST_PAGE_UNDEFINED);
+        
         JSONArray settingsJson = json.optJSONArray("settings");
         ArrayList<String> settings = new ArrayList<String>();
         if (settingsJson != null) {
@@ -203,7 +206,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         model.allowDeleteFiles = model.allowDeletePosts;
         model.requiredFileForNewThread = settings.contains("requireThreadFile");
         model.allowRandomHash = settings.contains("uniqueFiles");
-        model.uniqueAttachmentNames = settings.contains("uniqueFiles");
+        model.uniqueAttachmentNames = false;  //spoiler thumbs have same urls in different imageboards
         model.attachmentsMaxCount = settings.contains("textBoard") ? 0 : model.attachmentsMaxCount;
         try {
             JSONArray flags = json.getJSONArray("flagData");
@@ -281,7 +284,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
             JSONObject thread = threads.getJSONObject(i);
             ThreadModel curThread = mapThreadModel(thread);
             curThread.posts = new PostModel[posts.length() + 1];
-            curThread.postsCount += posts.length();
+            curThread.postsCount += curThread.posts.length;
             curThread.posts[0] = mapPostModel(thread);
             curThread.threadNumber = curThread.posts[0].number;
             curThread.posts[0].parentThread = curThread.threadNumber;
@@ -325,11 +328,11 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         }
         return result;
     }
-    
+
     private ThreadModel mapCatalogThreadModel(JSONObject object) {
         ThreadModel model = mapThreadModel(object);
-        model.postsCount = object.optInt("postCount");
-        model.attachmentsCount = object.optInt("fileCount");
+        model.postsCount = object.optInt("postCount") + 1;
+        model.attachmentsCount = object.optInt("fileCount", -1);
         PostModel post = mapPostModel(object);
         post.number = model.threadNumber;
         post.parentThread = model.threadNumber;
@@ -337,7 +340,17 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         if (thumb.length() > 0) {
             AttachmentModel attachment = new AttachmentModel();
             attachment.thumbnail = thumb;
-            attachment.path = thumb;
+            Matcher mimeMatcher = MIME_TYPE_PATTERN.matcher(thumb);
+            if (mimeMatcher.find()) {
+                String mime = mimeMatcher.group(1) + "/" + mimeMatcher.group(2);
+                attachment.type = getAttachmentType(mime);
+                String ext = MimeTypes.toExtension(mime);
+                attachment.path = thumb.replace("t_", "")
+                        + (ext != null ? "." + ext : "");
+            } else {
+                attachment.thumbnail = fixRelativeUrl(attachment.thumbnail);
+                attachment.path = attachment.thumbnail;
+            }
             attachment.height = -1;
             attachment.width = -1;
             attachment.size = -1;
@@ -353,28 +366,30 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         model.isSticky = object.optBoolean("pinned", false);
         model.isClosed = object.optBoolean("locked", false);
         model.isCyclical = object.optBoolean("cyclic", false);
-        model.postsCount = object.optInt("ommitedPosts", 0) + 1;
+        model.postsCount = object.optInt("ommitedPosts");
         return model;
     }
 
-    private PostModel mapPostModel(JSONObject object) {
+    protected PostModel mapPostModel(JSONObject object) {
         PostModel model = new PostModel();
         try {
             model.timestamp = CHAN_DATEFORMAT.parse(object.optString("creation")).getTime();
         } catch (ParseException e) {
             Logger.e(TAG, "cannot parse date; make sure you choose the right DateFormat for this chan", e);
         }
-        model.name = StringEscapeUtils.unescapeHtml4(object.optString("name"));
-        model.email = StringEscapeUtils.unescapeHtml4(object.optString("email"));
-        model.subject = StringEscapeUtils.unescapeHtml4(object.optString("subject"));
+        model.name = StringEscapeUtils.unescapeHtml4(object.optString("name")).replace("&apos;", "'");
+        model.email = StringEscapeUtils.unescapeHtml4(object.optString("email")).replace("&apos;", "'");
+        model.subject = StringEscapeUtils.unescapeHtml4(object.optString("subject")).replace("&apos;", "'");
         model.comment = object.optString("markdown", object.optString("message"));
         model.comment = RegexUtils.replaceAll(model.comment, RED_TEXT_MARK_PATTERN, "<font color=\"red\"><b>$1</b></font>");
         model.comment = RegexUtils.replaceAll(model.comment, ORANGE_TEXT_MARK_PATTERN, "<font color=\"#FFA500\">$1</font>");
         model.comment = RegexUtils.replaceAll(model.comment, GREEN_TEXT_MARK_PATTERN, "<span class=\"quote\">$1</span>");
         model.comment = RegexUtils.replaceAll(model.comment, REPLY_NUMBER_PATTERN, "&gt;&gt;$1");
+        model.comment = RegexUtils.linkify(model.comment.replace("&#58;//", "://"));
+        
         String banMessage = object.optString("banMessage", "");
         if (!banMessage.equals(""))
-            model.comment = model.comment + "<br/><em><font color=\"red\">"+banMessage+"</font></em>";
+            model.comment += "<br/><br/><em><font color=\"red\">" + banMessage + "</font></em>";
         String flag = object.optString("flag", "");
         if (!flag.equals("")) {
             BadgeIconModel icon = new BadgeIconModel();
@@ -391,13 +406,13 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         String signedRole = object.optString("signedRole", "");
         if (!signedRole.equals("")) model.trip = "##" + signedRole;
         String id = object.optString("id", "");
-        model.sage = id.equalsIgnoreCase("Heaven") || model.email.toLowerCase(Locale.US).contains("sage");
+        model.sage = model.email.toLowerCase(Locale.US).equals("sage");
         if (!id.equals("")) {
             model.name += (" ID:" + id);
             model.color = CryptoUtils.hashIdColor(id);
         }
         JSONArray files = object.optJSONArray("files");
-        if (files != null) {
+        if (files != null && files.length() > 0) {
             model.attachments = new AttachmentModel[files.length()];
             for (int i = 0, len = files.length(); i < len; ++i) {
                 model.attachments[i] = mapAttachment(files.getJSONObject(i));
@@ -408,26 +423,29 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
 
     private AttachmentModel mapAttachment(JSONObject object) {
         AttachmentModel model = new AttachmentModel();
-        model.originalName = StringEscapeUtils.unescapeHtml4(object.optString("originalName"));
+        model.originalName = StringEscapeUtils.unescapeHtml4(object.optString("originalName")).replace("&apos;", "'");
         model.thumbnail = object.optString("thumb");
         model.path = object.optString("path");
         model.height = object.optInt("height", -1);
         model.width = object.optInt("width", -1);
         model.size = object.optInt("size", -1) / 1024;
         model.size = model.size < 0 ? -1 : model.size;
-        String mime = object.optString("mime");
-        if (mime.startsWith("image/")) {
-            model.type = AttachmentModel.TYPE_IMAGE_STATIC;
-            if (mime.contains("gif")) model.type = AttachmentModel.TYPE_IMAGE_GIF;
-            if (mime.contains("svg")) model.type = AttachmentModel.TYPE_IMAGE_SVG;
-        } else if (mime.startsWith("audio/")) {
-            model.type = AttachmentModel.TYPE_AUDIO;
-        } else if (mime.startsWith("video/")) {
-            model.type = AttachmentModel.TYPE_VIDEO;
-        } else {
-            model.type = AttachmentModel.TYPE_OTHER_FILE;
-        }
+        model.type = getAttachmentType(object.optString("mime"));
         return model;
+    }
+
+    private int getAttachmentType(String mimeType) {
+        if (mimeType.startsWith("image/")) {
+            if (mimeType.contains("gif")) return AttachmentModel.TYPE_IMAGE_GIF;
+            if (mimeType.contains("svg")) return AttachmentModel.TYPE_IMAGE_SVG;
+            return AttachmentModel.TYPE_IMAGE_STATIC;
+        } else if (mimeType.startsWith("audio/")) {
+            return AttachmentModel.TYPE_AUDIO;
+        } else if (mimeType.startsWith("video/")) {
+            return AttachmentModel.TYPE_VIDEO;
+        } else {
+            return AttachmentModel.TYPE_OTHER_FILE;
+        }
     }
 
     @Override
