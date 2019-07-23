@@ -87,9 +87,14 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
     private static final Pattern GREEN_TEXT_MARK_PATTERN = Pattern.compile("<span class=\"greenText\">(.*?)</span>");
     private static final Pattern REPLY_NUMBER_PATTERN = Pattern.compile("&gt&gt(\\d+)");
     
+    private static final int MODE_NO_CAPTCHA = 0;
+    private static final int MODE_THREAD_CAPTCHA = 1;
+    private static final int MODE_POST_CAPTCHA = 2;
+    
     public static final int MAX_PASSWORD_LENGTH = 8;
     
     protected Map<String, BoardModel> boardsMap = null;
+    protected Map<String, Integer> captchaModesMap = null;
     protected Map<String, ArrayList<String>> flagsMap = null;
 
     public AbstractLynxChanModule(SharedPreferences preferences, Resources resources) {
@@ -164,9 +169,11 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         if (boardsMap == null) {
             boardsMap = new HashMap<>();
         }
-        BoardModel model;
-        if (boardsMap.containsKey(shortName)) {
-            model = boardsMap.get(shortName);
+        if (captchaModesMap == null) {
+            captchaModesMap = new HashMap<>();
+        }
+        if (boardsMap.containsKey(shortName) && captchaModesMap.containsKey(shortName)) {
+            return boardsMap.get(shortName);
         } else {
             String url = getUsingUrl() + shortName + "/1.json";
             JSONObject boardJson;
@@ -175,10 +182,10 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
             } catch (Exception e) {
                 boardJson = new JSONObject();
             }
-            model = mapBoardModel(boardJson);
+            BoardModel model = mapBoardModel(boardJson);
             boardsMap.put(model.boardName, model);
+            return model;
         }
-        return model;
     }
 
     protected BoardModel mapBoardModel(JSONObject json) {
@@ -214,6 +221,15 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
                 model.iconDescriptions = icons;
             }
         } catch (Exception e) {}
+        if (captchaModesMap == null) {
+            captchaModesMap = new HashMap<>();
+        }
+        switch (json.optInt("captchaMode", -1)) {
+            case 0: captchaModesMap.put(model.boardName, MODE_NO_CAPTCHA); break;
+            case 1: captchaModesMap.put(model.boardName, MODE_THREAD_CAPTCHA); break;
+            case 2: captchaModesMap.put(model.boardName, MODE_POST_CAPTCHA); break;
+            default: captchaModesMap.put(model.boardName, MODE_NO_CAPTCHA);
+        }
         return model;
     }
 
@@ -456,6 +472,29 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         return super.fixRelativeUrl(url);
     }
 
+    @Override
+    public ExtendedCaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
+        String captchaUrl = getUsingUrl() + "captcha.js?d=" + Math.random();
+        
+        if (boardName == null) {
+            return downloadCaptcha(captchaUrl, listener, task);
+        }
+        if (captchaModesMap == null || !captchaModesMap.containsKey(boardName)) {
+            try {
+                getBoard(boardName, listener, task);
+            } catch (Exception e) {
+                captchaModesMap.put(boardName, MODE_NO_CAPTCHA);
+                return null;
+            }
+        }
+        int captchaMode = captchaModesMap.get(boardName);
+        if ((captchaMode == MODE_THREAD_CAPTCHA && threadNumber == null) || captchaMode == MODE_POST_CAPTCHA) {
+            return downloadCaptcha(captchaUrl, listener, task);
+        } else {
+            return null;
+        }
+    }
+
     protected ExtendedCaptchaModel downloadCaptcha(String captchaUrl, ProgressListener listener, CancellableTask task) throws Exception {
         Bitmap captchaBitmap = null;
         String captchaId = null;
@@ -489,12 +528,6 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         captchaModel.bitmap = captchaBitmap;
         captchaModel.captchaID = captchaId;
         return captchaModel;
-    }
-
-    @Override
-    public ExtendedCaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
-        String captchaUrl = getUsingUrl() + "captcha.js?d=" + Math.random();
-        return downloadCaptcha(captchaUrl, listener, task);
     }
 
     public static String computeFileMD5(File file) throws NoSuchAlgorithmException, IOException {
