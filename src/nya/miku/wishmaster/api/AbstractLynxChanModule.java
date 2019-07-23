@@ -22,7 +22,6 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.webkit.MimeTypeMap;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -71,6 +70,7 @@ import nya.miku.wishmaster.http.interactive.SimpleCaptchaException;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
+import nya.miku.wishmaster.lib.MimeTypes;
 import nya.miku.wishmaster.lib.base64.Base64;
 import nya.miku.wishmaster.lib.base64.Base64OutputStream;
 import nya.miku.wishmaster.lib.org_json.JSONArray;
@@ -516,24 +516,24 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
             jsonParameters.put("captcha", model.captchaAnswer);
         if (model.icon > 0)
             jsonParameters.put("flag", flagsMap.get(model.boardName).get(model.icon - 1));
-        MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
         if (model.attachments != null && model.attachments.length > 0) {
             JSONArray files = new JSONArray();
             for (int i = 0; i < model.attachments.length; ++i) {
-                String ext = MimeTypeMap.getFileExtensionFromUrl(model.attachments[i].toURI().toString());
-                String mime = mimeTypeMap.getMimeTypeFromExtension(ext);
+                String name = model.attachments[i].getName();
+                String mime = MimeTypes.forExtension(name.substring(name.lastIndexOf('.') + 1), "");
                 String md5 = checkFileIdentifier(model.attachments[i], mime, listener, task);
                 JSONObject file = new JSONObject();
-                file.put("name", model.attachments[i].getName());
+                file.put("name", name);
                 if (md5 != null) {
                     file.put("md5", md5);
                     file.put("mime", mime);
                 } else {
                     file.put("content", "data:" + mime + ";base64," + base64EncodeFile(model.attachments[i]));
                 }
-                file.put("spoiler", model.custommark);
+                file.put("spoiler", false);
                 files.put(file);
             }
+            jsonParameters.put("spoiler", model.custommark);
             jsonParameters.put("files", files);
         }
         jsonPayload.put("parameters", jsonParameters);
