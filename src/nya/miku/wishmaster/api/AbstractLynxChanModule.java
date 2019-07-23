@@ -18,10 +18,16 @@
 
 package nya.miku.wishmaster.api;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Bundle;
+import android.preference.EditTextPreference;
+import android.preference.PreferenceGroup;
+import android.text.InputFilter;
+import android.text.InputType;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -45,6 +51,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import cz.msebera.android.httpclient.Header;
+import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.AttachmentModel;
@@ -79,11 +86,49 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
     private static final Pattern ORANGE_TEXT_MARK_PATTERN = Pattern.compile("<span class=\"orangeText\">(.*?)</span>");
     private static final Pattern GREEN_TEXT_MARK_PATTERN = Pattern.compile("<span class=\"greenText\">(.*?)</span>");
     private static final Pattern REPLY_NUMBER_PATTERN = Pattern.compile("&gt&gt(\\d+)");
+    
+    public static final int MAX_PASSWORD_LENGTH = 8;
+    
     protected Map<String, BoardModel> boardsMap = null;
     protected Map<String, ArrayList<String>> flagsMap = null;
-    
+
     public AbstractLynxChanModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
+    }
+
+    @Override
+    public String getDefaultPassword() {
+        String curPass;
+        if (!preferences.contains(getSharedKey(PREF_KEY_PASSWORD))) {
+            curPass = CryptoUtils.genPassword(MAX_PASSWORD_LENGTH);
+        } else {
+            curPass = preferences.getString(getSharedKey(PREF_KEY_PASSWORD), "");
+            if (curPass.length() > MAX_PASSWORD_LENGTH) {
+                curPass = curPass.substring(0, MAX_PASSWORD_LENGTH);
+            }
+        }
+        preferences.edit().putString(getSharedKey(PREF_KEY_PASSWORD), curPass).commit();
+        return curPass;
+    }
+
+    @Override
+    protected void addPasswordPreference(PreferenceGroup group) {
+        final Context context = group.getContext();
+        EditTextPreference passwordPref = new EditTextPreference(context) {
+            @Override
+            protected void showDialog(Bundle state) {
+                setText(getDefaultPassword());
+                super.showDialog(state);
+            }
+        };
+        passwordPref.setTitle(R.string.pref_password_title);
+        passwordPref.setDialogTitle(R.string.pref_password_title);
+        passwordPref.setSummary(R.string.pref_password_summary);
+        passwordPref.setKey(getSharedKey(PREF_KEY_PASSWORD));
+        passwordPref.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+        passwordPref.getEditText().setSingleLine();
+        passwordPref.getEditText().setFilters(new InputFilter[] { new InputFilter.LengthFilter(MAX_PASSWORD_LENGTH) });
+        group.addPreference(passwordPref);
     }
 
     @Override
