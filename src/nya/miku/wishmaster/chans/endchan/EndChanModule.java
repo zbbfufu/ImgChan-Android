@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.AbstractLynxChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
@@ -45,6 +46,7 @@ import nya.miku.wishmaster.api.models.DeletePostModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.UrlPageModel;
 import nya.miku.wishmaster.common.IOUtils;
+import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.http.JSONEntry;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
@@ -52,6 +54,7 @@ import nya.miku.wishmaster.lib.MimeTypes;
 import nya.miku.wishmaster.lib.base64.Base64;
 import nya.miku.wishmaster.lib.base64.Base64OutputStream;
 import nya.miku.wishmaster.lib.org_json.JSONArray;
+import nya.miku.wishmaster.lib.org_json.JSONException;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
 public class EndChanModule extends AbstractLynxChanModule {
@@ -177,6 +180,18 @@ public class EndChanModule extends AbstractLynxChanModule {
         return os.toString();
     }
 
+    @Override
+    public ExtendedCaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
+        BasicClientCookie c = new BasicClientCookie("captchaid", "");
+        c.setDomain(getUsingDomain());
+        c.setPath("/");
+        httpClient.getCookieStore().addCookie(c);
+
+        ExtendedCaptchaModel captchaModel = super.getNewCaptcha(boardName, threadNumber, listener, task);
+        lastCaptchaId = captchaModel.captchaID;
+        return captchaModel;
+    }
+
     private boolean validateCaptcha(String captchaAnswer, ProgressListener listener, CancellableTask task) throws Exception {
         if (lastCaptchaId == null) return false;
         String url = getUsingUrl() + ".api/solveCaptcha";
@@ -282,29 +297,18 @@ public class EndChanModule extends AbstractLynxChanModule {
     }
 
     @Override
-    public String deletePost(DeletePostModel model, final ProgressListener listener, final CancellableTask task) throws Exception {
+    public String deletePost(DeletePostModel model, ProgressListener listener, CancellableTask task) throws Exception {
         String url = getUsingUrl() + ".api/" + "deleteContent";
-        /*
-        if (lastCaptchaAnswer == null) {
-            throw new SimpleCaptchaException() {
-                private static final long serialVersionUID = 1L;
-                @Override
-                protected Bitmap getNewCaptcha() throws Exception {
-                    return AbstractLynxChanModule.this.getNewCaptcha("", "", listener, task).bitmap;
-                }
-                @Override
-                protected void storeResponse(String response) {
-                    lastCaptchaAnswer = response;
-                }
-            };
+        if (lastCaptchaId == null) {
+            getNewCaptcha(null, null, listener, task);
         }
-        */
+        if (model.password.length() > MAX_PASSWORD_LENGTH) {
+            model.password = model.password.substring(0, MAX_PASSWORD_LENGTH);
+        }
         JSONObject jsonPayload = new JSONObject();
         JSONObject jsonParameters = new JSONObject();
         jsonPayload.put("captchaId", lastCaptchaId);
         jsonParameters.put("password", model.password);
-        if (lastCaptchaAnswer != null && lastCaptchaAnswer.length() > 0)
-            jsonParameters.put("captcha", lastCaptchaAnswer);
         jsonParameters.put("deleteMedia", true);
         if (model.onlyFiles) {
             jsonParameters.put("deleteUploads", true);
@@ -314,21 +318,30 @@ public class EndChanModule extends AbstractLynxChanModule {
         post.put("board", model.boardName);
         post.put("thread", model.threadNumber);
         if (!model.postNumber.equals(model.threadNumber)) post.put("post", model.postNumber);
+        jsonArray.put(post);
         jsonParameters.put("postings", jsonArray);
         jsonPayload.put("parameters", jsonParameters);
         JSONEntry payload = new JSONEntry(jsonPayload);
         HttpRequestModel request = HttpRequestModel.builder().setPOST(payload).setNoRedirect(true).build();
         String response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, null, task, true);
         lastCaptchaId = null;
-        lastCaptchaAnswer = null;
         JSONObject result = new JSONObject(response);
-        if (result.optString("status").equals("error")) {
+        if (result.optString("status").equals("ok")) {
+            try {
+                JSONObject data = result.getJSONObject("data");
+                int removedCount = data.getInt("removedPosts") + data.getInt("removedThreads");
+                if (removedCount == 0) throw new Exception("Nothing was removed");
+                else if (removedCount > 0) return null;
+            } catch (JSONException e) {
+                Logger.e(TAG, "Incorrect delete content result");
+            }
+        } else if (result.optString("status").equals("error")) {
             String errorMessage = result.optString("data");
             if (errorMessage.length() > 0) {
                 throw new Exception(errorMessage);
             }
         }
-        return null;
+        throw new Exception("Unknown Error");
     }
 
 }

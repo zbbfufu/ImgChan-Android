@@ -492,7 +492,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
     }
 
     @Override
-    public CaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
+    public ExtendedCaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
         String captchaUrl = getUsingUrl() + "captcha.js?d=" + Math.random();
         return downloadCaptcha(captchaUrl, listener, task);
     }
