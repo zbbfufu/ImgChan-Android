@@ -508,6 +508,20 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         return md5Hex;
     }
 
+    protected boolean checkFileIdentifier(String hash, String mime, ProgressListener listener, CancellableTask task) {
+        if (hash == null || mime == null) return false;
+        String identifier = hash + "-" + mime.replace("/", "");
+        String url = getUsingUrl() + "checkFileIdentifier.js?json=1&identifier=" + identifier;
+        String response;
+        try {
+            response = HttpStreamer.getInstance().getStringFromUrl(url, null, httpClient, listener, task, false);
+            return response.contains("true");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public class ExtendedCaptchaModel extends CaptchaModel {
         public String captchaID = "";
     }

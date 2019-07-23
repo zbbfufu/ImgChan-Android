@@ -169,27 +169,6 @@ public class EndChanModule extends AbstractLynxChanModule {
         return model;
     }
 
-    private String checkFileIdentifier(File file, String mime, ProgressListener listener, CancellableTask task) {
-        String hash;
-        try {
-            hash = computeFileMD5(file);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-        String identifier = hash + "-" + mime.replace("/", "");
-        String url = getUsingUrl() + "checkFileIdentifier.js?identifier=" + identifier;
-        String response = "";
-        try {
-            response = HttpStreamer.getInstance().getStringFromUrl(url, null, httpClient, listener, task, false);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-        if (response.contains("true")) return hash;
-        return null;
-    }
-
     private String base64EncodeFile(File file) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         Base64OutputStream b64os = new Base64OutputStream(os, Base64.NO_WRAP);
@@ -250,10 +229,17 @@ public class EndChanModule extends AbstractLynxChanModule {
             for (int i = 0; i < model.attachments.length; ++i) {
                 String name = model.attachments[i].getName();
                 String mime = MimeTypes.forExtension(name.substring(name.lastIndexOf('.') + 1), "");
-                String md5 = checkFileIdentifier(model.attachments[i], mime, listener, task);
+                String md5;
+                try {
+                    md5 = computeFileMD5(model.attachments[i]);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new Exception("Cannot attach file " + name);
+                }
+                boolean fileExists = checkFileIdentifier(md5, mime, listener, task);
                 JSONObject file = new JSONObject();
                 file.put("name", name);
-                if (md5 != null) {
+                if (fileExists) {
                     file.put("md5", md5);
                     file.put("mime", mime);
                 } else {
