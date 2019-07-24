@@ -184,14 +184,14 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
             } catch (Exception e) {
                 boardJson = new JSONObject();
             }
-            BoardModel model = mapBoardModel(boardJson);
+            BoardModel model = mapBoardModel(boardJson, shortName);
             boardsMap.put(model.boardName, model);
             return model;
         }
     }
 
-    protected BoardModel mapBoardModel(JSONObject json) {
-        BoardModel model = getDefaultBoardModel(json.getString("boardUri"));
+    protected BoardModel mapBoardModel(JSONObject json, String shortName) {
+        BoardModel model = getDefaultBoardModel(shortName);
         model.boardDescription = json.optString("boardName", model.boardName);
         model.attachmentsMaxCount = json.optInt("maxFileCount", 5);
         model.lastPage = json.optInt("pageCount", BoardModel.LAST_PAGE_UNDEFINED);
@@ -273,9 +273,9 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         JSONObject response = downloadJSONObject(url, oldList != null, listener, task);
         if (response == null) return oldList;
         try {
-            BoardModel board = mapBoardModel(response);
+            BoardModel board = mapBoardModel(response, boardName);
             if (boardsMap == null) boardsMap = new HashMap<>();
-            boardsMap.put(board.boardName, board);
+            boardsMap.put(boardName, board);
         } catch (Exception e) {}
         JSONArray threads = response.getJSONArray("threads");
         ThreadModel[] result = new ThreadModel[threads.length()];
@@ -347,8 +347,8 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
                 String ext = MimeTypes.toExtension(mime);
                 attachment.path = thumb.replace("t_", "")
                         + (ext != null ? "." + ext : "");
-            } else {
-                attachment.thumbnail = fixRelativeUrl(attachment.thumbnail);
+            } else { //Internal image (e.g. spoiler)
+                attachment.thumbnail = fixRelativeUrl(thumb); //fix equal hashes in cache
                 attachment.path = attachment.thumbnail;
             }
             attachment.height = -1;

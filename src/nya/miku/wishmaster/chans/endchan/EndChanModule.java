@@ -62,6 +62,11 @@ import nya.miku.wishmaster.lib.org_json.JSONArray;
 import nya.miku.wishmaster.lib.org_json.JSONException;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
+/**
+ * Class interacting with Endchan imageboard (Lynxchan engine version 1)
+ * Can be used as a superclass for modules of sites using the same version of the engine.
+ */
+
 public class EndChanModule extends AbstractLynxChanModule {
     private static final String TAG = "EndChanModule";
     
@@ -175,7 +180,7 @@ public class EndChanModule extends AbstractLynxChanModule {
     @Override
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel model = super.getBoard(shortName, listener, task);
-        model.allowRandomHash = false;
+        model.allowRandomHash = false; // doesn't implemented
         return model;
     }
 
@@ -379,7 +384,6 @@ public class EndChanModule extends AbstractLynxChanModule {
         jsonPayload.put("captchaId", lastCaptchaId);
         jsonParameters.put("reason", model.reportReason);
         jsonParameters.put("captcha", lastCaptchaAnswer);
-        //jsonParameters.put("global", false);
         JSONArray jsonArray = new JSONArray();
         JSONObject post = new JSONObject();
         post.put("board", model.boardName);
