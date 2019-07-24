@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.regex.Pattern;
 
 import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 import nya.miku.wishmaster.R;
@@ -43,9 +44,11 @@ import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.BoardModel;
 import nya.miku.wishmaster.api.models.DeletePostModel;
+import nya.miku.wishmaster.api.models.PostModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
 import nya.miku.wishmaster.api.models.UrlPageModel;
+import nya.miku.wishmaster.api.util.RegexUtils;
 import nya.miku.wishmaster.common.IOUtils;
 import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
@@ -64,13 +67,15 @@ public class KohlchanModule extends AbstractLynxChanModule {
     private static final String DISPLAYING_NAME = "Kohlchan";
     private static final String DEFAULT_DOMAIN = "kohlchan.net";
     private static final String PREF_KEY_DOMAIN = "domain";
-    private static final List<String> DOMAINS_LIST = Arrays.asList(new String[] {
-            DEFAULT_DOMAIN, "kohlchan.mett.ru", "kohlchankxguym67.onion", "fastkohlp6h2seef.onion"
-    });
-    private static final String DOMAINS_HINT = "kohlchan.net, kohlchan.mett.ru, kohlchankxguym67.onion, fastkohlp6h2seef.onion (1 hop)";
+    private static final List<String> DOMAINS_LIST = Arrays.asList(
+            DEFAULT_DOMAIN, "kohlchan.mett.ru", "kohlchankxguym67.onion", "fastkohlp6h2seef.onion",
+            "kohlchan7cwtdwfuicqhxgqx4k47bsvlt2wn5eduzovntrzvonv4cqyd.onion",
+            "fastkohlt5rxcxtl5no7k3efmahlt7mafry7be6yvxdovekhq2hdnwqd.onion");
+    private static final String DOMAINS_HINT = "kohlchan.net, kohlchan.mett.ru, kohlchankxguym67.onion, fastkohlp6h2seef.onion";
     
     private static final String[] ATTACHMENT_FORMATS = new String[] {
             "jpg", "jpeg", "bmp", "gif", "png", "mp3", "ogg", "flac", "opus", "webm", "mp4", "7z", "zip", "pdf", "epub", "txt" };
+    private static final Pattern INVALID_LESSER_THAN_PATTERN = Pattern.compile("&lt([^;])");
     
     private String domain;
     private Map<String, String> captchas = new HashMap<>();
@@ -210,6 +215,13 @@ public class KohlchanModule extends AbstractLynxChanModule {
         model.defaultUserName = "Bernd";
         model.allowEmails = false;
         model.attachmentsFormatFilters = ATTACHMENT_FORMATS;
+        return model;
+    }
+
+    @Override
+    protected PostModel mapPostModel(JSONObject object) {
+        PostModel model = super.mapPostModel(object);
+        model.comment = RegexUtils.replaceAll(model.comment, INVALID_LESSER_THAN_PATTERN, "&lt;$1");
         return model;
     }
 

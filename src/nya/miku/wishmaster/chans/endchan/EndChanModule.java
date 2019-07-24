@@ -36,6 +36,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 import nya.miku.wishmaster.R;
@@ -44,8 +45,10 @@ import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.BoardModel;
 import nya.miku.wishmaster.api.models.DeletePostModel;
+import nya.miku.wishmaster.api.models.PostModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.UrlPageModel;
+import nya.miku.wishmaster.api.util.RegexUtils;
 import nya.miku.wishmaster.common.IOUtils;
 import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.http.JSONEntry;
@@ -60,15 +63,17 @@ import nya.miku.wishmaster.lib.org_json.JSONException;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
 public class EndChanModule extends AbstractLynxChanModule {
-    private static final List<String> DOMAINS_LIST = Arrays.asList(new String[]{
-            "endchan.xyz", "endchan.net", "infinow.net", "endchan5doxvprs5.onion", "s6424n4x4bsmqs27.onion", "endchan.i2p"
-    });
-    private static final String DOMAINS_HINT = "endchan.xyz, endchan.net, infinow.net (cached), endchan5doxvprs5.onion, s6424n4x4bsmqs27.onion, endchan.i2p";
     private static final String TAG = "EndChanModule";
-    private static final String DISPLAYING_NAME = "EndChan";
+    
+    private static final List<String> DOMAINS_LIST = Arrays.asList(
+            "endchan.xyz", "endchan.net", "endchan.org", "endchan5doxvprs5.onion", "s6424n4x4bsmqs27.onion", "endchan.i2p");
+    private static final String DOMAINS_HINT = "endchan.xyz, endchan.net, endchan.org (cached), endchan5doxvprs5.onion, s6424n4x4bsmqs27.onion, endchan.i2p";
+    private static final String DISPLAYING_NAME = "Endchan";
     private static final String CHAN_NAME = "endchan.xyz";
     private static final String DEFAULT_DOMAIN = "endchan.xyz";
     private static final String PREF_KEY_DOMAIN = "domain";
+    private static final Pattern EMBED_HREF_PATTERN = Pattern.compile("<span class=\"youtube_wrapper\".*?<a href=\"([^\"]+)\".*?</span>");
+    
     private String domain;
     
     private String lastCaptchaId;
@@ -171,6 +176,13 @@ public class EndChanModule extends AbstractLynxChanModule {
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel model = super.getBoard(shortName, listener, task);
         model.allowRandomHash = false;
+        return model;
+    }
+
+    @Override
+    protected PostModel mapPostModel(JSONObject object) {
+        PostModel model = super.mapPostModel(object);
+        model.comment = RegexUtils.replaceAll(model.comment, EMBED_HREF_PATTERN, "<a href=\"$1\">$1</a>");
         return model;
     }
 
