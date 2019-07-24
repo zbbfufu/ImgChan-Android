@@ -207,7 +207,7 @@ public class EndChanModule extends AbstractLynxChanModule {
         httpClient.getCookieStore().addCookie(c);
 
         ExtendedCaptchaModel captchaModel = super.getNewCaptcha(boardName, threadNumber, listener, task);
-        lastCaptchaId = captchaModel.captchaID;
+        if (captchaModel != null) lastCaptchaId = captchaModel.captchaID;
         return captchaModel;
     }
 
@@ -235,7 +235,7 @@ public class EndChanModule extends AbstractLynxChanModule {
 
     public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
         boolean captchaSolved = false;
-        if (model.captchaAnswer != null) {
+        if (model.captchaAnswer != null && model.captchaAnswer.length() > 0) {
             captchaSolved = validateCaptcha(model.captchaAnswer, listener, task);
         } else if (lastCaptchaId == null) {
             getNewCaptcha(null, null, listener, task);
