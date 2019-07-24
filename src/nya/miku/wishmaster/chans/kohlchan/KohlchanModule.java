@@ -42,16 +42,19 @@ import nya.miku.wishmaster.api.AbstractLynxChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.BoardModel;
+import nya.miku.wishmaster.api.models.DeletePostModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
 import nya.miku.wishmaster.api.models.UrlPageModel;
 import nya.miku.wishmaster.common.IOUtils;
+import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
 import nya.miku.wishmaster.http.streamer.HttpWrongStatusCodeException;
 import nya.miku.wishmaster.lib.MimeTypes;
+import nya.miku.wishmaster.lib.org_json.JSONException;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
 public class KohlchanModule extends AbstractLynxChanModule {
@@ -71,6 +74,7 @@ public class KohlchanModule extends AbstractLynxChanModule {
     
     private String domain;
     private Map<String, String> captchas = new HashMap<>();
+    private String reportCaptchaAnswer = null;
 
     public KohlchanModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -317,6 +321,91 @@ public class KohlchanModule extends AbstractLynxChanModule {
                 banMessage += "\nReason: " + result.getJSONObject("data").getString("reason");
             } catch (Exception e) { }
             throw new Exception(banMessage);
+        }
+        throw new Exception("Unknown Error");
+    }
+
+    @Override
+    public String deletePost(DeletePostModel model, ProgressListener listener, CancellableTask task) throws Exception {
+        String url = getUsingUrl() + "contentActions.js?json=1";
+
+        if (model.password.length() > MAX_PASSWORD_LENGTH) {
+            model.password = model.password.substring(0, MAX_PASSWORD_LENGTH);
+        }
+        ExtendedMultipartBuilder multipartBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
+                addString("action", "delete").
+                addString("password", model.password).
+                addString("deleteMedia", "true"). /* Unnecessary. Only mods can remove files from server */
+                addString(model.boardName + "-" + model.threadNumber
+                        + (model.threadNumber.equals(model.postNumber) ? "" : ("-" + model.postNumber)), "true");
+        if (model.onlyFiles) {
+            multipartBuilder.addString("deleteUploads", "true");
+        }
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(multipartBuilder.build()).build();
+        String response;
+        try {
+            response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, listener, task, false);
+        } catch (HttpWrongStatusCodeException e) {
+            checkCloudflareError(e, url);
+            throw e;
+        }
+        JSONObject result = new JSONObject(response);
+        String status = result.optString("status");
+        if ("ok".equals(status)) {
+            try {
+                JSONObject data = result.getJSONObject("data");
+                int removedCount = data.getInt("removedPosts") + data.getInt("removedThreads");
+                if (removedCount == 0) throw new Exception("Nothing was removed");
+                else if (removedCount > 0) return null;
+            } catch (JSONException e) {
+                Logger.e(TAG, "Incorrect delete content result");
+            }
+        } else if (status.contains("error")) {
+            String errorMessage = result.optString("data");
+            if (errorMessage.length() > 0) {
+                throw new Exception(errorMessage);
+            }
+        }
+        throw new Exception("Unknown Error");
+    }
+
+    @Override
+    public String reportPost(DeletePostModel model, ProgressListener listener, CancellableTask task) throws Exception {
+        if (reportCaptchaAnswer == null) {
+            throw new KohlchanCaptchaException() {
+                @Override
+                protected void storeResponse(String response) {
+                    reportCaptchaAnswer = response;
+                }
+            };
+        }
+
+        String url = getUsingUrl() + "contentActions.js?json=1";
+
+        ExtendedMultipartBuilder multipartBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
+                addString("action", "report").
+                addString("reason", model.reportReason).
+                addString("captcha", reportCaptchaAnswer).
+                addString(model.boardName + "-" + model.threadNumber
+                        + (model.threadNumber.equals(model.postNumber) ? "" : "-" + model.postNumber), "true");
+        reportCaptchaAnswer = null;
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(multipartBuilder.build()).build();
+        String response;
+        try {
+            response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, listener, task, false);
+        } catch (HttpWrongStatusCodeException e) {
+            checkCloudflareError(e, url);
+            throw e;
+        }
+        JSONObject result = new JSONObject(response);
+        String status = result.optString("status");
+        if ("ok".equals(status)) {
+            return null;
+        } else if (status.equals("error")) {
+            String errorMessage = result.optString("data");
+            if (errorMessage.length() > 0) {
+                throw new Exception(errorMessage);
+            }
         }
         throw new Exception("Unknown Error");
     }
