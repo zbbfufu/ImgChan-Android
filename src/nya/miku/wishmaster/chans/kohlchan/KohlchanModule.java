@@ -29,23 +29,30 @@ import android.support.v4.content.res.ResourcesCompat;
 import android.text.InputType;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
+import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.AbstractLynxChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.BoardModel;
+import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
+import nya.miku.wishmaster.api.models.UrlPageModel;
 import nya.miku.wishmaster.common.IOUtils;
-import nya.miku.wishmaster.common.Logger;
+import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
 import nya.miku.wishmaster.http.streamer.HttpWrongStatusCodeException;
+import nya.miku.wishmaster.lib.MimeTypes;
+import nya.miku.wishmaster.lib.org_json.JSONObject;
 
 public class KohlchanModule extends AbstractLynxChanModule {
     private static final String TAG = "KohlchanModule";
@@ -63,6 +70,7 @@ public class KohlchanModule extends AbstractLynxChanModule {
             "jpg", "jpeg", "bmp", "gif", "png", "mp3", "ogg", "flac", "opus", "webm", "mp4", "7z", "zip", "pdf", "epub", "txt" };
     
     private String domain;
+    private Map<String, String> captchas = new HashMap<>();
 
     public KohlchanModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -76,6 +84,10 @@ public class KohlchanModule extends AbstractLynxChanModule {
     @Override
     protected void initHttpClient() {
         updateDomain(preferences.getString(getSharedKey(PREF_KEY_DOMAIN), DEFAULT_DOMAIN));
+        BasicClientCookie cookieConsent = new BasicClientCookie("cookieConsent", "true");
+        cookieConsent.setDomain(getUsingDomain());
+        cookieConsent.setPath("/");
+        httpClient.getCookieStore().addCookie(cookieConsent);
     }
 
     @Override
@@ -189,23 +201,123 @@ public class KohlchanModule extends AbstractLynxChanModule {
     }
 
     @Override
-    protected Map<String, SimpleBoardModel> getBoardsMap(ProgressListener listener, CancellableTask task) throws Exception {
-        try {
-            return super.getBoardsMap(listener, task);
-        } catch (Exception e) {
-            Logger.e(TAG, e);
-            return Collections.emptyMap();
-        }
-    }
-    
-    @Override
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel model = super.getBoard(shortName, listener, task);
         model.defaultUserName = "Bernd";
-        model.attachmentsMaxCount = 4;
-        model.allowNames = false;
         model.allowEmails = false;
         model.attachmentsFormatFilters = ATTACHMENT_FORMATS;
         return model;
+    }
+
+    void putCaptcha(String captchaID, String answer) {
+        if (captchas == null) captchas = new HashMap<>();
+        captchas.put(captchaID, answer);
+    }
+
+    private void validateCaptcha(String captchaID, ProgressListener listener, CancellableTask task) throws Exception {
+        String captchaAnswer = captchas.remove(captchaID);
+        if (captchaAnswer == null) captchaAnswer = "";
+        String url = getUsingUrl() + "renewBypass.js?json=1";
+        ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
+                addString("captcha", captchaAnswer);
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build()).build();
+        JSONObject response;
+        try {
+            response = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, true);
+        } catch (HttpWrongStatusCodeException e) {
+            checkCloudflareError(e, url);
+            throw e;
+        }
+        switch (response.optString("status")) {
+            case "failed":
+            case "new":
+            case "next":
+                throw new KohlchanCaptchaException();
+            case "finish":
+                return;
+            case "error":
+                throw new Exception(response.optString("data", "Captcha Error"));
+            default: throw new Exception("Unknown Error");
+        }
+    }
+
+    public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
+        String captchaId;
+        try {
+            captchaId = captchas.keySet().iterator().next();
+        } catch (NoSuchElementException e) {
+            captchaId = null;
+        }
+        if (captchaId != null) validateCaptcha(captchaId, listener, task);
+        
+        String url = getUsingUrl() + (model.threadNumber == null ? "newThread.js?json=1" : "replyThread.js?json=1");
+        
+        if (model.password.length() > MAX_PASSWORD_LENGTH) {
+            model.password = model.password.substring(0, MAX_PASSWORD_LENGTH);
+        }
+        ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
+                setCharset(Charset.forName("UTF-8")).
+                addString("name", model.name).
+                addString("subject", model.subject).
+                addString("message", model.comment).
+                addString("password", model.password).
+                addString("boardUri", model.boardName);
+        if (model.sage) postEntityBuilder.addString("sage", "true");
+        if (model.threadNumber != null) postEntityBuilder.addString("threadId", model.threadNumber);
+        if (model.custommark) postEntityBuilder.addString("spoiler", "true");
+        if (model.attachments != null && model.attachments.length > 0) {
+            for (int i = 0; i < model.attachments.length; ++i) {
+                String name = model.attachments[i].getName();
+                String mime = MimeTypes.forExtension(name.substring(name.lastIndexOf('.') + 1));
+                if (mime == null) throw new Exception("Unknown file type of " + name);
+                String md5;
+                try {
+                    md5 = computeFileMD5(model.attachments[i]);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new Exception("Cannot attach file " + name);
+                }
+                postEntityBuilder.
+                        addString("fileMd5", md5).
+                        addString("fileMime", mime).
+                        addString("fileSpoiler", "").
+                        addString("fileName", name);
+                boolean fileExists = checkFileIdentifier(md5, mime, listener, task);
+                if (!fileExists) {
+                    postEntityBuilder.addFile("files", model.attachments[i], mime, model.randomHash);
+                }
+            }
+        }
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build()).setNoRedirect(true).build();
+        String response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, null, task, true);
+        JSONObject result = new JSONObject(response);
+        String status = result.optString("status");
+        if ("ok".equals(status)) {
+            UrlPageModel urlPageModel = new UrlPageModel();
+            urlPageModel.type = UrlPageModel.TYPE_THREADPAGE;
+            urlPageModel.chanName = getChanName();
+            urlPageModel.boardName = model.boardName;
+            urlPageModel.threadNumber = model.threadNumber;
+            if (model.threadNumber == null) {
+                urlPageModel.threadNumber = Integer.toString(result.optInt("data"));
+            } else {
+                urlPageModel.postNumber = Integer.toString(result.optInt("data"));
+            }
+            return buildUrl(urlPageModel);
+        } else if (status.contains("error") || status.contains("blank")) {
+            String errorMessage = result.optString("data");
+            if (errorMessage.length() > 0) {
+                throw new Exception(errorMessage);
+            }
+        } else if ("bypassable".equals(status)) {
+            throw new KohlchanCaptchaException();
+        } else if("banned".equals(status)) {
+            String banMessage = "You have been banned!";
+            try {
+                banMessage += "\nReason: " + result.getJSONObject("data").getString("reason");
+            } catch (Exception e) { }
+            throw new Exception(banMessage);
+        }
+        throw new Exception("Unknown Error");
     }
 }
