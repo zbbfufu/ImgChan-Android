@@ -35,7 +35,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
@@ -64,7 +66,6 @@ import nya.miku.wishmaster.lib.org_json.JSONObject;
 
 /**
  * Class interacting with Endchan imageboard (Lynxchan engine version 1)
- * Can be used as a superclass for modules of sites using the same version of the engine.
  */
 
 public class EndChanModule extends AbstractLynxChanModule {
@@ -74,15 +75,14 @@ public class EndChanModule extends AbstractLynxChanModule {
             "endchan.xyz", "endchan.net", "endchan.org", "endchan5doxvprs5.onion", "s6424n4x4bsmqs27.onion", "endchan.i2p");
     private static final String DOMAINS_HINT = "endchan.xyz, endchan.net, endchan.org (cached), endchan5doxvprs5.onion, s6424n4x4bsmqs27.onion, endchan.i2p";
     private static final String DISPLAYING_NAME = "Endchan";
-    private static final String CHAN_NAME = "endchan.xyz";
+    static final String CHAN_NAME = "endchan.xyz";
     private static final String DEFAULT_DOMAIN = "endchan.xyz";
     private static final String PREF_KEY_DOMAIN = "domain";
     private static final Pattern EMBED_HREF_PATTERN = Pattern.compile("<span class=\"youtube_wrapper\".*?<a href=\"([^\"]+)\".*?</span>");
     
     private String domain;
-    
-    private String lastCaptchaId;
-    private String lastCaptchaAnswer;
+    private Map<String, String> captchas = new HashMap<>();
+    private String bypassId = null;
 
     public EndChanModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -199,18 +199,6 @@ public class EndChanModule extends AbstractLynxChanModule {
         return os.toString();
     }
 
-    @Override
-    public ExtendedCaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
-        BasicClientCookie c = new BasicClientCookie("captchaid", "");
-        c.setDomain(getUsingDomain());
-        c.setPath("/");
-        httpClient.getCookieStore().addCookie(c);
-
-        ExtendedCaptchaModel captchaModel = super.getNewCaptcha(boardName, threadNumber, listener, task);
-        if (captchaModel != null) lastCaptchaId = captchaModel.captchaID;
-        return captchaModel;
-    }
-
     private boolean validateCaptcha(String captchaAnswer, ProgressListener listener, CancellableTask task) throws Exception {
         if (lastCaptchaId == null) return false;
         String url = getUsingUrl() + ".api/solveCaptcha";
@@ -233,7 +221,46 @@ public class EndChanModule extends AbstractLynxChanModule {
         }
     }
 
-    public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
+    void putCaptcha(String captchaID, String answer) {
+        if (captchas == null) captchas = new HashMap<>();
+        captchas.put(captchaID, answer);
+    }
+
+    private void renewBypass(String captchaId, String captchaAnswer, ProgressListener listener, CancellableTask task) throws Exception {
+        String url = getUsingUrl() + "/.api/renewBypass";
+
+        JSONObject jsonPayload = new JSONObject();
+        JSONObject jsonParameters = new JSONObject();
+        jsonPayload.put("captchaId", captchaId);
+        jsonParameters.put("captcha", captchaAnswer);
+        jsonPayload.put("parameters", jsonParameters);
+        JSONEntry payload = new JSONEntry(jsonPayload);
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(payload).setNoRedirect(true).build();
+        String response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, listener, task, true);
+        JSONObject result = new JSONObject(response);
+        String status = result.optString("status");
+        String data = result.optString("data");
+        if ("ok".equals(status)) {
+            bypassId = data;
+            BasicClientCookie c = new BasicClientCookie("bypass", bypassId);
+            c.setDomain(getUsingDomain());
+            c.setPath("/");
+            httpClient.getCookieStore().addCookie(c);
+            
+            throw new Exception("You have a valid block bypass.");
+        } else {
+            throw new Exception(data);
+        }
+    }
+
+    public String sendPost(SendPostModel model, final ProgressListener listener, final CancellableTask task) throws Exception {
+        if (!captchas.isEmpty()) {
+            String captchaId = captchas.keySet().iterator().next();
+            String captchaAnswer = captchas.remove(captchaId);
+            if (captchaAnswer == null) captchaAnswer = "";
+            renewBypass(captchaId, captchaAnswer, listener, task);
+        }
+        
         boolean captchaSolved = false;
         if (model.captchaAnswer != null && model.captchaAnswer.length() > 0) {
             captchaSolved = validateCaptcha(model.captchaAnswer, listener, task);
@@ -246,6 +273,7 @@ public class EndChanModule extends AbstractLynxChanModule {
         JSONObject jsonPayload = new JSONObject();
         JSONObject jsonParameters = new JSONObject();
         jsonPayload.put("captchaId", lastCaptchaId);
+        if (bypassId != null) jsonPayload.put("bypassId", bypassId);
         jsonParameters.put("name", model.name);
         jsonParameters.put("password", model.password);
         jsonParameters.put("subject", model.subject);
@@ -309,6 +337,10 @@ public class EndChanModule extends AbstractLynxChanModule {
             if (errorMessage.length() > 0) {
                 throw new Exception(errorMessage);
             }
+            
+        } else if ("bypassable".equals(status)) {
+            bypassId = null;
+            throw new EndchanCaptchaException();
         } else if (result.isNull("data") && status.length() > 0) {
             throw new Exception(status);
         }
@@ -317,7 +349,7 @@ public class EndChanModule extends AbstractLynxChanModule {
 
     @Override
     public String deletePost(DeletePostModel model, ProgressListener listener, CancellableTask task) throws Exception {
-        String url = getUsingUrl() + ".api/" + "deleteContent";
+        String url = getUsingUrl() + ".api/deleteContent";
         if (lastCaptchaId == null) {
             getNewCaptcha(null, null, listener, task);
         }

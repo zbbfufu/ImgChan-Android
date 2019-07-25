@@ -52,6 +52,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.cookie.Cookie;
+import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
@@ -83,11 +85,15 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         CHAN_DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         CHAN_DATEFORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
+    private static DateFormat COOKIE_DATEFORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
     private static final Pattern MIME_TYPE_PATTERN = Pattern.compile("-(application|audio|image|text|video)(.+)");
     private static final Pattern RED_TEXT_MARK_PATTERN = Pattern.compile("<span class=\"redText\">(.*?)</span>");
     private static final Pattern ORANGE_TEXT_MARK_PATTERN = Pattern.compile("<span class=\"orangeText\">(.*?)</span>");
     private static final Pattern GREEN_TEXT_MARK_PATTERN = Pattern.compile("<span class=\"greenText\">(.*?)</span>");
     private static final Pattern REPLY_NUMBER_PATTERN = Pattern.compile("&gt&gt(\\d+)");
+    
+    private static final String CAPTCHAID_COOKIE_NAME = "captchaid";
+    private static final String CAPTCHAEXPIRATION_COOKIE_NAME = "captchaexpiration";
     
     private static final int MODE_NO_CAPTCHA = 0;
     private static final int MODE_THREAD_CAPTCHA = 1;
@@ -98,6 +104,8 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
     protected Map<String, BoardModel> boardsMap = null;
     protected Map<String, Integer> captchaModesMap = null;
     protected Map<String, ArrayList<String>> flagsMap = null;
+    protected String lastCaptchaId = null;
+    protected String lastCaptchaAnswer = null;
 
     public AbstractLynxChanModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -492,22 +500,42 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
 
     @Override
     public ExtendedCaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
+        List<Cookie> cookies = httpClient.getCookieStore().getCookies();
+        for (Cookie cookie : cookies) {
+            if (cookie.getName().equals(CAPTCHAEXPIRATION_COOKIE_NAME) && cookie.getDomain().contains(getUsingDomain())) {
+                long delta = 0;
+                try {
+                    delta = (COOKIE_DATEFORMAT.parse(cookie.getValue()).getTime() - System.currentTimeMillis()) / 1000;
+                } catch (Exception e) {
+                    Logger.e(TAG, "cannot parse date; make sure you choose the right DateFormat for this chan", e);
+                }
+                if (delta <= 0) {
+                    BasicClientCookie c = new BasicClientCookie(CAPTCHAID_COOKIE_NAME, "");
+                    c.setDomain(getUsingDomain());
+                    c.setPath("/");
+                    httpClient.getCookieStore().addCookie(c);
+                }
+                break;
+            }
+        }
+        
         String captchaUrl = getUsingUrl() + "captcha.js?d=" + Math.random();
+        ExtendedCaptchaModel captcha = downloadCaptcha(captchaUrl, listener, task);
+        lastCaptchaId = captcha.captchaID;
         
         if (boardName == null) {
-            return downloadCaptcha(captchaUrl, listener, task);
+            return captcha;
         }
         if (captchaModesMap == null || !captchaModesMap.containsKey(boardName)) {
             try {
                 getBoard(boardName, listener, task);
             } catch (Exception e) {
-                captchaModesMap.put(boardName, MODE_NO_CAPTCHA);
                 return null;
             }
         }
         int captchaMode = captchaModesMap.get(boardName);
         if ((captchaMode == MODE_THREAD_CAPTCHA && threadNumber == null) || captchaMode == MODE_POST_CAPTCHA) {
-            return downloadCaptcha(captchaUrl, listener, task);
+            return captcha;
         } else {
             return null;
         }
@@ -522,7 +550,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
             for (Header header : responseModel.headers) {
                 if (header != null && "Set-Cookie".equalsIgnoreCase(header.getName())) {
                     String cookie = header.getValue();
-                    if (cookie.contains("captchaid")) {
+                    if (cookie.contains(CAPTCHAID_COOKIE_NAME)) {
                         try {
                             captchaId = cookie.split(";")[0].split("=")[1];
                         } catch (Exception e) {
