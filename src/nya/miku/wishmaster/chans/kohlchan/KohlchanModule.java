@@ -34,7 +34,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.regex.Pattern;
 
 import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
@@ -230,9 +229,36 @@ public class KohlchanModule extends AbstractLynxChanModule {
         captchas.put(captchaID, answer);
     }
 
-    private void validateCaptcha(String captchaID, ProgressListener listener, CancellableTask task) throws Exception {
-        String captchaAnswer = captchas.remove(captchaID);
-        if (captchaAnswer == null) captchaAnswer = "";
+    private boolean validateCaptcha(String captchaAnswer, ProgressListener listener, CancellableTask task) throws Exception {
+        if (lastCaptchaId == null) return false;
+
+        String url = getUsingUrl() + "/solveCaptcha.js";
+
+        ExtendedMultipartBuilder multipartBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
+                addString("captchaId", lastCaptchaId).
+                addString("answer", captchaAnswer);
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(multipartBuilder.build()).build();
+        String response;
+        try {
+            response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, listener, task, false);
+        } catch (HttpWrongStatusCodeException e) {
+            checkCloudflareError(e, url);
+            throw e;
+        }
+        JSONObject result = new JSONObject(response);
+        String status = result.optString("status");
+        if ("ok".equals(status)) {
+            return true;
+        } else if (status.equals("error")) {
+            String errorMessage = result.optString("data");
+            if (errorMessage.length() > 0) {
+                throw new Exception(errorMessage);
+            }
+        }
+        throw new Exception("Unknown Error");
+    }
+
+    private void renewBypass(String captchaAnswer, ProgressListener listener, CancellableTask task) throws Exception {
         String url = getUsingUrl() + "renewBypass.js?json=1";
         ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
                 addString("captcha", captchaAnswer);
@@ -258,13 +284,20 @@ public class KohlchanModule extends AbstractLynxChanModule {
     }
 
     public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
-        String captchaId;
-        try {
-            captchaId = captchas.keySet().iterator().next();
-        } catch (NoSuchElementException e) {
-            captchaId = null;
+        if (!captchas.isEmpty()) {
+            String captchaId = captchas.keySet().iterator().next();
+            String captchaAnswer = captchas.remove(captchaId);
+            if (captchaAnswer == null) captchaAnswer = "";
+            renewBypass(captchaAnswer, listener, task);
+            if (model.captchaAnswer.length() > 0) {
+                throw new Exception("You have a valid block bypass.");
+            }
         }
-        if (captchaId != null) validateCaptcha(captchaId, listener, task);
+
+        boolean captchaSolved = false;
+        if (model.captchaAnswer.length() > 0) {
+            captchaSolved = validateCaptcha(model.captchaAnswer, listener, task);
+        }
         
         String url = getUsingUrl() + (model.threadNumber == null ? "newThread.js?json=1" : "replyThread.js?json=1");
         
@@ -280,6 +313,7 @@ public class KohlchanModule extends AbstractLynxChanModule {
                 addString("boardUri", model.boardName);
         if (model.sage) postEntityBuilder.addString("sage", "true");
         if (model.threadNumber != null) postEntityBuilder.addString("threadId", model.threadNumber);
+        if (captchaSolved) postEntityBuilder.addString("captcha", model.captchaAnswer);
         if (model.custommark) postEntityBuilder.addString("spoiler", "true");
         if (model.attachments != null && model.attachments.length > 0) {
             for (int i = 0; i < model.attachments.length; ++i) {
