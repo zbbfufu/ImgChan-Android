@@ -95,6 +95,9 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
     private static final String CAPTCHAID_COOKIE_NAME = "captchaid";
     private static final String CAPTCHAEXPIRATION_COOKIE_NAME = "captchaexpiration";
     
+    protected static final String PREF_KEY_BYPASS_COOKIE = "PREF_KEY_BYPASS_COOKIE";
+    protected static final String BYPASS_COOKIE_NAME = "bypass";
+    
     private static final int MODE_NO_CAPTCHA = 0;
     private static final int MODE_THREAD_CAPTCHA = 1;
     private static final int MODE_POST_CAPTCHA = 2;

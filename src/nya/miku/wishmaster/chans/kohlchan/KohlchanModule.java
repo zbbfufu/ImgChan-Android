@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import cz.msebera.android.httpclient.cookie.Cookie;
 import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.AbstractLynxChanModule;
@@ -58,6 +59,10 @@ import nya.miku.wishmaster.http.streamer.HttpWrongStatusCodeException;
 import nya.miku.wishmaster.lib.MimeTypes;
 import nya.miku.wishmaster.lib.org_json.JSONException;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
+
+/**
+ * Class interacting with Kohlchan imageboard (Lynxchan engine version 2)
+ */
 
 public class KohlchanModule extends AbstractLynxChanModule {
     private static final String TAG = "KohlchanModule";
@@ -92,10 +97,13 @@ public class KohlchanModule extends AbstractLynxChanModule {
     @Override
     protected void initHttpClient() {
         updateDomain(preferences.getString(getSharedKey(PREF_KEY_DOMAIN), DEFAULT_DOMAIN));
+        
         BasicClientCookie cookieConsent = new BasicClientCookie("cookieConsent", "true");
         cookieConsent.setDomain(getUsingDomain());
         cookieConsent.setPath("/");
         httpClient.getCookieStore().addCookie(cookieConsent);
+        
+        loadBypassCookie();
     }
 
     @Override
@@ -172,7 +180,25 @@ public class KohlchanModule extends AbstractLynxChanModule {
     public Drawable getChanFavicon() {
         return ResourcesCompat.getDrawable(resources, R.drawable.favicon_kohlchan, null);
     }
-    
+
+    private void saveBypassCookie() {
+        for (Cookie cookie : httpClient.getCookieStore().getCookies()) {
+            if (cookie.getName().equals(BYPASS_COOKIE_NAME) && cookie.getDomain().contains(getUsingDomain())) {
+                preferences.edit().putString(getSharedKey(PREF_KEY_BYPASS_COOKIE), cookie.getValue()).commit();
+            }
+        }
+    }
+
+    private void loadBypassCookie() {
+        String bypassCookie = preferences.getString(getSharedKey(PREF_KEY_BYPASS_COOKIE), null);
+        if (bypassCookie != null) {
+            BasicClientCookie c = new BasicClientCookie(BYPASS_COOKIE_NAME, bypassCookie);
+            c.setDomain(getUsingDomain());
+            c.setPath("/");
+            httpClient.getCookieStore().addCookie(c);
+        }
+    }
+
     @Override
     public SimpleBoardModel[] getBoardsList(ProgressListener listener, CancellableTask task, SimpleBoardModel[] oldBoardsList) throws Exception {
         String url = getUsingUrl() + ".static/pages/sidebar.html";
@@ -276,6 +302,7 @@ public class KohlchanModule extends AbstractLynxChanModule {
             case "next":
                 throw new KohlchanCaptchaException();
             case "finish":
+                saveBypassCookie();
                 return;
             case "error":
                 throw new Exception(response.optString("data", "Captcha Error"));

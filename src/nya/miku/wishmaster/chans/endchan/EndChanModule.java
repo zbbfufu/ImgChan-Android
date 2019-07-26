@@ -91,6 +91,7 @@ public class EndChanModule extends AbstractLynxChanModule {
     @Override
     protected void initHttpClient() {
         updateDomain(preferences.getString(getSharedKey(PREF_KEY_DOMAIN), DEFAULT_DOMAIN));
+        loadBypassCookie();
     }
 
     @Override
@@ -176,6 +177,27 @@ public class EndChanModule extends AbstractLynxChanModule {
     public Drawable getChanFavicon() {
         return ResourcesCompat.getDrawable(resources, R.drawable.favicon_endchan, null);
     }
+    
+    private void loadBypassCookie() {
+        bypassId = preferences.getString(getSharedKey(PREF_KEY_BYPASS_COOKIE), null);
+        if (bypassId != null) {
+            BasicClientCookie c = new BasicClientCookie(BYPASS_COOKIE_NAME, bypassId);
+            c.setDomain(getUsingDomain());
+            c.setPath("/");
+            httpClient.getCookieStore().addCookie(c);
+        }
+    }
+    
+    private void saveBypassCookie(String cookieValue) {
+        if (cookieValue != null) {
+            bypassId = cookieValue;
+            preferences.edit().putString(getSharedKey(PREF_KEY_BYPASS_COOKIE), bypassId).commit();
+            BasicClientCookie c = new BasicClientCookie(BYPASS_COOKIE_NAME, bypassId);
+            c.setDomain(getUsingDomain());
+            c.setPath("/");
+            httpClient.getCookieStore().addCookie(c);
+        }
+    }
 
     @Override
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
@@ -239,18 +261,14 @@ public class EndChanModule extends AbstractLynxChanModule {
         String response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, listener, task, true);
         JSONObject result = new JSONObject(response);
         String status = result.optString("status");
-        String data = result.optString("data");
+        String data = result.optString("data", null);
         if ("ok".equals(status)) {
-            bypassId = data;
-            BasicClientCookie c = new BasicClientCookie("bypass", bypassId);
-            c.setDomain(getUsingDomain());
-            c.setPath("/");
-            httpClient.getCookieStore().addCookie(c);
-            
-            throw new Exception("You have a valid block bypass.");
+            saveBypassCookie(data);
+            if (data != null) throw new Exception("You have a valid block bypass.");
         } else {
-            throw new Exception(data);
+            if (data != null) throw new Exception(data);
         }
+        throw new Exception("Unknown Error");
     }
 
     public String sendPost(SendPostModel model, final ProgressListener listener, final CancellableTask task) throws Exception {
