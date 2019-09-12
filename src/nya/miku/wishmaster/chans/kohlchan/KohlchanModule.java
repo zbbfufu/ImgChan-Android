@@ -78,7 +78,8 @@ public class KohlchanModule extends AbstractLynxChanModule {
     private static final String DOMAINS_HINT = "kohlchan.net, kohlchan.mett.ru, kohlchankxguym67.onion, fastkohlp6h2seef.onion";
     
     private static final String[] ATTACHMENT_FORMATS = new String[] {
-            "jpg", "jpeg", "bmp", "gif", "png", "mp3", "ogg", "flac", "opus", "webm", "mp4", "7z", "zip", "pdf", "epub", "txt" };
+            "jpg", "jpeg", "bmp", "gif", "png", "webp", "mp3", "ogg", "flac", "opus", "webm", "mp4",
+            "7z", "zip", "pdf", "epub", "txt" };
     private static final Pattern INVALID_LESSER_THAN_PATTERN = Pattern.compile("&lt([^;])");
     
     private String domain;
@@ -240,6 +241,7 @@ public class KohlchanModule extends AbstractLynxChanModule {
         model.defaultUserName = "Bernd";
         model.allowEmails = false;
         model.attachmentsFormatFilters = ATTACHMENT_FORMATS;
+        model.markType = BoardModel.MARK_BBCODE;
         return model;
     }
 

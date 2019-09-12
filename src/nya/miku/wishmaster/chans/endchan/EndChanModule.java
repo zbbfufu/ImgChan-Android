@@ -76,7 +76,7 @@ public class EndChanModule extends AbstractLynxChanModule {
     private static final String DOMAINS_HINT = "endchan.xyz, endchan.net, endchan.org (cached), endchan5doxvprs5.onion, s6424n4x4bsmqs27.onion, endchan.i2p";
     private static final String DISPLAYING_NAME = "Endchan";
     static final String CHAN_NAME = "endchan.xyz";
-    private static final String DEFAULT_DOMAIN = "endchan.xyz";
+    private static final String DEFAULT_DOMAIN = "endchan.net";
     private static final String PREF_KEY_DOMAIN = "domain";
     private static final Pattern EMBED_HREF_PATTERN = Pattern.compile("<span class=\"youtube_wrapper\".*?<a href=\"([^\"]+)\".*?</span>");
     

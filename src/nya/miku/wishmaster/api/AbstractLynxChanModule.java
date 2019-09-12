@@ -153,9 +153,15 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
     public SimpleBoardModel[] getBoardsList(ProgressListener listener, CancellableTask task, SimpleBoardModel[] oldBoardsList) throws Exception {
         String url = getUsingUrl() + "boards.js?json=1";
         List<SimpleBoardModel> list = new ArrayList<SimpleBoardModel>();
-        JSONObject boardsJson = downloadJSONObject(url, (oldBoardsList != null && boardsMap != null), listener, task);
-        if (boardsJson == null) return oldBoardsList;
-        JSONArray boards = boardsJson.getJSONArray("boards");
+        JSONObject response = downloadJSONObject(url, (oldBoardsList != null && boardsMap != null), listener, task);
+        if (response == null) return oldBoardsList;
+        String status = response.optString("status");  //since Lynxchan v2.2
+        if ("ok".equals(status)) {
+            response = response.getJSONObject("data");
+        } else if ("error".equals(status)) {
+            throw new Exception(response.optString("data"));
+        }
+        JSONArray boards = response.getJSONArray("boards");
         SimpleBoardModel model;
         for (int i = 0, len = boards.length(); i < len; ++i) {
             try {
