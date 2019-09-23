@@ -538,6 +538,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_autoupdate_background_summary">Update tabs marked for auto-update in the background</string>
     <string name="pref_autoupdate_notification_title">In the notification area</string>
     <string name="pref_autoupdate_notification_summary">Does not allow the system to close the process when the application is minimized</string>
+    <string name="pref_autoupdate_progress_title">Show progress in drawer</string>
+    <string name="pref_autoupdate_progress_summary">Show auto-update progress in drawer</string>
     <string name="pref_subscriptions_enabled_title">Track replies</string>
     <string name="pref_subscriptions_enabled_summary">Track replies to posts you are subscribed</string>
     <string name="pref_subscribe_threads_title">Track threads</string>

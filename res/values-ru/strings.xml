@@ -546,6 +546,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_autoupdate_background_summary">Обновлять вкладки, отмеченные для автообновления, в фоновом режиме</string>
     <string name="pref_autoupdate_notification_title">В области уведомлений</string>
     <string name="pref_autoupdate_notification_summary">Не даёт системе закрыть процесс, когда приложение свёрнуто</string>
+    <string name="pref_autoupdate_progress_title">Отображать прогресс в шторке</string>
+    <string name="pref_autoupdate_progress_summary">Показывать прогресс автообновления в шторке</string>
     <string name="pref_subscriptions_enabled_title">Отслеживать ответы</string>
     <string name="pref_subscriptions_enabled_summary">Отслеживать ответы на сообщения, на которые вы подписаны</string>
     <string name="pref_subscribe_threads_title">Отслеживать треды</string>

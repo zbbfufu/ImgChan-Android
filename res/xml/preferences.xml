@@ -367,6 +367,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:title="@string/pref_autoupdate_notification_title"
             android:summary="@string/pref_autoupdate_notification_summary"
             android:dependency="@string/pref_key_enable_autoupdate" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_autoupdate_progress"
+            android:title="@string/pref_autoupdate_progress_title"
+            android:summary="@string/pref_autoupdate_progress_summary"
+            android:dependency="@string/pref_key_enable_autoupdate" />
     </PreferenceCategory>
     
     <PreferenceCategory android:title="@string/pref_cat_subscriptions">

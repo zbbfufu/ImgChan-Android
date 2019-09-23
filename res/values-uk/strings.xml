@@ -549,6 +549,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_autoupdate_background_summary">Оновлювати позначені для автооновлення вкладки незалежно від того, чи вони на передньому плані</string>
     <string name="pref_autoupdate_notification_title">Закріпити у шторці</string>
     <string name="pref_autoupdate_notification_summary">Не дозволяти системі закривати мінімізований процес</string>
+    <string name="pref_autoupdate_progress_title">Відображати прогрес в шторці</string>
+    <string name="pref_autoupdate_progress_summary">Показувати прогрес автооновлення в шторці</string>
     <string name="pref_subscriptions_enabled_title">Відстежувати відповіді</string>
     <string name="pref_subscriptions_enabled_summary">Відстежувати відповіді на пости, на які ви підписані</string>
     <string name="pref_subscribe_threads_title">Відстежувати треди</string>

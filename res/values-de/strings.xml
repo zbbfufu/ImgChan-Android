@@ -539,6 +539,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_autoupdate_background_summary">Markierte Tabs für Auto-Update im Hintergrund aktualisieren</string>
     <string name="pref_autoupdate_notification_title">Im Infobereich</string>
     <string name="pref_autoupdate_notification_summary">Das System darf den Prozess nicht schließen, wenn die Anwendung minimiert wird</string>
+    <string name="pref_autoupdate_progress_title">Zeige Fortschritt in Schublade</string>
+    <string name="pref_autoupdate_progress_summary">Zeigt den Fortschritt der automatischen Aktualisierung in der Schublade an</string>
     <string name="pref_subscriptions_enabled_title">Antworten verfolgen</string>
     <string name="pref_subscriptions_enabled_summary">Die Antworten auf jeden von Ihnen abonnierten Post verfolgen</string>
     <string name="pref_subscribe_threads_title">Threads verfolgen</string>

@@ -387,7 +387,7 @@ public class MainActivity extends FragmentActivity {
             new View[] { findViewById(R.id.sidebar_btn_newtab), findViewById(R.id.sidebar_btn_history), findViewById(R.id.sidebar_btn_favorites) };
         hiddenTabsSection = new HiddenTabsSection(sidebarButtons);
         
-        DragSortListView list = (DragSortListView)findViewById(R.id.sidebar_tabs_list);
+        final DragSortListView list = (DragSortListView)findViewById(R.id.sidebar_tabs_list);
         TabsState state = MainApplication.getInstance().tabsState;
         tabsAdapter = initTabsListView(list, state);
         handleUriIntent(getIntent());
@@ -428,7 +428,7 @@ public class MainActivity extends FragmentActivity {
                             break;
                     }
                 } else if (action.equals(TabsTrackerService.BROADCAST_ACTION_NOTIFY)) {
-                    tabsAdapter.notifyDataSetChanged(false);
+                    list.invalidateViews();
                     TabsTrackerService.clearUnread();
                 }
             }
