@@ -90,7 +90,11 @@ public class Attachments {
      * @param attachment модель вложения
      */
     public static String getAttachmentDisplayName(AttachmentModel attachment) {
-        if (attachment.originalName != null && attachment.originalName.length() != 0) return attachment.originalName;
+        if ((attachment.originalName != null) &&
+            (attachment.originalName.length() != 0) &&
+            (!attachment.originalName.equals(getAttachmentExtention(attachment)))) {
+            return attachment.originalName;
+        }
         if (attachment.type == AttachmentModel.TYPE_OTHER_NOTFILE) {
             return attachment.path == null ? "" : attachment.path;
         }
