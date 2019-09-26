@@ -294,10 +294,10 @@ public class DownloadingService extends Service {
                         getString(R.string.downloading_title, downloadingQueue.size() + 1) : getString(R.string.downloading_title_simple));
                 
                 if (item.type == DownloadingQueueItem.TYPE_ATTACHMENT) {
-                    final String filename = Attachments.getAttachmentLocalFileName(item.attachment, item.boardModel);
+                    final String filename = Attachments.getAttachmentLocalFileName(item.attachment, item.boardModel, settings.isDownloadOriginalNames());
                     if (filename == null) continue;
                     String elementName = getString(R.string.downloading_element_format, item.chanName,
-                            Attachments.getAttachmentLocalShortName(item.attachment, item.boardModel));
+                            Attachments.getAttachmentLocalShortName(item.attachment, item.boardModel, settings.isDownloadOriginalNames()));
                     currentItemName = elementName;
                     
                     curProgress = -1;
@@ -603,7 +603,7 @@ public class DownloadingService extends Service {
                             String curFile = Attachments.getAttachmentLocalFileName(attachment, item.boardModel);
                             if (curFile == null) continue;
                             String curElementName = getString(R.string.downloading_element_format, item.chanName,
-                                    Attachments.getAttachmentLocalShortName(attachment, item.boardModel));
+                                    Attachments.getAttachmentLocalShortName(attachment, item.boardModel, settings.isDownloadOriginalNames()));
                             String curThumbElementName = getString(R.string.downloading_thumbnail_format, curElementName);
                             String curHash = ChanModels.hashAttachmentModel(attachment);
                             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
