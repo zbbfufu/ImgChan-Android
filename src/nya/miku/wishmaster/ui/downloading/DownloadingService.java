@@ -294,14 +294,34 @@ public class DownloadingService extends Service {
                         getString(R.string.downloading_title, downloadingQueue.size() + 1) : getString(R.string.downloading_title_simple));
                 
                 if (item.type == DownloadingQueueItem.TYPE_ATTACHMENT) {
-                    final String filename = Attachments.getAttachmentLocalFileName(item.attachment, item.boardModel, settings.isDownloadOriginalNames());
+                    String filename = Attachments.getAttachmentLocalFileName(item.attachment, item.boardModel, settings.isDownloadOriginalNames());
                     if (filename == null) continue;
                     String elementName = getString(R.string.downloading_element_format, item.chanName,
                             Attachments.getAttachmentLocalShortName(item.attachment, item.boardModel, settings.isDownloadOriginalNames()));
                     currentItemName = elementName;
-                    
+
+                    File directory = new File(settings.getDownloadDirectory(), item.chanName);
+                    if (item.subdirectory != null && item.subdirectory.length() > 0) directory = new File(directory, item.subdirectory);
+                    if (!directory.mkdirs() && !directory.isDirectory()) {
+                        addError(item, elementName, getString(R.string.downloading_error_mkdir));
+                        continue;
+                    }
+                    File target = new File(directory, filename);
+                    if (target.exists()) {
+                        int extensionPos = filename.lastIndexOf(".");
+                        String name = (extensionPos >= 0) ? filename.substring(0, extensionPos) : filename;
+                        String extension = (extensionPos >= 0) ? filename.substring(extensionPos) : "";
+                        int n = 1;
+                        do {
+                            filename = name + "(" + n + ")" + extension;
+                            target = new File(directory, filename);
+                            ++n;
+                        } while (target.exists());
+                    }
+                    final String finalName = filename;
+
                     curProgress = -1;
-                    progressNotifBuilder.setContentText(filename).setProgress(100, 0, true);
+                    progressNotifBuilder.setContentText(finalName).setProgress(100, 0, true);
                     notifyForeground(DOWNLOADING_NOTIFICATION_ID, progressNotifBuilder.build());
                     sendBroadcast(new Intent(BROADCAST_UPDATED));
                     
@@ -313,7 +333,7 @@ public class DownloadingService extends Service {
                             curProgress = newProgress;
                             progressNotifBuilder.setProgress(100, newProgress, false);
                             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-                                progressNotifBuilder.setContentText("("+newProgress+"%) "+filename);
+                                progressNotifBuilder.setContentText("("+newProgress+"%) "+finalName);
                             }
                             notifyForeground(DOWNLOADING_NOTIFICATION_ID, progressNotifBuilder.build());
                             sendBroadcast(new Intent(BROADCAST_UPDATED));
@@ -327,25 +347,13 @@ public class DownloadingService extends Service {
                             if (curProgress == -1) return;
                             progressNotifBuilder.setProgress(100, 0, true);
                             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-                                progressNotifBuilder.setContentText(filename);
+                                progressNotifBuilder.setContentText(finalName);
                             }
                             notifyForeground(DOWNLOADING_NOTIFICATION_ID, progressNotifBuilder.build());
                             sendBroadcast(new Intent(BROADCAST_UPDATED));
                             curProgress = -1;
                         }
                     };
-                    
-                    File directory = new File(settings.getDownloadDirectory(), item.chanName);
-                    if (item.subdirectory != null && item.subdirectory.length() > 0) directory = new File(directory, item.subdirectory);
-                    if (!directory.mkdirs() && !directory.isDirectory()) {
-                        addError(item, elementName, getString(R.string.downloading_error_mkdir));
-                        continue;
-                    }
-                    File target = new File(directory, filename);
-                    if (target.exists()) {
-                        addError(item, elementName, getString(R.string.downloading_error_file_exists));
-                        continue;
-                    }
                     File fromCache = fileCache.get(FileCache.PREFIX_ORIGINALS + ChanModels.hashAttachmentModel(item.attachment) +
                             Attachments.getAttachmentExtention(item.attachment));
                     if (fromCache != null) {
