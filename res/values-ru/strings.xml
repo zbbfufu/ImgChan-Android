@@ -283,6 +283,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <string name="downloading_start_ticker">Загрузка файлов</string>
     <string name="downloading_success_ticker">Все загрузки завершены</string>
+    <string name="downloading_success">Загружено</string>
     <string name="downloading_error_ticker">Некоторые файлы не загружены</string>
     <string name="downloading_error_title">Ошибка при загрузке</string>
     <string name="downloading_error_report_title">Следующие файлы не были загружены:</string>

@@ -286,6 +286,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <string name="downloading_start_ticker">Звантаження файлів</string>
     <string name="downloading_success_ticker">Файли звантажені</string>
+    <string name="downloading_success">Завантажено</string>
     <string name="downloading_error_ticker">Не всі файли звантажені</string>
     <string name="downloading_error_title">Помилка звантаження</string>
     <string name="downloading_error_report_title">Не вдалося звантажити файли:</string>
