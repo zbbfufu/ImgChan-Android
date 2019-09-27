@@ -410,6 +410,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <PreferenceCategory android:title="@string/pref_cat_cache">
         <EditTextPreference
+            android:defaultValue=""
             android:key="@string/pref_key_cache_maxsize"
             android:title="@string/pref_cache_maxsize_title"
             android:hint="@string/pref_cache_maxsize_hint"
