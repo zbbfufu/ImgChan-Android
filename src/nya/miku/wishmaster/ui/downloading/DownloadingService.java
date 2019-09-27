@@ -354,43 +354,25 @@ public class DownloadingService extends Service {
                             curProgress = -1;
                         }
                     };
-                    File fromCache = fileCache.get(FileCache.PREFIX_ORIGINALS + ChanModels.hashAttachmentModel(item.attachment) +
+                    File cachedFile = fileCache.get(FileCache.PREFIX_ORIGINALS + ChanModels.hashAttachmentModel(item.attachment) +
                             Attachments.getAttachmentExtention(item.attachment));
-                    if (fromCache != null) {
-                        String fromCacheFilename = fromCache.getAbsolutePath();
-                        while (downloadingLocker.isLocked(fromCacheFilename)) downloadingLocker.waitUnlock(fromCacheFilename);
-                        if (isCancelled()) continue;
-                        boolean success = false;
-                        InputStream is = null;
-                        OutputStream os = null;
-                        try {
-                            if (listener != null) listener.setMaxValue(fromCache.length());
-                            is = IOUtils.modifyInputStream(new FileInputStream(fromCache), listener, this);
-                            os = new FileOutputStream(target);
-                            IOUtils.copyStream(is, os);
-                            success = true;
-                        } catch (Exception e) {
-                            if (!isCancelled()) {
-                                addError(item, elementName,
-                                        getString(IOUtils.isENOSPC(e) ? R.string.error_no_space : R.string.downloading_error_copy));
-                            }
-                        } finally {
-                            IOUtils.closeQuietly(is);
-                            IOUtils.closeQuietly(os);
-                            if (!success) target.delete();
-                            else notifyMediaScanner(target);
-                        }
+                    String cachedFileFilename;
+                    if (cachedFile != null) {
+                        cachedFileFilename = cachedFile.getAbsolutePath();
                     } else {
-                        String targetFilename = target.getAbsolutePath();
-                        while (!downloadingLocker.lock(targetFilename)) downloadingLocker.waitUnlock(targetFilename);
+                        cachedFile = fileCache.create(FileCache.PREFIX_ORIGINALS + ChanModels.hashAttachmentModel(item.attachment) +
+                            Attachments.getAttachmentExtention(item.attachment));
+                        cachedFileFilename = cachedFile.getAbsolutePath();
+                        while (!downloadingLocker.lock(cachedFileFilename)) downloadingLocker.waitUnlock(cachedFileFilename);
                         if (isCancelled()) {
-                            downloadingLocker.unlock(targetFilename);
+                            fileCache.abort(cachedFile);
+                            downloadingLocker.unlock(cachedFileFilename);
                             continue;
                         }
                         boolean success = false;
                         FileOutputStream out = null;
                         try {
-                            out = new FileOutputStream(target);
+                            out = new FileOutputStream(cachedFile);
                             MainApplication.getInstance().getChanModule(item.chanName).downloadFile(item.attachment.path, out, listener, this);
                             success = true;
                         } catch (Exception e) {
@@ -400,10 +382,32 @@ public class DownloadingService extends Service {
                                         getMessageOrENOSPC(e));
                         } finally {
                             IOUtils.closeQuietly(out);
-                            if (!success) target.delete();
-                            else notifyMediaScanner(target);
-                            downloadingLocker.unlock(targetFilename);
+                            if (!success) fileCache.abort(cachedFile);
+                            else fileCache.put(cachedFile);
+                            downloadingLocker.unlock(cachedFileFilename);
                         }
+                        if (!success) continue;
+                    }
+                    while (downloadingLocker.isLocked(cachedFileFilename)) downloadingLocker.waitUnlock(cachedFileFilename);
+                    if (isCancelled()) continue;
+                    boolean success = false;
+                    InputStream is = null;
+                    OutputStream os = null;
+                    try {
+                        is = IOUtils.modifyInputStream(new FileInputStream(cachedFile), null, this);
+                        os = new FileOutputStream(target);
+                        IOUtils.copyStream(is, os);
+                        success = true;
+                    } catch (Exception e) {
+                        if (!isCancelled()) {
+                            addError(item, elementName,
+                                    getString(IOUtils.isENOSPC(e) ? R.string.error_no_space : R.string.downloading_error_copy));
+                        }
+                    } finally {
+                        IOUtils.closeQuietly(is);
+                        IOUtils.closeQuietly(os);
+                        if (!success) target.delete();
+                        else notifyMediaScanner(target);
                     }
                     
                 } else if (item.type == DownloadingQueueItem.TYPE_THREAD) {
