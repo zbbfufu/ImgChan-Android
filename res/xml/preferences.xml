@@ -422,6 +422,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:title="@string/pref_clear_cache_title" />
     </PreferenceCategory>
     
+    <PreferenceCategory android:title="@string/pref_cat_update">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_update_on_startup"
+            android:title="@string/pref_update_on_startup_title"
+            android:summary="@string/pref_update_on_startup_summary" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_update_allow_beta"
+            android:title="@string/pref_update_allow_beta_title"
+            android:summary="@string/pref_update_allow_beta_summary" />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/pref_cat_about">
         <Preference
             android:key="@string/pref_key_about_version"
