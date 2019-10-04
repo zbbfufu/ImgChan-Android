@@ -42,6 +42,8 @@ public class ApplicationSettings {
     private final boolean isSFW;
     
     private void initHiddenPreferences() {
+        if (!preferences.contains(resources.getString(R.string.pref_key_autohide_json)))
+            preferences.edit().putString(resources.getString(R.string.pref_key_autohide_json), "[]").commit();
         if (!preferences.contains(resources.getString(R.string.pref_key_quickaccess_json)))
             preferences.edit().putString(resources.getString(R.string.pref_key_quickaccess_json), "[{}]").commit();
     }
