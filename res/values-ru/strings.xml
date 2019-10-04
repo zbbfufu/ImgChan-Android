@@ -486,8 +486,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_show_nsfw_boards_summary">Отображать доски с немодерируемым содержимым</string>
     <string name="pref_mask_pictures_title">SFW режим</string>
     <string name="pref_mask_pictures_summary">Маскировать все картинки</string>
-    <string name="pref_autohide_title">Автоскрытие</string>
-    <string name="pref_autohide_summary">Автоскрытие по регулярным выражениям</string>
     <!-- <string name="pref_hide_completely_title">Скрывать полностью</string>
     <string name="pref_hide_completely_summary">Не показывать скрытые посты и треды</string> -->
     <string name="pref_swipe_to_hide_title">Скрывать свайпом</string>
