@@ -471,6 +471,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_hide_personal_summary">Immer die Standardwerte verwenden</string>
     <string name="pref_ssl_certificates_title">SSL-Zertifikate</string>
     <string name="pref_ssl_certificates_summary">Vertrauenswürdige Zertifikate (Ausnahmen)</string>
+    <string name="pref_safe_posting_title">Sicheres Posten</string>
+    <string name="pref_safe_posting_summary">Senden Sie Beiträge durch langes oder doppeltes Tippen</string>
     <string name="pref_random_hash_title">Zufällige Hash</string>
     <string name="pref_random_hash_summary">Ein paar Bytes an das Ende der Anlagedateien fügen</string>
     <string name="pref_show_all_chans_list_title">Imageboards-Liste</string>

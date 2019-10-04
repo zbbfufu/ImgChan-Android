@@ -481,6 +481,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_hide_personal_summary">Завжди використовувати типові значення</string>
     <string name="pref_ssl_certificates_title">SSL сертифікати</string>
     <string name="pref_ssl_certificates_summary">Довірені SSL сертифікати (виключення)</string>
+    <string name="pref_safe_posting_title">Безпечна відправка постів</string>
+    <string name="pref_safe_posting_summary">Відправляти пости по подвійному або довгому натисненню кнопки</string>
     <string name="pref_random_hash_title">Випадковий хеш</string>
     <string name="pref_random_hash_summary">Додавати кілька байтів у кінець прикріплених файлів</string>
     <string name="pref_show_all_chans_list_title">Список іміджбордів</string>

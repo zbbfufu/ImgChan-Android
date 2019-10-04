@@ -73,6 +73,10 @@ public class ApplicationSettings {
         return preferences.getString(resources.getString(R.string.pref_key_email), "");
     }
     
+    public boolean isSafePosting() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_safe_posting), false);
+    }
+
     public boolean isRandomHash() {
         return preferences.getBoolean(resources.getString(R.string.pref_key_random_hash), false);
     }
