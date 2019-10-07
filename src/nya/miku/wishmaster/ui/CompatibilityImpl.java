@@ -136,26 +136,34 @@ public class CompatibilityImpl {
         }
     }
     
-    public static interface CustomSelectionActionModeCallback {
-        void onCreate();
-        void onClick();
-        void onDestroy();
+    public static class CustomSelectionActionModeCallback {
+        private final int titleRes;
+        private final Drawable icon;
+        public CustomSelectionActionModeCallback(final int titleRes, final Drawable icon) {
+            this.titleRes = titleRes;
+            this.icon = icon;
+        }
+        public void onCreate() {};
+        public void onClick() {};
+        public void onDestroy() {};
     }
     
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static void setCustomSelectionActionModeMenuCallback(TextView textView, final int titleRes, final Drawable icon,
-            final CustomSelectionActionModeCallback callback) {
+    public static void setCustomSelectionActionModeMenuCallback(TextView textView,
+            final CustomSelectionActionModeCallback[] callbacks) {
         textView.setCustomSelectionActionModeCallback(new ActionMode.Callback() {
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                 try {
-                    callback.onCreate();
-                    setShowAsActionAlways(menu.add(Menu.NONE, 1, Menu.FIRST, titleRes).setIcon(icon));
+                    for (int i = 0; i < callbacks.length; ++i) {
+                        callbacks[i].onCreate();
+                        setShowAsActionAlways(menu.add(Menu.NONE, i, Menu.FIRST, callbacks[i].titleRes).setIcon(callbacks[i].icon));
+                    }
                     menu.removeItem(android.R.id.selectAll);
-                    return true;
                 } catch (Exception e) {
                     return false;
                 }
+                return true;
             }
             @Override
             public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
@@ -163,16 +171,19 @@ public class CompatibilityImpl {
             }
             @Override
             public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                if (item.getItemId() == 1) {
-                    callback.onClick();
-                    mode.finish();
-                    return true;
+                int itemId = item.getItemId();
+                if (itemId < 0 || itemId >= callbacks.length) {
+                    return false;
                 }
-                return false;
+                callbacks[itemId].onClick();
+                mode.finish();
+                return true;
             }
             @Override
             public void onDestroyActionMode(ActionMode mode) {
-                callback.onDestroy();
+                for (int i = 0; i < callbacks.length; ++i) {
+                    callbacks[i].onDestroy();
+                }
             }
         });
     }

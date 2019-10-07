@@ -1934,10 +1934,9 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 tag.repliesView = (JellyBeanSpanFixTextView) view.findViewById(R.id.post_replies);
                 tag.postsCountView = (TextView) view.findViewById(R.id.post_posts_count);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB && fragment().pageType == TYPE_POSTSLIST) {
-                    CompatibilityImpl.setCustomSelectionActionModeMenuCallback(tag.commentView,
-                            R.string.context_menu_reply_with_quote,
-                            ThemeUtils.getActionbarIcon(fragment().activity.getTheme(), fragment().resources, R.attr.actionAddPost),
-                            new CompatibilityImpl.CustomSelectionActionModeCallback() {
+                    CompatibilityImpl.setCustomSelectionActionModeMenuCallback(tag.commentView, new CompatibilityImpl.CustomSelectionActionModeCallback[] {
+                            new CompatibilityImpl.CustomSelectionActionModeCallback(R.string.context_menu_reply_with_quote,
+                                ThemeUtils.getActionbarIcon(fragment().activity.getTheme(), fragment().resources, R.attr.actionAddPost)) {
                         @Override
                         public void onClick() {
                             try {
@@ -2004,7 +2003,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                                 Logger.e(TAG, e);
                             }
                         }
-                    });
+                    }});
                 }
                 view.setTag(tag);
             }
