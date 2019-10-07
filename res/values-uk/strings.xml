@@ -208,6 +208,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_quickaccess_remove">Стерти зі швидкого доступу</string>
     <string name="context_menu_quickaccess_custom_board">Додати приховану дошку</string>
     <string name="context_menu_save_captcha">Зберегти капчу</string>
+    <string name="context_menu_web_search">Web-пошук</string>
     
     <string name="share_via">Метод</string>
     <string name="share_no_tabs">Відкритих вкладок немає</string>
@@ -643,5 +644,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="newtab_select_local_directory">Вказати розташування каталогу</string>
     <string name="pref_scroll_to_active_tab_summary">Прокручувати до активної вкладки при закритті неактивній вкладки</string>
     <string name="pref_scroll_to_active_tab_title">Прокрутка до активної вкладки</string>
+    <string name="pref_web_search_url_title">URL Web-пошуку</string>
+    <string name="pref_web_search_url_summary">Персональний URL Web-пошуку</string>
     <string name="pref_makaba_passcode">Пасскод</string>
 </resources>

@@ -22,6 +22,7 @@ import java.io.File;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -92,6 +93,7 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -99,6 +101,7 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -1999,6 +2002,24 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                                 if (params.height == ViewGroup.LayoutParams.WRAP_CONTENT) return;
                                 params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
                                 tag.commentView.setLayoutParams(params);
+                            } catch (Exception e) {
+                                Logger.e(TAG, e);
+                            }
+                        }
+                    }, new CompatibilityImpl.CustomSelectionActionModeCallback(R.string.context_menu_web_search, null) {
+                        @Override
+                        public void onClick() {
+                            try {
+                                String query = getSelectedText(tag);
+                                String url = MainApplication.getInstance().settings.getWebSearchUrl();
+                                Intent intent;
+                                if (url != null) {
+                                    intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url + URLEncoder.encode(query, "UTF-8")));
+                                } else {
+                                    intent = new Intent(Intent.ACTION_WEB_SEARCH);
+                                    intent.putExtra(SearchManager.QUERY, query);
+                                }
+                                fragment().activity.startActivity(intent);
                             } catch (Exception e) {
                                 Logger.e(TAG, e);
                             }
