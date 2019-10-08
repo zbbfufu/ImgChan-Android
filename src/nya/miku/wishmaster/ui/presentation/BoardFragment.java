@@ -2148,7 +2148,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 }
             }
             
-            if ((popupWidth != null || fragment().pageType == TYPE_POSTSLIST) && !tag.clickableLinksSet) {
+            if (popupWidth != null || fragment().pageType == TYPE_POSTSLIST) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                     CompatibilityImpl.setTextIsSelectable(tag.commentView);
                 } else {

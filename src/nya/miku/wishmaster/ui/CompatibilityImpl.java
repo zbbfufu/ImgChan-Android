@@ -211,6 +211,8 @@ public class CompatibilityImpl {
     
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static void setTextIsSelectable(TextView textView) {
+        textView.measure(-1, -1);
+        textView.requestLayout();
         textView.setTextIsSelectable(true);
     }
     
