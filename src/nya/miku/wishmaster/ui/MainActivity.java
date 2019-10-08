@@ -463,6 +463,8 @@ public class MainActivity extends FragmentActivity {
         super.onDestroy();
         MainApplication.getInstance().tabsSwitcher.currentId = null;
         MainApplication.getInstance().tabsSwitcher.currentFragment = null;
+        if (isFinishing() && TabsTrackerService.isRunning() && MainApplication.getInstance().settings.isAutoupdateStopOnExit())
+            stopService(new Intent(this, TabsTrackerService.class));
         isDestroyed = true;
         Logger.d(TAG, "main activity destroyed");
     }
