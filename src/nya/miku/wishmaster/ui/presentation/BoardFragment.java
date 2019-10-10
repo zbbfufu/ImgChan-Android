@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
@@ -226,7 +227,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
     private CancellableTask currentTask;
     private CancellableTask imagesDownloadTask = new CancellableTask.BaseCancellableTask();
     private ExecutorService imagesDownloadExecutor = Executors.newFixedThreadPool(4, Async.LOW_PRIORITY_FACTORY);
-    private OpenedDialogs dialogs = new OpenedDialogs();
+    static private OpenedDialogs dialogs = new OpenedDialogs();
     
     private boolean updatingNow = false;
     
@@ -3756,6 +3757,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 gridDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             }
             gridDialog.show();
+            dialogs.add(gridDialog);
         } catch (OutOfMemoryError oom) {
             MainApplication.freeMemory();
             Logger.e(TAG, oom);
@@ -3994,33 +3996,44 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
     }
     
     private static class OpenedDialogs {
-        private List<WeakReference<Dialog>> refsList = new ArrayList<>();
-        private ReferenceQueue<Dialog> queue = new ReferenceQueue<>();
-        
-        private void reduce() {
-            Reference<? extends Dialog> r;
-            while ((r = queue.poll()) != null) {
-                int i = refsList.indexOf(r);
-                if (i != -1) refsList.remove(i);
+        private List<WeakReference<Dialog>> refs = Collections.synchronizedList(new ArrayList<WeakReference<Dialog>>());
+
+        private final Dialog.OnDismissListener onDismissListener = new Dialog.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                remove((Dialog)dialog);
+            }
+        };
+
+        public void add(Dialog dialog) {
+            dialog.setOnDismissListener(onDismissListener);
+            refs.add(new WeakReference<>(dialog));
+        }
+
+        public void remove(Dialog dialog) {
+            ListIterator<WeakReference<Dialog>> i = refs.listIterator(refs.size());
+            while (i.hasPrevious()) {
+                if (i.previous().get() == dialog) {
+                    i.remove();
+                    break;
+                }
             }
         }
-        
-        private synchronized void add(Dialog dialog) {
-            reduce();
-            refsList.add(new WeakReference<>(dialog));
-        }
-        
-        public void onDestroyFragment(long tabId) {
-            Fragment currentFragment = MainApplication.getInstance().tabsSwitcher.currentFragment;
-            if (currentFragment instanceof BoardFragment && currentFragment.getArguments().getLong("TabModelId") == tabId) return;
-            
-            reduce();
-            for (int i=0; i<refsList.size(); ++i) {
-                Dialog dialog = refsList.get(i).get();
+
+        public void closeAll() {
+            for (WeakReference<Dialog> ref: refs) {
+                Dialog dialog = ref.get();
                 if (dialog != null && dialog.isShowing()) {
                     dialog.dismiss();
                 }
             }
+            refs.clear();
+        }
+
+        public void onDestroyFragment(long tabId) {
+            Fragment currentFragment = MainApplication.getInstance().tabsSwitcher.currentFragment;
+            if (currentFragment instanceof BoardFragment && currentFragment.getArguments().getLong("TabModelId") == tabId) return;
+            closeAll();
         }
     }
     
