@@ -3998,6 +3998,19 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
     private static class OpenedDialogs {
         private List<WeakReference<Dialog>> refs = Collections.synchronizedList(new ArrayList<WeakReference<Dialog>>());
 
+        private final Dialog.OnKeyListener onKeyListener = new Dialog.OnKeyListener() {
+            @Override
+            public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+                if ((keyCode == KeyEvent.KEYCODE_BACK) &&
+                    (event.getAction() == KeyEvent.ACTION_DOWN) &&
+                    ((event.getFlags() & KeyEvent.FLAG_LONG_PRESS) != 0)) {
+                    closeAll();
+                    return true;
+                }
+                return false;
+            }
+        };
+
         private final Dialog.OnDismissListener onDismissListener = new Dialog.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
@@ -4006,6 +4019,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         };
 
         public void add(Dialog dialog) {
+            dialog.setOnKeyListener(onKeyListener);
             dialog.setOnDismissListener(onDismissListener);
             refs.add(new WeakReference<>(dialog));
         }
