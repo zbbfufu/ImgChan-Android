@@ -176,6 +176,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_autoupdate_now">Run auto-update</string>
     <string name="context_menu_open_in_new_tab">Open in new tab</string>
     <string name="context_menu_thread_preview">Thread preview</string>
+    <string name="context_menu_goto_post">Go to post</string>
     <string name="context_menu_reply">Reply to this post</string>
     <string name="context_menu_reply_with_quote">Reply with quote</string>
     <string name="context_menu_reply_no_reading">Reply without reading</string>

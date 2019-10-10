@@ -186,6 +186,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_autoupdate_now">Виконати автооновлення</string>
     <string name="context_menu_open_in_new_tab">У новій вкладці</string>
     <string name="context_menu_thread_preview">Переглянути тред</string>
+    <string name="context_menu_goto_post">Перейти до посту</string>
     <string name="context_menu_reply">Відповісти</string>
     <string name="context_menu_reply_with_quote">Відповісти з цитатою</string>
     <string name="context_menu_reply_no_reading">Відповісти не читаючи</string>

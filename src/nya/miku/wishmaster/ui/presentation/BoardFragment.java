@@ -655,6 +655,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         }
         
         if (pageType == TYPE_POSTSLIST) {
+            menu.add(Menu.NONE, R.id.context_menu_goto_post, 0, R.string.context_menu_goto_post);
             menu.add(Menu.NONE, R.id.context_menu_reply, 1, R.string.context_menu_reply);
             menu.add(Menu.NONE, R.id.context_menu_reply_with_quote, 2, R.string.context_menu_reply_with_quote);
             menu.add(Menu.NONE, R.id.context_menu_select_text, 3, Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB && isList ?
@@ -666,6 +667,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             menu.add(Menu.NONE, R.id.context_menu_subscribe, 8, R.string.context_menu_subscribe);
             if (!isList) {
                 for (int id : new int[] {
+                        R.id.context_menu_goto_post,
                         R.id.context_menu_reply,
                         R.id.context_menu_reply_with_quote,
                         R.id.context_menu_select_text,
@@ -676,6 +678,9 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                         R.id.context_menu_subscribe} ) {
                     menu.findItem(id).setOnMenuItemClickListener(contextMenuListener);
                 }
+            }
+            if (isList) {
+                menu.findItem(R.id.context_menu_goto_post).setVisible(false);
             }
             if (presentationModel.source.boardModel.readonlyBoard || tabModel.type == TabModel.TYPE_LOCAL) {
                 menu.findItem(R.id.context_menu_reply).setVisible(false);
@@ -789,6 +794,9 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                         pageType == TYPE_POSTSLIST ? tabModel.pageModel.threadNumber : adapter.getItem(position).sourceModel.number,
                         pageType == TYPE_POSTSLIST ? adapter.getItem(position).sourceModel.number : null);
                 adapter.notifyDataSetChanged();
+                return true;
+            case R.id.context_menu_goto_post:
+                scrollToItem(adapter.getItem(position).sourceModel.number, true);
                 return true;
             case R.id.context_menu_reply:
                 openReply(position, false, null);

@@ -55,6 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <item name="context_menu_autoupdate_now" type="id"/>
     <item name="context_menu_open_in_new_tab" type="id"/>
     <item name="context_menu_thread_preview" type="id"/>
+    <item name="context_menu_goto_post" type="id"/>
     <item name="context_menu_reply" type="id"/>
     <item name="context_menu_reply_with_quote" type="id"/>
     <item name="context_menu_reply_no_reading" type="id"/>
