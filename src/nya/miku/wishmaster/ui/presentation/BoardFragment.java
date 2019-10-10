@@ -2592,7 +2592,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             for (int i=0; i<presentationModel.presentationList.size(); ++i) {
                 PresentationItemModel model = presentationModel.presentationList.get(i);
                 if (model.sourceModel.number.equals(number)) {
-                    listView.setSelection(i);
+                    hackListViewSetPosition(listView, i, TabModel.DEFAULT_TOP);
                     if (closeDialogs) {
                         dialogs.closeAll();
                     }
