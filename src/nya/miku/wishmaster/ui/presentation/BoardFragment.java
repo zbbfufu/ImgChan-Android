@@ -1655,8 +1655,10 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         
         private static class OnAttachmentClickListener implements View.OnClickListener {
             private WeakReference<BoardFragment> fragmentRef;
-            public OnAttachmentClickListener(WeakReference<BoardFragment> fragmentRef) {
+            private boolean fromDialog;
+            public OnAttachmentClickListener(WeakReference<BoardFragment> fragmentRef, boolean fromDialog) {
                 this.fragmentRef = fragmentRef;
+                this.fromDialog = fromDialog;
             }
             @Override
             public void onClick(View v) {
@@ -1665,18 +1667,20 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                     Fragment currentFragment = MainApplication.getInstance().tabsSwitcher.currentFragment;
                     if (currentFragment instanceof BoardFragment) fragment = (BoardFragment) currentFragment;
                 }
-                if (fragment != null) fragment.openAttachment((AttachmentModel)v.getTag());
+                if (fragment != null) fragment.openAttachment((AttachmentModel)v.getTag(), fromDialog);
             }
         }
         
         private OnUnreadFrameListener onUnreadFrameListener;
         private OnAttachmentClickListener onAttachmentClickListener;
+        private OnAttachmentClickListener onDialogAttachmentClickListener;
         
         public PostsListAdapter(BoardFragment fragment) {
             super(fragment.activity, 0, fragment.presentationModel.presentationList);
             fragmentRef = new WeakReference<BoardFragment>(fragment);
             onUnreadFrameListener = new OnUnreadFrameListener(fragmentRef);
-            onAttachmentClickListener = new OnAttachmentClickListener(fragmentRef);
+            onAttachmentClickListener = new OnAttachmentClickListener(fragmentRef, false);
+            onDialogAttachmentClickListener = new OnAttachmentClickListener(fragmentRef, true);
             if (fragment.presentationModel != null) // может обнулиться в BoardFragment.onDestroy() (т.к. метод работает асинхронно)
                 this.currentCount = fragment.presentationModel.presentationList.size();
             this.inflater = LayoutInflater.from(fragment.activity);
@@ -2063,7 +2067,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                     tag.singleThumbnailView.setVisibility(View.VISIBLE);
                     tag.singleThumbnailIsVisible = true;
                 }
-                fillThumbnail(tag.singleThumbnailView, model.sourceModel.attachments[0], model.attachmentHashes[0], popupWidth != null);
+                fillThumbnail(tag.singleThumbnailView, model.sourceModel.attachments[0], model.attachmentHashes[0], popupWidth != null, popupWidth != null);
             } else {
                 if (tag.singleThumbnailIsVisible) {
                     tag.singleThumbnailView.setVisibility(View.GONE);
@@ -2105,7 +2109,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 tag.multiThumbnailsVisibleCount = attachmentsCount;
                 
                 for (int i=0; i<attachmentsCount; ++i)
-                    fillThumbnail(tag.multiThumbnails[i], model.sourceModel.attachments[i], model.attachmentHashes[i], popupWidth != null);
+                    fillThumbnail(tag.multiThumbnails[i], model.sourceModel.attachments[i], model.attachmentHashes[i], popupWidth != null, popupWidth != null);
             }
             
             //комментарий
@@ -2349,13 +2353,13 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 if (attachmentsCount == 1) {
                     Object picTag = tag.singleThumbnailView.findViewById(R.id.post_thumbnail_image).getTag();
                     if (picTag == null || picTag == Boolean.FALSE) {
-                        fillThumbnail(tag.singleThumbnailView, model.sourceModel.attachments[0], model.attachmentHashes[0], true);
+                        fillThumbnail(tag.singleThumbnailView, model.sourceModel.attachments[0], model.attachmentHashes[0], true, false);
                     }
                 } else {
                     for (int j=0; j<attachmentsCount; ++j) {
                         Object picTag = tag.multiThumbnails[j].findViewById(R.id.post_thumbnail_image).getTag();
                         if (picTag == null || picTag == Boolean.FALSE) { 
-                            fillThumbnail(tag.multiThumbnails[j], model.sourceModel.attachments[j], model.attachmentHashes[j], true);
+                            fillThumbnail(tag.multiThumbnails[j], model.sourceModel.attachments[j], model.attachmentHashes[j], true, false);
                         }
                     }
                 }
@@ -2374,10 +2378,14 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             CompatibilityUtils.setImageAlpha(imageView, alphaValue);
         }
         
-        private void fillThumbnail(View thumbnailView, AttachmentModel attachment, String hash, boolean nonBusy) {
+        private void fillThumbnail(View thumbnailView, AttachmentModel attachment, String hash, boolean nonBusy, boolean isDialog) {
             BoardFragment fragment = fragment();
             weakRegisterForContextMenu(thumbnailView);
-            thumbnailView.setOnClickListener(onAttachmentClickListener);
+            if (isDialog) {
+                thumbnailView.setOnClickListener(onDialogAttachmentClickListener);
+            } else {
+                thumbnailView.setOnClickListener(onAttachmentClickListener);
+            }
             thumbnailView.setTag(attachment);
             ImageView thumbnailPic = (ImageView) thumbnailView.findViewById(R.id.post_thumbnail_image);
             setViewSize(thumbnailPic, MainApplication.getInstance().settings.getPostThumbnailSize());
@@ -2569,13 +2577,17 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
     /**
      * Проскролить спиок до заданного элемента (поста)
      * @param number номер поста
+     * @param closeDialogs закрыть диалоги
      */
-    public void scrollToItem(String number) {
+    public void scrollToItem(String number, boolean closeDialogs) {
         if (listLoaded) {
             for (int i=0; i<presentationModel.presentationList.size(); ++i) {
                 PresentationItemModel model = presentationModel.presentationList.get(i);
                 if (model.sourceModel.number.equals(number)) {
                     listView.setSelection(i);
+                    if (closeDialogs) {
+                        dialogs.closeAll();
+                    }
                     break;
                 }
             }
@@ -3562,7 +3574,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                         Fragment currentFragment = MainApplication.getInstance().tabsSwitcher.currentFragment;
                         if (currentFragment instanceof BoardFragment) fragment = (BoardFragment) currentFragment;
                     }
-                    fragment.openAttachment((AttachmentModel) v.getTag());
+                    fragment.openAttachment((AttachmentModel) v.getTag(), true);
                 }
             }
             private void fill(int position, View view, boolean isBusy) {
@@ -3765,7 +3777,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         }
     }
     
-    private void openAttachment(AttachmentModel attachment) {
+    private void openAttachment(AttachmentModel attachment, boolean fromDialog) {
         if (attachment.type == AttachmentModel.TYPE_OTHER_NOTFILE) {
             UrlHandler.open(chan.fixRelativeUrl(attachment.path), activity);
             return;
@@ -3776,6 +3788,8 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         galleryIntent.putExtra(GalleryActivity.EXTRA_ATTACHMENT, attachment);
         galleryIntent.putExtra(GalleryActivity.EXTRA_BOARDMODEL, presentationModel.source.boardModel);
         galleryIntent.putExtra(GalleryActivity.EXTRA_PAGEHASH, tabModel.hash);
+        galleryIntent.putExtra(GalleryActivity.EXTRA_FROMTHREAD, pageType == TYPE_POSTSLIST);
+        galleryIntent.putExtra(GalleryActivity.EXTRA_FROMDIALOG, fromDialog);
         if (tabModel.type == TabModel.TYPE_LOCAL) {
             galleryIntent.putExtra(GalleryActivity.EXTRA_LOCALFILENAME, tabModel.localFilePath);
         }

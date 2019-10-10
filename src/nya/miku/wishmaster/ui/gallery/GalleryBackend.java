@@ -179,11 +179,11 @@ public class GalleryBackend extends Service {
         }
         
         @Override
-        public void tryScrollParent(int contextId, String postNumber) {
+        public void tryScrollParent(int contextId, String postNumber, boolean closeDialogs) {
             GalleryBackend service = this.service.get();
             if (service == null) return;
             
-            service.contexts.get(contextId).tryScrollParent(postNumber);
+            service.contexts.get(contextId).tryScrollParent(postNumber, closeDialogs);
         }
     }
     
@@ -349,7 +349,7 @@ public class GalleryBackend extends Service {
             return chan.fixRelativeUrl(url);
         }
         
-        public void tryScrollParent(final String postNumber) {
+        public void tryScrollParent(final String postNumber, final boolean closeDialogs) {
             try {
                 TabsState tabsState = MainApplication.getInstance().tabsState;
                 final TabsSwitcher tabsSwitcher = MainApplication.getInstance().tabsSwitcher;
@@ -359,7 +359,7 @@ public class GalleryBackend extends Service {
                         Async.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                ((BoardFragment) tabsSwitcher.currentFragment).scrollToItem(postNumber);
+                                ((BoardFragment) tabsSwitcher.currentFragment).scrollToItem(postNumber, closeDialogs);
                             }
                         });
                     }

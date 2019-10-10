@@ -95,9 +95,9 @@ public class GalleryRemote {
         }
     }
     
-    public void tryScrollParent(String postNumber) {
+    public void tryScrollParent(String postNumber, boolean closeDialogs) {
         try {
-            binder.tryScrollParent(contextId, postNumber);
+            binder.tryScrollParent(contextId, postNumber, closeDialogs);
         } catch (Exception e) {
             Logger.e(TAG, e);
         }

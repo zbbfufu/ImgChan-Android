@@ -31,6 +31,6 @@ interface GalleryBinder {
     Bitmap getBitmap(int contextId, String hash, String url);
     String getAttachment(int contextId, in GalleryAttachmentInfo attachment, GalleryGetterCallback callback);
     String getAbsoluteUrl(int contextId, String url);
-    void tryScrollParent(int contextId, String postNumber);
+    void tryScrollParent(int contextId, String postNumber, boolean closeDialogs);
     boolean isPageLoaded(String pagehash);
 }
