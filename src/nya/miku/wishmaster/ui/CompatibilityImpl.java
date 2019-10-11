@@ -159,7 +159,6 @@ public class CompatibilityImpl {
                         callbacks[i].onCreate();
                         setShowAsActionAlways(menu.add(Menu.NONE, i, Menu.FIRST, callbacks[i].titleRes).setIcon(callbacks[i].icon));
                     }
-                    menu.removeItem(android.R.id.selectAll);
                 } catch (Exception e) {
                     return false;
                 }
