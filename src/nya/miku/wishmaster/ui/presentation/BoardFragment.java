@@ -660,8 +660,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             menu.add(Menu.NONE, R.id.context_menu_goto_post, 0, R.string.context_menu_goto_post);
             menu.add(Menu.NONE, R.id.context_menu_reply, 1, R.string.context_menu_reply);
             menu.add(Menu.NONE, R.id.context_menu_reply_with_quote, 2, R.string.context_menu_reply_with_quote);
-            menu.add(Menu.NONE, R.id.context_menu_select_text, 3, Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB && isList ?
-                    R.string.context_menu_select_text : R.string.context_menu_copy_text);
+            menu.add(Menu.NONE, R.id.context_menu_copy_text, 3, R.string.context_menu_copy_text);
             menu.add(Menu.NONE, R.id.context_menu_share, 4, R.string.context_menu_share);
             menu.add(Menu.NONE, R.id.context_menu_hide, 5, R.string.context_menu_hide_post);
             menu.add(Menu.NONE, R.id.context_menu_delete, 6, R.string.context_menu_delete);
@@ -672,7 +671,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                         R.id.context_menu_goto_post,
                         R.id.context_menu_reply,
                         R.id.context_menu_reply_with_quote,
-                        R.id.context_menu_select_text,
+                        R.id.context_menu_copy_text,
                         R.id.context_menu_share,
                         R.id.context_menu_hide,
                         R.id.context_menu_delete,
@@ -818,18 +817,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             case R.id.context_menu_reply_with_quote:
                 openReply(position, true, null);
                 return true;
-            case R.id.context_menu_select_text:
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB && lastContextMenuPosition == -1) {
-                    int firstPosition = listView.getFirstVisiblePosition() - listView.getHeaderViewsCount();
-                    int wantedChild = position - firstPosition;
-                    if (wantedChild >= 0 && wantedChild < listView.getChildCount()) {
-                        View v = listView.getChildAt(wantedChild);
-                        if (v != null && v.getTag() != null && v.getTag() instanceof PostsListAdapter.PostViewTag) {
-                            ((PostsListAdapter.PostViewTag)v.getTag()).commentView.startSelection();
-                            return true;
-                        }
-                    }
-                }
+            case R.id.context_menu_copy_text:
                 Clipboard.copyText(activity, adapter.getItem(position).spannedComment.toString());
                 Toast.makeText(activity, resources.getString(R.string.notification_comment_copied), Toast.LENGTH_LONG).show();
                 return true;
