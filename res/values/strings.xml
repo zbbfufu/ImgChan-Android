@@ -166,7 +166,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_quickaccess_add">Add to Quick Access</string>
     
     <string name="context_menu_move">Move</string>
-    <string name="context_menu_copy_url">Copy the link</string>
+    <string name="context_menu_copy_url">Copy link</string>
     <string name="context_menu_add_favorites">Add to favorites</string>
     <string name="context_menu_remove_favorites">Remove from favorites</string>
     <string name="context_menu_remove_history">Remove from history</string>
