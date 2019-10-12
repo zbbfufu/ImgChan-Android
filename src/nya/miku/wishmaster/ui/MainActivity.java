@@ -823,6 +823,7 @@ public class MainActivity extends FragmentActivity {
                 }
                 break;
             case KeyEvent.KEYCODE_BACK:
+                if (event.getRepeatCount() > 0) return true;
                 if (onBack()) return true;
                 break;
             case KeyEvent.KEYCODE_DPAD_LEFT:
