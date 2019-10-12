@@ -604,11 +604,13 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             }
             menu.add(Menu.NONE, R.id.context_menu_thumb_download, 2, R.string.context_menu_download_file);
             menu.add(Menu.NONE, R.id.context_menu_thumb_copy_url, 3, R.string.context_menu_copy_url);
-            menu.add(Menu.NONE, R.id.context_menu_thumb_attachment_info, 4, R.string.context_menu_attachment_info);
-            menu.add(Menu.NONE, R.id.context_menu_thumb_reverse_search, 5, R.string.context_menu_reverse_search);
+            menu.add(Menu.NONE, R.id.context_menu_thumb_share_link, 4, R.string.context_menu_share_link);
+            menu.add(Menu.NONE, R.id.context_menu_thumb_attachment_info, 5, R.string.context_menu_attachment_info);
+            menu.add(Menu.NONE, R.id.context_menu_thumb_reverse_search, 6, R.string.context_menu_reverse_search);
             for (int id : new int[] {
                     R.id.context_menu_thumb_download,
                     R.id.context_menu_thumb_copy_url,
+                    R.id.context_menu_thumb_share_link,
                     R.id.context_menu_thumb_attachment_info,
                     R.id.context_menu_thumb_reverse_search } ) {
                 menu.findItem(id).setOnMenuItemClickListener(contextMenuListener);
@@ -713,6 +715,15 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         }
     }
     
+    private void shareAttachmentUrl(AttachmentModel model) {
+        String absoluteUrl = chan.fixRelativeUrl(model.path);
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, absoluteUrl);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, absoluteUrl);
+        startActivity(Intent.createChooser(shareIntent, getString(R.string.share_via)));
+    }
+
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         //контекстное меню для превью-аттачментов
@@ -738,6 +749,9 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 String url = chan.fixRelativeUrl(((AttachmentModel) lastContextMenuAttachment.getTag()).path);
                 Clipboard.copyText(activity, url);
                 Toast.makeText(activity, resources.getString(R.string.notification_url_copied, url), Toast.LENGTH_LONG).show();
+                return true;
+            case R.id.context_menu_thumb_share_link:
+                shareAttachmentUrl((AttachmentModel)lastContextMenuAttachment.getTag());
                 return true;
             case R.id.context_menu_thumb_attachment_info:
                 String info = Attachments.getAttachmentInfoString(chan, ((AttachmentModel) lastContextMenuAttachment.getTag()), resources);

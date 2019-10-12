@@ -77,6 +77,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <item name="context_menu_thumb_load_thumb" type="id"/>
     <item name="context_menu_thumb_download" type="id"/>
     <item name="context_menu_thumb_copy_url" type="id"/>
+    <item name="context_menu_thumb_share_link" type="id"/>
     <item name="context_menu_thumb_attachment_info" type="id"/>
     <item name="context_menu_thumb_reverse_search" type="id"/>
     
