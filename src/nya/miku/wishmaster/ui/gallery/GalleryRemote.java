@@ -95,6 +95,15 @@ public class GalleryRemote {
         }
     }
     
+    public String getAttachmentInfoString(GalleryAttachmentInfo attachment) {
+        try {
+            return binder.getAttachmentInfoString(contextId, attachment);
+        } catch (Exception e) {
+            Logger.e(TAG, e);
+            return null;
+        }
+    }
+
     public void tryScrollParent(String postNumber, boolean closeDialogs) {
         try {
             binder.tryScrollParent(contextId, postNumber, closeDialogs);

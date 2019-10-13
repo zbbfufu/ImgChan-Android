@@ -255,6 +255,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
         View customView = getLayoutInflater().inflate(R.layout.action_bar_title, null);
         titleView = (TextView)customView.findViewById(R.id.action_bar_title);
         titleView.setText(initialTitleText);
+        titleView.setOnClickListener(this);
         titleView.setOnLongClickListener(this);
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             titleView.setPadding(10, 0, 0, 0);
@@ -389,6 +390,13 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
                     viewPager.setCurrentItem(++currentPosition);
                     updateItem();
                 }
+                break;
+            case R.id.action_bar_title:
+                GalleryItemViewTag tag = getCurrentTag();
+                String info = remote.getAttachmentInfoString(new GalleryAttachmentInfo(tag.attachmentModel, tag.attachmentHash));
+                Toast toast = Toast.makeText(this, info, Toast.LENGTH_LONG);
+                toast.setGravity(Gravity.BOTTOM|Gravity.CENTER, 0, navigationInfo.getHeight() * 10 / 8);
+                toast.show();
                 break;
         }
     }
