@@ -969,6 +969,12 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
     }
     
     @Override
+    public void onURLSpanLongClick(View v, ClickableURLSpan span, String url, String referer) {
+        Clipboard.copyText(activity, url);
+        Toast.makeText(activity, resources.getString(R.string.notification_url_copied, url), Toast.LENGTH_LONG).show();
+    }
+
+    @Override
     public void onURLSpanClick(View v, ClickableURLSpan span, String url, String referer) {
         if (presentationModel == null || presentationModel.presentationList == null) return;
         if (tabModel.pageModel.type != UrlPageModel.TYPE_THREADPAGE) {
@@ -3198,6 +3204,10 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                                 dialog.dismiss();
                                 UrlHandler.open(chan.fixRelativeUrl(url), activity);
                             }
+                        }
+                        @Override
+                        public void onLongClick(View v, ClickableURLSpan span, String url, String referer) {
+                            onURLSpanLongClick(v, span, url, referer);
                         }
                     };
                     
