@@ -936,70 +936,89 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     }
     
     private void setVideo(final GalleryItemViewTag tag, final File file) {
-        runOnUiThread(new Runnable() {
+        final Runnable startVideoView = new Runnable() {
             @Override
             public void run() {
-                setOnClickView(tag, getString(R.string.gallery_tap_to_play), new View.OnClickListener() {
+                recycleTag(tag, false);
+                tag.thumbnailView.setVisibility(View.GONE);
+                tag.loadingView.setVisibility(View.GONE);
+                tag.layout.setVisibility(View.VISIBLE);
+                View videoContainer = inflater.inflate(R.layout.gallery_videoplayer, tag.layout);
+                final VideoView videoView = (VideoView)videoContainer.findViewById(R.id.gallery_video_view);
+                final TextView durationView = (TextView)videoContainer.findViewById(R.id.gallery_video_duration);
+
+                videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                     @Override
-                    public void onClick(View v) {
-                        if (!settings.useInternalVideoPlayer()) {
-                            openExternal();
-                        } else {
-                            recycleTag(tag, false);
-                            tag.thumbnailView.setVisibility(View.GONE);
-                            View videoContainer = inflater.inflate(R.layout.gallery_videoplayer, tag.layout);
-                            final VideoView videoView = (VideoView)videoContainer.findViewById(R.id.gallery_video_view);
-                            final TextView durationView = (TextView)videoContainer.findViewById(R.id.gallery_video_duration);
-                            
-                            videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                                @Override
-                                public void onPrepared(final MediaPlayer mp) {
-                                    mp.setLooping(true);
-                                    
-                                    durationView.setText("00:00 / " + formatMediaPlayerTime(mp.getDuration()));
-                                    
-                                    tag.timer = new Timer();
-                                    tag.timer.schedule(new TimerTask() {
-                                        @Override
-                                        public void run() {
-                                            runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    try {
-                                                        durationView.setText(formatMediaPlayerTime(mp.getCurrentPosition()) + " / " +
-                                                                formatMediaPlayerTime(mp.getDuration()));
-                                                    } catch (Exception e) {
-                                                        Logger.e(TAG, e);
-                                                        tag.timer.cancel();
-                                                    }
-                                                }
-                                            });
+                    public void onPrepared(final MediaPlayer mp) {
+                        mp.setLooping(true);
+
+                        durationView.setText("00:00 / " + formatMediaPlayerTime(mp.getDuration()));
+
+                        tag.timer = new Timer();
+                        tag.timer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            durationView.setText(formatMediaPlayerTime(mp.getCurrentPosition()) + " / " +
+                                                    formatMediaPlayerTime(mp.getDuration()));
+                                        } catch (Exception e) {
+                                            Logger.e(TAG, e);
+                                            tag.timer.cancel();
                                         }
-                                    }, 1000, 1000);
-                                    
-                                    videoView.start();
-                                }
-                            });
-                            videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                                @Override
-                                public boolean onError(MediaPlayer mp, int what, int extra) {
-                                    Logger.e(TAG, "(Video) Error code: " + what);
-                                    if (tag.timer != null) tag.timer.cancel();
-                                    showError(tag, getString(R.string.gallery_error_play));
-                                    return true;
-                                }
-                            });
-                            
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
-                                CompatibilityImpl.setVideoViewZOrderOnTop(videoView);
+                                    }
+                                });
                             }
-                            videoView.setVideoPath(file.getAbsolutePath());
-                        }
+                        }, 1000, 1000);
+
+                        videoView.start();
                     }
-                    
                 });
+                videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                    @Override
+                    public boolean onError(MediaPlayer mp, int what, int extra) {
+                        Logger.e(TAG, "(Video) Error code: " + what);
+                        if (tag.timer != null) tag.timer.cancel();
+                        showError(tag, getString(R.string.gallery_error_play));
+                        return true;
+                    }
+                });
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
+                    CompatibilityImpl.setVideoViewZOrderOnTop(videoView);
+                }
+                videoView.setVideoPath(file.getAbsolutePath());
             }
-        });
+        };
+        if (!settings.useInternalVideoPlayer()) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    setOnClickView(tag, getString(R.string.gallery_tap_to_play), new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            openExternal();
+                        }
+                    });
+                }
+            });
+        } else if (!settings.autoplayMedia()) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    setOnClickView(tag, getString(R.string.gallery_tap_to_play), new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            runOnUiThread(startVideoView);
+                        }
+                    });
+                }
+            });
+        } else {
+            runOnUiThread(startVideoView);
+        }
     }
     
     private void setAudio(final GalleryItemViewTag tag, final File file) {
@@ -1131,7 +1150,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     }
     
     private void setWebView(final GalleryItemViewTag tag, final File file) {
-        runOnUiThread(new Runnable() {
+        final Runnable startWebView = new Runnable() {
             private boolean oomFlag = false;
             
             private final ViewGroup.LayoutParams MATCH_PARAMS =
@@ -1144,7 +1163,6 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
                     CompatibilityImpl.setScrollbarFadingEnabled(webView, true);
                 }
-
                 WebSettings settings = webView.getSettings();
                 settings.setBuiltInZoomControls(true);
                 settings.setSupportZoom(true);
@@ -1155,11 +1173,12 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 }
                 settings.setUseWideViewPort(true);
                 settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
-
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
                     CompatibilityImpl.setBlockNetworkLoads(settings, true);
                 }
-                
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    settings.setMediaPlaybackRequiresUserGesture(false);
+                }
                 setScaleWebView(webView);
             }
             
@@ -1248,7 +1267,22 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 }
             }
             
-        });
+        };
+        if (tag.attachmentModel.type == AttachmentModel.TYPE_VIDEO && !settings.autoplayMedia()) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    setOnClickView(tag, getString(R.string.gallery_tap_to_play), new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            runOnUiThread(startWebView);
+                        }
+                    });
+                }
+            });
+        } else {
+            runOnUiThread(startWebView);
+        }
     }
     
     public static interface FullscreenCallback {
