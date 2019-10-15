@@ -128,6 +128,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     
     private ProgressBar progressBar;
     private ViewPager viewPager;
+    private WebView webView;
     private TextView navigationInfo;
     private SparseArray<View> instantiatedViews;
     
@@ -319,6 +320,13 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         }, new IntentFilter(BoardFragment.BROADCAST_PAGE_LOADED));
     }
     
+    private void stopWebView() {
+        if (webView != null) {
+            webView.destroy();
+            webView = null;
+        }
+    }
+
     @Override
     protected void onStop() {
         super.onStop();
@@ -329,6 +337,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        stopWebView();
         if (instantiatedViews != null) {
             for (int i=0; i<instantiatedViews.size(); ++i) {
                 View v = instantiatedViews.valueAt(i);
@@ -682,6 +691,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     }
     
     private void updateItem() {
+        stopWebView();
         AttachmentModel attachment = attachments.get(currentPosition).getLeft();
         if (settings.scrollThreadFromGallery() && !firstScroll) remote.tryScrollParent(attachments.get(currentPosition).getRight());
         firstScroll = false;
@@ -1238,7 +1248,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
             public void run() {
                 try {
                     recycleTag(tag, false);
-                    WebView webView = new WebViewFixed(GalleryActivity.this);
+                    webView = new WebViewFixed(GalleryActivity.this);
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         webView.setWebViewClient(new WebViewClient() {
                             @Override
