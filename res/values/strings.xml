@@ -165,6 +165,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_open_player">Open external player</string>
     <string name="menu_quickaccess_add">Add to Quick Access</string>
     
+    <string name="context_menu_copy_and_share">Copy/Share</string>
     <string name="context_menu_move">Move</string>
     <string name="context_menu_copy_url">Copy link</string>
     <string name="context_menu_add_favorites">Add to favorites</string>
@@ -190,7 +191,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_report">Report abuse</string>
     <string name="context_menu_subscribe">Subscribe</string>
     <string name="context_menu_unsubscribe">Unsubscribe</string>
-    <string name="context_menu_share">Share</string>
+    <string name="context_menu_share_text">Share text</string>
     <string name="context_menu_share_link">Share link</string>
     <string name="context_menu_reverse_search">Image search</string>
     <string name="context_menu_delete_autohide_rule">Remove the rule</string>

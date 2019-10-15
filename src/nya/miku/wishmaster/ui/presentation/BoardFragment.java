@@ -129,6 +129,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
@@ -657,22 +658,30 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         }
         
         if (pageType == TYPE_POSTSLIST) {
+            SubMenu menuCopyAndShare = menu.addSubMenu(Menu.NONE, R.id.context_menu_copy_and_share, 3, R.string.context_menu_copy_and_share);
+            menuCopyAndShare.clearHeader();
+
+            menuCopyAndShare.add(Menu.NONE, R.id.context_menu_copy_post_url, 0, R.string.context_menu_copy_url);
+            menuCopyAndShare.add(Menu.NONE, R.id.context_menu_copy_post_text, 1, R.string.context_menu_copy_text);
+            menuCopyAndShare.add(Menu.NONE, R.id.context_menu_share_post_link, 2, R.string.context_menu_share_link);
+            menuCopyAndShare.add(Menu.NONE, R.id.context_menu_share_post_text, 3, R.string.context_menu_share_text);
+
             menu.add(Menu.NONE, R.id.context_menu_goto_post, 0, R.string.context_menu_goto_post);
             menu.add(Menu.NONE, R.id.context_menu_reply, 1, R.string.context_menu_reply);
             menu.add(Menu.NONE, R.id.context_menu_reply_with_quote, 2, R.string.context_menu_reply_with_quote);
-            menu.add(Menu.NONE, R.id.context_menu_copy_text, 3, R.string.context_menu_copy_text);
-            menu.add(Menu.NONE, R.id.context_menu_share, 4, R.string.context_menu_share);
-            menu.add(Menu.NONE, R.id.context_menu_hide, 5, R.string.context_menu_hide_post);
-            menu.add(Menu.NONE, R.id.context_menu_delete, 6, R.string.context_menu_delete);
-            menu.add(Menu.NONE, R.id.context_menu_report, 7, R.string.context_menu_report);
-            menu.add(Menu.NONE, R.id.context_menu_subscribe, 8, R.string.context_menu_subscribe);
+            menu.add(Menu.NONE, R.id.context_menu_hide, 4, R.string.context_menu_hide_post);
+            menu.add(Menu.NONE, R.id.context_menu_delete, 5, R.string.context_menu_delete);
+            menu.add(Menu.NONE, R.id.context_menu_report, 6, R.string.context_menu_report);
+            menu.add(Menu.NONE, R.id.context_menu_subscribe, 7, R.string.context_menu_subscribe);
             if (!isList) {
                 for (int id : new int[] {
                         R.id.context_menu_goto_post,
                         R.id.context_menu_reply,
                         R.id.context_menu_reply_with_quote,
-                        R.id.context_menu_copy_text,
-                        R.id.context_menu_share,
+                        R.id.context_menu_copy_post_url,
+                        R.id.context_menu_copy_post_text,
+                        R.id.context_menu_share_post_link,
+                        R.id.context_menu_share_post_text,
                         R.id.context_menu_hide,
                         R.id.context_menu_delete,
                         R.id.context_menu_report,
@@ -765,6 +774,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         int position = lastContextMenuPosition;
         if (item.getMenuInfo() != null && item.getMenuInfo() instanceof AdapterView.AdapterContextMenuInfo) {
             position = ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).position;
+            lastContextMenuPosition = position;
         }
         if (nullAdapterIsSet || position == -1 || adapter.getCount() <= position) return false;
         switch (item.getItemId()) {
@@ -817,11 +827,11 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             case R.id.context_menu_reply_with_quote:
                 openReply(position, true, null);
                 return true;
-            case R.id.context_menu_copy_text:
+            case R.id.context_menu_copy_post_text:
                 Clipboard.copyText(activity, adapter.getItem(position).spannedComment.toString());
                 Toast.makeText(activity, resources.getString(R.string.notification_comment_copied), Toast.LENGTH_LONG).show();
                 return true;
-            case R.id.context_menu_share:
+            case R.id.context_menu_share_post_text:
                 UrlPageModel sharePostUrlPageModel = new UrlPageModel();
                 sharePostUrlPageModel.chanName = chan.getChanName();
                 sharePostUrlPageModel.type = UrlPageModel.TYPE_THREADPAGE;
@@ -834,6 +844,33 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 sharePostIntent.putExtra(Intent.EXTRA_SUBJECT, chan.buildUrl(sharePostUrlPageModel));
                 sharePostIntent.putExtra(Intent.EXTRA_TEXT, adapter.getItem(position).spannedComment.toString());
                 startActivity(Intent.createChooser(sharePostIntent, resources.getString(R.string.share_via)));
+                return true;
+            case R.id.context_menu_copy_post_url:
+                UrlPageModel copyLinkUrlPageModel = new UrlPageModel();
+                copyLinkUrlPageModel.chanName = chan.getChanName();
+                copyLinkUrlPageModel.type = UrlPageModel.TYPE_THREADPAGE;
+                copyLinkUrlPageModel.boardName = tabModel.pageModel.boardName;
+                copyLinkUrlPageModel.threadNumber = tabModel.pageModel.threadNumber;
+                copyLinkUrlPageModel.postNumber = adapter.getItem(position).sourceModel.number;
+
+                String copyLinkUrl = chan.buildUrl(copyLinkUrlPageModel);
+                Clipboard.copyText(activity, copyLinkUrl);
+                Toast.makeText(activity, resources.getString(R.string.notification_url_copied, copyLinkUrl), Toast.LENGTH_LONG).show();
+                return true;
+            case R.id.context_menu_share_post_link:
+                UrlPageModel shareLinkUrlPageModel = new UrlPageModel();
+                shareLinkUrlPageModel.chanName = chan.getChanName();
+                shareLinkUrlPageModel.type = UrlPageModel.TYPE_THREADPAGE;
+                shareLinkUrlPageModel.boardName = tabModel.pageModel.boardName;
+                shareLinkUrlPageModel.threadNumber = tabModel.pageModel.threadNumber;
+                shareLinkUrlPageModel.postNumber = adapter.getItem(position).sourceModel.number;
+
+                String shareLinkUrl = chan.buildUrl(shareLinkUrlPageModel);
+                Intent shareLinkIntent = new Intent(Intent.ACTION_SEND);
+                shareLinkIntent.setType("text/plain");
+                shareLinkIntent.putExtra(Intent.EXTRA_SUBJECT, shareLinkUrl);
+                shareLinkIntent.putExtra(Intent.EXTRA_TEXT, shareLinkUrl);
+                startActivity(Intent.createChooser(shareLinkIntent, resources.getString(R.string.share_via)));
                 return true;
             case R.id.context_menu_delete:
                 DeletePostModel delModel = new DeletePostModel();
