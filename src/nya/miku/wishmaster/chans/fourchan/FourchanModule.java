@@ -292,7 +292,7 @@ public class FourchanModule extends CloudflareChanModule {
         fallbackRecaptchaPref.setTitle(R.string.fourchan_prefs_new_recaptcha_fallback);
         fallbackRecaptchaPref.setSummary(R.string.fourchan_prefs_new_recaptcha_fallback_summary);
         fallbackRecaptchaPref.setKey(getSharedKey(PREF_KEY_NEW_RECAPTCHA_FALLBACK));
-        fallbackRecaptchaPref.setDefaultValue(false);
+        fallbackRecaptchaPref.setDefaultValue(true);
         preferenceGroup.addPreference(fallbackRecaptchaPref);
         
         addPasswordPreference(preferenceGroup);
@@ -317,7 +317,7 @@ public class FourchanModule extends CloudflareChanModule {
     
     private boolean newRecaptchaFallback() {
         return preferences.getBoolean(getSharedKey(PREF_KEY_USE_PROXY), false) ||
-                preferences.getBoolean(getSharedKey(PREF_KEY_NEW_RECAPTCHA_FALLBACK), false);
+                preferences.getBoolean(getSharedKey(PREF_KEY_NEW_RECAPTCHA_FALLBACK), true);
     }
     
     @Override
