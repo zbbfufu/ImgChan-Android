@@ -751,7 +751,7 @@ public class MainActivity extends FragmentActivity {
                     }
                     TabModel model = tabsState.tabsArray.remove(from);
                     tabsState.tabsArray.add(to, model);
-                    adapter.setSelectedItem(newSelected); //serialization enabled
+                    adapter.setSelectedItem(newSelected, true, false); //serialization enabled
                 }
             }
         });
