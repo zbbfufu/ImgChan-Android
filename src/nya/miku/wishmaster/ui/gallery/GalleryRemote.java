@@ -19,6 +19,7 @@
 package nya.miku.wishmaster.ui.gallery;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import android.graphics.Bitmap;
 import nya.miku.wishmaster.common.Logger;
@@ -36,11 +37,26 @@ public class GalleryRemote {
     
     public GalleryInitResult getInitResult() {
         try {
-            GalleryInitResult result = binder.getInitResult(contextId);
-            if (result == null || result.attachments == null) {
+            GalleryInitResult part = binder.getInitResult(contextId);
+            if (part == null || part.attachments == null) {
                 Logger.e(TAG, "returned null");
                 return null;
             }
+            if (part.hasMoreAttachments == 0)
+                return part;
+            GalleryInitResult result = new GalleryInitResult();
+            result.initPosition = part.initPosition;
+            result.shouldWaitForPageLoaded = part.shouldWaitForPageLoaded;
+            result.attachments = new ArrayList<>(part.attachments.size() + part.hasMoreAttachments);
+            result.attachments.addAll(part.attachments);
+            do {
+                part = binder.getInitResult(contextId);
+                if (part == null || part.attachments == null) {
+                    Logger.e(TAG, "returned null");
+                    return null;
+                }
+                result.attachments.addAll(part.attachments);
+            } while (part.hasMoreAttachments > 0);
             return result;
         } catch (Exception e) {
             Logger.e(TAG, e);
