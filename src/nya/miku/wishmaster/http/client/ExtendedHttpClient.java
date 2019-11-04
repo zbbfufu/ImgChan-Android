@@ -19,6 +19,7 @@
 package nya.miku.wishmaster.http.client;
 
 import java.util.Date;
+import android.os.Build;
 import android.webkit.CookieManager;
 import nya.miku.wishmaster.http.HttpConstants;
 import nya.miku.wishmaster.http.SSLCompatibility;
@@ -106,7 +107,9 @@ public class ExtendedHttpClient extends HttpClientWrapper {
      */
     public ExtendedHttpClient(HttpHost proxy) {
         super();
-        this.cookieStore = new ExtendedCookieStore();
+        this.cookieStore = Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT
+            ? new BasicCookieStore()
+            : new ExtendedCookieStore();
         this.proxy = proxy;
     }
     
