@@ -100,6 +100,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="boards.4chan.org" />
                 
                 <data android:host="8ch.net" />
+                <data android:host="8kun.net" />
+                <data android:host="8kun.top" />
                 <data android:host="8chan.co" />
                 <data android:host="oxwugzccvk3dk6tj.onion" />
                 <data android:host="www.8ch.net" />

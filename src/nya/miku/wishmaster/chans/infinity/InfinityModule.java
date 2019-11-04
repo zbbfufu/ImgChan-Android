@@ -76,12 +76,12 @@ public class InfinityModule extends AbstractVichanModule {
     private static final String TAG = "InfinityModule";
     
     private static final String CHAN_NAME = "8chan";
-    private static final String DEFAULT_DOMAIN = "8ch.net";
-    private static final String SYSTEM_DOMAIN = "sys.8ch.net";
-    private static final String MEDIA_DOMAIN = "media.8ch.net";
-    private static final String MEDIA2_DOMAIN = "media2.8ch.net";
-    private static final String ONION_DOMAIN = "oxwugzccvk3dk6tj.onion";
-    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN, "8chan.co" };
+    private static final String DEFAULT_DOMAIN = "8kun.top";
+    private static final String SYSTEM_DOMAIN = "sys.8kun.top";
+    private static final String MEDIA_DOMAIN = "media.8kun.top";
+    private static final String MEDIA2_DOMAIN = "media2.8kun.top";
+    private static final String ONION_DOMAIN = "jthnx5wyvjvzsxtu.onion";
+    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN, "8ch.net", "8kun.net", "8chan.co" };
     
     private static final String[] ATTACHMENT_FORMATS = new String[] { "jpg", "jpeg", "gif", "png", "webm", "mp4", "swf", "pdf" };
     private static final FastHtmlTagParser.TagReplaceHandler QUOTE_REPLACER = new FastHtmlTagParser.TagReplaceHandler() {
