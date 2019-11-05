@@ -86,6 +86,7 @@ import android.text.style.ForegroundColorSpan;
 import android.util.SparseArray;
 import android.view.GestureDetector;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -1342,6 +1343,29 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
         return super.onMenuOpened(featureId, menu);
     }
     
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_BACK:
+                event.startTracking();
+                return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_BACK:
+                if (fromDialog || fromThread) {
+                    remote.tryScrollParent(attachments.get(currentPosition).getRight(), fromDialog);
+                }
+                finish();
+                return true;
+        }
+        return super.onKeyLongPress(keyCode, event);
+    }
+
     private class GalleryItemViewTag {
         public CancellableTask downloadingTask;
         public Timer timer;
