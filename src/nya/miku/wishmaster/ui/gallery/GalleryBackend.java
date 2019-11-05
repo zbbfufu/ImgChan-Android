@@ -208,6 +208,16 @@ public class GalleryBackend extends Service {
             }
             
             PresentationModel presentationModel = MainApplication.getInstance().pagesCache.getPresentationModel(initData.pageHash);
+            if (presentationModel == null) {
+                TabsSwitcher tabsSwitcher = MainApplication.getInstance().tabsSwitcher;
+                if (tabsSwitcher.currentFragment instanceof BoardFragment) {
+                    BoardFragment fragment = (BoardFragment)tabsSwitcher.currentFragment;
+                    TabModel currentTab = fragment.getCurrentTabModel();
+                    if (currentTab != null && currentTab.hash != null && currentTab.hash.equals(initData.pageHash)) {
+                        presentationModel = fragment.getCurrentPresentationModel();
+                    }
+                }
+            }
             if (presentationModel != null) {
                 boolean isThread = presentationModel.source.pageModel.type == UrlPageModel.TYPE_THREADPAGE;
                 this.customSubdir = BoardFragment.getCustomSubdir(presentationModel.source.pageModel);

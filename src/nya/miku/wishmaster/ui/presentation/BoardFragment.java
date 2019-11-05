@@ -2514,6 +2514,14 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         }
     }
     
+    public TabModel getCurrentTabModel() {
+        return tabModel;
+    }
+
+    public PresentationModel getCurrentPresentationModel() {
+        return presentationModel;
+    }
+
     /**
      * Обновить страницу
      */
