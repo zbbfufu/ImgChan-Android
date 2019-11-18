@@ -383,6 +383,7 @@ public class InfinityModule extends AbstractVichanModule {
             List<NameValuePair> pairs = new ArrayList<NameValuePair>();
             pairs.add(new BasicNameValuePair("captcha_text", answer));
             pairs.add(new BasicNameValuePair("captcha_cookie", torCaptchaCookie));
+            pairs.add(new BasicNameValuePair("tos_agree", "on"));
             HttpRequestModel rqModel = HttpRequestModel.builder().setPOST(new UrlEncodedFormEntity(pairs, "UTF-8")).setTimeout(30000).build();
             String response = HttpStreamer.getInstance().getStringFromUrl(url, rqModel, httpClient, null, task, true);
             if (response.contains("Error") && !response.contains("Success")) throw new HttpWrongStatusCodeException(400, "400");
