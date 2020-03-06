@@ -33,6 +33,7 @@ import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.HttpHeaders;
 import cz.msebera.android.httpclient.NameValuePair;
 import cz.msebera.android.httpclient.client.entity.UrlEncodedFormEntity;
+import cz.msebera.android.httpclient.cookie.Cookie;
 import cz.msebera.android.httpclient.message.BasicHeader;
 import cz.msebera.android.httpclient.message.BasicNameValuePair;
 import cz.msebera.android.httpclient.util.TextUtils;
@@ -115,6 +116,7 @@ public class InfinityModule extends AbstractVichanModule {
     protected Set<String> boardsPostCaptcha = new HashSet<>();
     private boolean needTorCaptcha = false;
     private String torCaptchaCookie = null;
+    private String torSessionCookie = null;
     protected boolean needNewThreadCaptcha = false;
     protected String newThreadCaptchaId = null;
     
@@ -387,6 +389,13 @@ public class InfinityModule extends AbstractVichanModule {
             HttpRequestModel rqModel = HttpRequestModel.builder().setPOST(new UrlEncodedFormEntity(pairs, "UTF-8")).setTimeout(30000).build();
             String response = HttpStreamer.getInstance().getStringFromUrl(url, rqModel, httpClient, null, task, true);
             if (response.contains("Error") && !response.contains("Success")) throw new HttpWrongStatusCodeException(400, "400");
+            torSessionCookie = null;
+            for (Cookie cookie: httpClient.getCookieStore().getCookies()) {
+                if (cookie.getName().equals("tor") && cookie.getDomain().contains(getUsingDomain())) {
+                    torSessionCookie = cookie.getValue();
+                    break;
+                }
+            }
             needTorCaptcha = false;
         } catch (HttpWrongStatusCodeException e) {
             if (task != null && task.isCancelled()) throw new InterruptedException("interrupted");
@@ -417,6 +426,8 @@ public class InfinityModule extends AbstractVichanModule {
                 addString("body", model.comment).
                 addString("post", model.threadNumber == null ? "New Topic" : "New Reply").
                 addString("board", model.boardName);
+        if (torSessionCookie != null)
+            postEntityBuilder.addString("tor", torSessionCookie);
         if (model.threadNumber != null) postEntityBuilder.addString("thread", model.threadNumber);
         if (model.custommark) postEntityBuilder.addString("spoiler", "on");
         postEntityBuilder.addString("password", TextUtils.isEmpty(model.password) ? getDefaultPassword() : model.password);
