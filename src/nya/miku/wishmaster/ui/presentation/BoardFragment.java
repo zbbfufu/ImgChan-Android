@@ -658,21 +658,26 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         }
         
         if (pageType == TYPE_POSTSLIST) {
-            SubMenu menuCopyAndShare = menu.addSubMenu(Menu.NONE, R.id.context_menu_copy_and_share, 3, R.string.context_menu_copy_and_share);
-            menuCopyAndShare.clearHeader();
-
-            menuCopyAndShare.add(Menu.NONE, R.id.context_menu_copy_post_url, 0, R.string.context_menu_copy_url);
-            menuCopyAndShare.add(Menu.NONE, R.id.context_menu_copy_post_text, 1, R.string.context_menu_copy_text);
-            menuCopyAndShare.add(Menu.NONE, R.id.context_menu_share_post_link, 2, R.string.context_menu_share_link);
-            menuCopyAndShare.add(Menu.NONE, R.id.context_menu_share_post_text, 3, R.string.context_menu_share_text);
-
             menu.add(Menu.NONE, R.id.context_menu_goto_post, 0, R.string.context_menu_goto_post);
             menu.add(Menu.NONE, R.id.context_menu_reply, 1, R.string.context_menu_reply);
             menu.add(Menu.NONE, R.id.context_menu_reply_with_quote, 2, R.string.context_menu_reply_with_quote);
-            menu.add(Menu.NONE, R.id.context_menu_hide, 4, R.string.context_menu_hide_post);
-            menu.add(Menu.NONE, R.id.context_menu_delete, 5, R.string.context_menu_delete);
-            menu.add(Menu.NONE, R.id.context_menu_report, 6, R.string.context_menu_report);
-            menu.add(Menu.NONE, R.id.context_menu_subscribe, 7, R.string.context_menu_subscribe);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                SubMenu subMenu = menu.addSubMenu(Menu.NONE, R.id.context_menu_copy_and_share, 3, R.string.context_menu_copy_and_share);
+                subMenu.clearHeader();
+                subMenu.add(Menu.NONE, R.id.context_menu_copy_post_url, 0, R.string.context_menu_copy_url);
+                subMenu.add(Menu.NONE, R.id.context_menu_copy_post_text, 1, R.string.context_menu_copy_text);
+                subMenu.add(Menu.NONE, R.id.context_menu_share_post_link, 2, R.string.context_menu_share_link);
+                subMenu.add(Menu.NONE, R.id.context_menu_share_post_text, 3, R.string.context_menu_share_text);
+            } else {
+                menu.add(Menu.NONE, R.id.context_menu_copy_post_url, 3, R.string.context_menu_copy_url);
+                menu.add(Menu.NONE, R.id.context_menu_copy_post_text, 4, R.string.context_menu_copy_text);
+                menu.add(Menu.NONE, R.id.context_menu_share_post_link, 5, R.string.context_menu_share_link);
+                menu.add(Menu.NONE, R.id.context_menu_share_post_text, 6, R.string.context_menu_share_text);
+            }
+            menu.add(Menu.NONE, R.id.context_menu_hide, 7, R.string.context_menu_hide_post);
+            menu.add(Menu.NONE, R.id.context_menu_delete, 8, R.string.context_menu_delete);
+            menu.add(Menu.NONE, R.id.context_menu_report, 9, R.string.context_menu_report);
+            menu.add(Menu.NONE, R.id.context_menu_subscribe, 10, R.string.context_menu_subscribe);
             if (!isList) {
                 for (int id : new int[] {
                         R.id.context_menu_goto_post,
