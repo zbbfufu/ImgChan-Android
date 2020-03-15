@@ -81,6 +81,7 @@ public class KohlchanModule extends AbstractLynxChanModule {
             "jpg", "jpeg", "bmp", "gif", "png", "webp", "mp3", "ogg", "flac", "opus", "webm", "mp4",
             "7z", "zip", "pdf", "epub", "txt" };
     private static final Pattern INVALID_LESSER_THAN_PATTERN = Pattern.compile("&lt([^;])");
+    private static final Pattern LINE_BREAK_PATTERN = Pattern.compile("\\n");
     
     private String domain;
     private Map<String, String> captchas = new HashMap<>();
@@ -249,6 +250,7 @@ public class KohlchanModule extends AbstractLynxChanModule {
     protected PostModel mapPostModel(JSONObject object) {
         PostModel model = super.mapPostModel(object);
         model.comment = RegexUtils.replaceAll(model.comment, INVALID_LESSER_THAN_PATTERN, "&lt;$1");
+        model.comment = RegexUtils.replaceAll(model.comment, LINE_BREAK_PATTERN, "<br/>");
         return model;
     }
 
