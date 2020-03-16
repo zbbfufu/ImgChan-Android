@@ -349,9 +349,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <string name="app_update_checking">Перевірка оновлень</string>
     <string name="app_update_update_available">Є оновлення</string>
-    <string name="app_update_update_dialog_text">Є нова версія:\n%s\n\n%s\n\nЗавантажити оновлення?</string>
+    <string name="app_update_update_dialog_text">Є нова версія:\n%s\n\n%s\n\nВстановити оновлення?</string>
     <string name="app_update_update_not_required">Ця версія найновіша</string>
     <string name="app_update_update_error">Помилка перевірки оновлень</string>
+    <string name="app_update_download_error">Не вдалося завантажити оновлення</string>
+    <string name="app_update_install_error">Помилка установки оновлення</string>
     
     <string name="custom_themes_title">Користувальницькі теми</string>
     <string name="custom_themes_local">(Вибрати з файлу)</string>

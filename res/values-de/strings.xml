@@ -339,9 +339,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <string name="app_update_checking">Suche nach Updates</string>
     <string name="app_update_update_available">Update verfügbar</string>
-    <string name="app_update_update_dialog_text">Neue Version ist verfügbar:\n%s\n\n%s\n\nMöchten Sie es herunterladen?</string>
+    <string name="app_update_update_dialog_text">Neue Version ist verfügbar:\n%s\n\n%s\n\nMöchten Sie es installieren?</string>
     <string name="app_update_update_not_required">Kein Update erforderlich</string>
     <string name="app_update_update_error">Kann nicht nach Updates suchen</string>
+    <string name="app_update_download_error">Update kann nicht heruntergeladen werden</string>
+    <string name="app_update_install_error">Installationsfehler aktualisieren</string>
     
     <string name="custom_themes_title">Benutzerdefinierte Themen</string>
     <string name="custom_themes_local">(Datei auswählen)</string>
