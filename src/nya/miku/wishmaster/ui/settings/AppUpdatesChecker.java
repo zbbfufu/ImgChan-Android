@@ -47,7 +47,7 @@ import cz.msebera.android.httpclient.message.BasicHeader;
 
 public class AppUpdatesChecker {
     private static final String TAG = "AppUpdatesChecker";
-    
+    private static final String PREF_KEY_LAST_CHECK = "last_check_for_updates";
     private static final String URL_PATH = "https://api.github.com/repos/overchan-project/Overchan-Android/releases/";
     private static final String URL_BETA = "tags/current";
     private static final String URL_STABLE = "latest";
@@ -57,6 +57,11 @@ public class AppUpdatesChecker {
     }
 
     public static void checkForUpdates(final Activity activity, final boolean silent) {
+        if (silent && 86400000 > System.currentTimeMillis() -
+            MainApplication.getInstance().preferences.
+                getLong(PREF_KEY_LAST_CHECK, 0)) {
+            return;
+        }
         final ExtendedHttpClient httpClient = new ExtendedHttpClient(null);
         final CancellableTask task = new CancellableTask.BaseCancellableTask();
         final ProgressDialog progressDialog;
@@ -104,6 +109,7 @@ public class AppUpdatesChecker {
                             if (result == null) throw new Exception();
                             final String newVersionName = result.getString("name");
                             final String currentVersionName = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).versionName;
+                            MainApplication.getInstance().preferences.edit().putLong(PREF_KEY_LAST_CHECK, System.currentTimeMillis()).commit();
                             if (!currentVersionName.equals(newVersionName)) {
                                 String newVersionInfo = result.getString("body");
                                 final String url = result.getJSONArray("assets").getJSONObject(0).getString("browser_download_url");

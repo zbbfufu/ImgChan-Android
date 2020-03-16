@@ -562,7 +562,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_clear_cache_summary">%.1f MB</string>
     <string name="pref_clear_cache_confirmation">Sind Sie sicher, dass Sie Cache löschen?</string>
     <string name="pref_update_on_startup_title">Beim Start der Anwendung</string>
-    <string name="pref_update_on_startup_summary">Suchen Sie beim Start nach Updates</string>
+    <string name="pref_update_on_startup_summary">Aber nicht mehr als einmal am Tag</string>
     <string name="pref_update_allow_beta_title">Erlaube Beta-Versionen</string>
     <string name="pref_update_allow_beta_summary">Erlaube die Installation von Beta-Versionen</string>
     <string name="pref_about_version_title">Overchan Android</string>
