@@ -3123,7 +3123,8 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         final int measuredWidth = isTablet ? adapter.measureViewWidth(itemPosition) : -1; //измерять требуется только для планшета
         final View tmpV = new View(activity);
         final Dialog tmpDlg = new Dialog(activity);
-        tmpDlg.getWindow().setBackgroundDrawableResource(bgShadowResource);
+        tmpDlg.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        tmpDlg.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         tmpDlg.requestWindowFeature(Window.FEATURE_NO_TITLE);
         tmpDlg.setCanceledOnTouchOutside(true);
         tmpDlg.setContentView(tmpV);
@@ -3223,7 +3224,8 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         final int bgColor = ThemeUtils.getThemeColor(activity.getTheme(), R.attr.activityRootBackground, Color.BLACK);
         final View tmpV = new View(activity);
         final Dialog tmpDlg = new Dialog(activity);
-        tmpDlg.getWindow().setBackgroundDrawableResource(bgShadowResource);
+        tmpDlg.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        tmpDlg.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         tmpDlg.requestWindowFeature(Window.FEATURE_NO_TITLE);
         tmpDlg.setCanceledOnTouchOutside(true);
         tmpDlg.setContentView(tmpV);
@@ -3375,7 +3377,8 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         final int bgColor = ThemeUtils.getThemeColor(activity.getTheme(), R.attr.activityRootBackground, Color.BLACK);
         final View tmpV = new View(activity);
         final Dialog tmpDlg = new Dialog(activity);
-        tmpDlg.getWindow().setBackgroundDrawableResource(bgShadowResource);
+        tmpDlg.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        tmpDlg.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         tmpDlg.requestWindowFeature(Window.FEATURE_NO_TITLE);
         tmpDlg.setCanceledOnTouchOutside(true);
         tmpDlg.setContentView(tmpV);
