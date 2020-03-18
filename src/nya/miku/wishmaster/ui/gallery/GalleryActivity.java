@@ -1252,15 +1252,18 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     
     private FullscreenCallback fullscreenCallback;
     private GestureDetector fullscreenGestureDetector;
+    private boolean ignoreNextUp = false;
     
     public void setFullscreenCallback(FullscreenCallback fullscreenCallback) {
         if (fullscreenGestureDetector == null) {
             fullscreenGestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
                 @Override
-                public boolean onSingleTapConfirmed(MotionEvent e) {
+                public void onLongPress(MotionEvent event) {
                     FullscreenCallback fullscreenCallback = GalleryActivity.this.fullscreenCallback;
-                    if (fullscreenCallback != null) fullscreenCallback.showUI(true);
-                    return true;
+                    if (fullscreenCallback != null) {
+                        fullscreenCallback.showUI(true);
+                        ignoreNextUp = true;
+                    }
                 }
             });
         }
@@ -1272,6 +1275,10 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         if (fullscreenCallback != null) {
             fullscreenCallback.keepUI(MotionEventCompat.getActionMasked(ev) == MotionEvent.ACTION_UP);
             fullscreenGestureDetector.onTouchEvent(ev);
+        }
+        if (ignoreNextUp && MotionEventCompat.getActionMasked(ev) == MotionEvent.ACTION_UP) {
+            ignoreNextUp = false;
+            return true;
         }
         return super.dispatchTouchEvent(ev);
     }
