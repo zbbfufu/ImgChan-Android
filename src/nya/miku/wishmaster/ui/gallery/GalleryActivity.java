@@ -1248,6 +1248,8 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     public static interface FullscreenCallback {
         void showUI(boolean hideAfterDelay);
         void keepUI(boolean hideAfterDelay);
+        void hideUI();
+        boolean isUIVisible();
     }
     
     private FullscreenCallback fullscreenCallback;
@@ -1261,7 +1263,10 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 public void onLongPress(MotionEvent event) {
                     FullscreenCallback fullscreenCallback = GalleryActivity.this.fullscreenCallback;
                     if (fullscreenCallback != null) {
-                        fullscreenCallback.showUI(true);
+                        if (fullscreenCallback.isUIVisible())
+                            fullscreenCallback.hideUI();
+                        else
+                            fullscreenCallback.showUI(true);
                         ignoreNextUp = true;
                     }
                 }
