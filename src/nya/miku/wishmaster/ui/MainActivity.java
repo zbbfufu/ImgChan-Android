@@ -36,6 +36,7 @@ import nya.miku.wishmaster.ui.posting.PostFormActivity;
 import nya.miku.wishmaster.ui.posting.PostingService;
 import nya.miku.wishmaster.ui.presentation.BoardFragment;
 import nya.miku.wishmaster.ui.presentation.FlowTextHelper;
+import nya.miku.wishmaster.ui.settings.AutohideActivity;
 import nya.miku.wishmaster.ui.settings.PreferencesActivity;
 import nya.miku.wishmaster.ui.settings.ApplicationSettings.StaticSettingsContainer;
 import nya.miku.wishmaster.ui.settings.AppUpdatesChecker;
@@ -190,6 +191,7 @@ public class MainActivity extends FragmentActivity {
                 menu.add(Menu.NONE, R.id.menu_open_browser, 202, R.string.menu_open_browser).setIcon(R.drawable.ic_menu_browser);
             }
         }
+        menu.add(Menu.NONE, R.id.menu_autohide, 203, R.string.autohide_title);
         menu.add(Menu.NONE, R.id.menu_settings, 203, R.string.menu_preferences).setIcon(android.R.drawable.ic_menu_preferences);
         Menu subMenu = menu.addSubMenu(Menu.NONE, R.id.menu_sub_settings, 203, R.string.menu_preferences).
                 setIcon(android.R.drawable.ic_menu_preferences);
@@ -247,6 +249,9 @@ public class MainActivity extends FragmentActivity {
                 if (tabsAdapter != null && tabsAdapter.getSelectedItem() >= 0 && tabsAdapter.getItem(tabsAdapter.getSelectedItem()).webUrl != null) {
                     handleFavorite(tabsAdapter.getItem(tabsAdapter.getSelectedItem()));
                 }
+                return true;
+            case R.id.menu_autohide:
+                startActivity(new Intent(this, AutohideActivity.class));
                 return true;
             case R.id.menu_settings:
             case R.id.menu_sub_settings_all:

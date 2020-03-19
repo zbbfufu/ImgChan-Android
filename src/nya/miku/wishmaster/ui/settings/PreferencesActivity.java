@@ -212,15 +212,6 @@ public class PreferencesActivity extends PreferenceActivity {
             }
         });
         
-        getPreferenceManager().findPreference(getString(R.string.pref_key_autohide)).setOnPreferenceClickListener(
-                new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                startActivity(new Intent(PreferencesActivity.this, AutohideActivity.class));
-                return true;
-            }
-        });
-        
         getPreferenceManager().findPreference(getString(R.string.pref_key_cache_maxsize)).setOnPreferenceChangeListener(
                 new Preference.OnPreferenceChangeListener() {
             @Override
