@@ -352,9 +352,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <string name="app_update_checking">Перевірка оновлень</string>
     <string name="app_update_update_available">Є оновлення</string>
-    <string name="app_update_update_dialog_text">Є нова версія:\n%s\n\nПерейти до сайту?</string>
+    <string name="app_update_update_dialog_text">Є нова версія:\n%s\n\n%s\n\nВстановити оновлення?</string>
     <string name="app_update_update_not_required">Ця версія найновіша</string>
     <string name="app_update_update_error">Помилка перевірки оновлень</string>
+    <string name="app_update_download_error">Не вдалося завантажити оновлення</string>
+    <string name="app_update_install_error">Помилка установки оновлення</string>
     
     <string name="custom_themes_title">Користувальницькі теми</string>
     <string name="custom_themes_local">(Вибрати з файлу)</string>
@@ -453,6 +455,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_cat_autoupdate">Автооновлення</string>
     <string name="pref_cat_subscriptions">Відстеження відповідей</string>
     <string name="pref_cat_cache">Кеш</string>
+    <string name="pref_cat_update">Перевірка оновлень</string>
     <string name="pref_cat_about">Про Overchan</string>
     <string name="pref_cat_proxy">З’єднання</string>
     <string name="pref_use_proxy">Проксі</string>
@@ -577,6 +580,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_clear_cache_title">Стерти кеш</string>
     <string name="pref_clear_cache_summary">%.1f МБ</string>
     <string name="pref_clear_cache_confirmation">Ви дійсно хочете стерти кеш?</string>
+    <string name="pref_update_on_startup_title">Перевіряти під час запуску</string>
+    <string name="pref_update_on_startup_summary">Але не частіше ніж один раз на день</string>
+    <string name="pref_update_allow_beta_title">Дозволити тестові версії</string>
+    <string name="pref_update_allow_beta_summary">Дозволити установку тестових версій</string>
     <string name="pref_about_version_title">Overchan Android</string>
     <string name="pref_about_license_title">Ліцензія</string>
     <string name="pref_about_license_summary">GPLv3</string>

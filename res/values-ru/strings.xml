@@ -349,9 +349,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <string name="app_update_checking">Проверка обновлений</string>
     <string name="app_update_update_available">Доступно обновление</string>
-    <string name="app_update_update_dialog_text">Доступна новая версия:\n%s\n\nОткрыть сайт?</string>
+    <string name="app_update_update_dialog_text">Доступна новая версия:\n%s\n\n%s\n\nУстановить обновление?</string>
     <string name="app_update_update_not_required">Обновление не требуется</string>
     <string name="app_update_update_error">Не удалось проверить обновления</string>
+    <string name="app_update_download_error">Не удалось загрузить обновление</string>
+    <string name="app_update_install_error">Ошибка установки обновления</string>
     
     <string name="custom_themes_title">Пользовательские темы</string>
     <string name="custom_themes_local">(Выбрать файл)</string>
@@ -450,6 +452,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_cat_autoupdate">Автообновление</string>
     <string name="pref_cat_subscriptions">Отслеживание ответов</string>
     <string name="pref_cat_cache">Кэширование</string>
+    <string name="pref_cat_update">Проверка обновлений</string>
     <string name="pref_cat_about">О программе</string>
     <string name="pref_cat_proxy">Настройки соединения</string>
     <string name="pref_use_proxy">Прокси</string>
@@ -573,6 +576,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_clear_cache_title">Очистить кэш</string>
     <string name="pref_clear_cache_summary">%.1f MБ</string>
     <string name="pref_clear_cache_confirmation">Вы действительно хотите очистить кэш?</string>
+    <string name="pref_update_on_startup_title">Проверять при запуске</string>
+    <string name="pref_update_on_startup_summary">Но не чаще одного раза в день</string>
+    <string name="pref_update_allow_beta_title">Разрешить тестовые версии</string>
+    <string name="pref_update_allow_beta_summary">Разрешить установку тестовых версий</string>
     <string name="pref_about_version_title">Overchan Android</string>
     <string name="pref_about_license_title">Лицензия</string>
     <string name="pref_about_license_summary">GPLv3</string>

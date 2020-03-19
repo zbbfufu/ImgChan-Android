@@ -38,6 +38,7 @@ import nya.miku.wishmaster.ui.presentation.BoardFragment;
 import nya.miku.wishmaster.ui.presentation.FlowTextHelper;
 import nya.miku.wishmaster.ui.settings.PreferencesActivity;
 import nya.miku.wishmaster.ui.settings.ApplicationSettings.StaticSettingsContainer;
+import nya.miku.wishmaster.ui.settings.AppUpdatesChecker;
 import nya.miku.wishmaster.ui.tabs.LocalHandler;
 import nya.miku.wishmaster.ui.tabs.TabModel;
 import nya.miku.wishmaster.ui.tabs.TabsAdapter;
@@ -440,7 +441,8 @@ public class MainActivity extends FragmentActivity {
         if (!TabsTrackerService.isRunning() && MainApplication.getInstance().settings.isAutoupdateEnabled())
             startService(new Intent(this, TabsTrackerService.class));
         
-        if (MainApplication.getInstance().settings.isSFWRelease()) NewsReader.checkNews(this);
+        // if (MainApplication.getInstance().settings.isSFWRelease()) NewsReader.checkNews(this);
+        if (MainApplication.getInstance().settings.isUpdateOnStartup()) AppUpdatesChecker.checkForUpdates(this, true);
     }
     
     @Override
