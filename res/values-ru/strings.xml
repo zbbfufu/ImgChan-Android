@@ -539,13 +539,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_autoupdate_only_wifi_title">Только через Wi-Fi</string>
     <string name="pref_autoupdate_only_wifi_summary">Автообновление только через Wi-Fi</string>
     <string name="pref_autoupdate_delay_title">Интервал (в секундах)</string>
-    <string name="pref_autoupdate_delay_summary">Интервал автообновления, не менее 30 секунд</string>
+    <string name="pref_autoupdate_delay_summary">Интервал автообновления</string>
     <string name="pref_autoupdate_delay_hint">по умолчанию 60 секунд</string>
     <string name="pref_autoupdate_delay_incorrect">Некорректное значение</string>
     <string name="pref_autoupdate_background_title">Обновление фоновых вкладок</string>
     <string name="pref_autoupdate_background_summary">Обновлять вкладки, отмеченные для автообновления, в фоновом режиме</string>
     <string name="pref_autoupdate_notification_title">В области уведомлений</string>
     <string name="pref_autoupdate_notification_summary">Не даёт системе закрыть процесс, когда приложение свёрнуто</string>
+    <string name="pref_autoupdate_progress_title">Отображать прогресс в шторке</string>
+    <string name="pref_autoupdate_progress_summary">Показывать прогресс автообновления в шторке</string>
     <string name="pref_subscriptions_enabled_title">Отслеживать ответы</string>
     <string name="pref_subscriptions_enabled_summary">Отслеживать ответы на сообщения, на которые вы подписаны</string>
     <string name="pref_subscribe_threads_title">Отслеживать треды</string>
@@ -636,6 +638,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="mark_code">Код</string>
     <string name="pref_post_thumbnail_scale_title">Размер эскизов</string>
     <string name="pref_key_post_thumbnail_scale_toast">Рекомендуется очистить кэш</string>
+    <string name="pref_show_default_names_title">Отображать имена по умолчанию</string>
+    <string name="pref_show_default_names_summary">Не скрывать поле имя у анонимных постеров</string>
+    <string name="pref_wide_popup_dialogs_title">Широкие всплывающие диалоги</string>
+    <string name="pref_wide_popup_dialogs_summary">Упрощает чтение всплывающих диалогов на маленьких экранах</string>
     <string name="newtab_select_local_directory">Указать расположение каталога</string>
     <string name="pref_scroll_to_active_tab_title">Прокрутка до активной вкладки</string>
     <string name="pref_scroll_to_active_tab_summary">Прокручивать до активной вкладки при закрытии неактивной вкладки</string>

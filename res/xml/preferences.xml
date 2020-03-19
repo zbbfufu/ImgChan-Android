@@ -101,6 +101,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:title="@string/pref_sidepanel_hide_title"
             android:summary="@string/pref_sidepanel_hide_summary"
             android:disableDependentsState="true" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_show_default_names"
+            android:title="@string/pref_show_default_names_title"
+            android:summary="@string/pref_show_default_names_summary" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_wide_popup_dialogs"
+            android:title="@string/pref_wide_popup_dialogs_title"
+            android:summary="@string/pref_wide_popup_dialogs_summary" />
         
         <ListPreference
             android:key="@string/pref_key_sidepanel_width"
@@ -354,6 +366,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:key="@string/pref_key_autoupdate_notification"
             android:title="@string/pref_autoupdate_notification_title"
             android:summary="@string/pref_autoupdate_notification_summary"
+            android:dependency="@string/pref_key_enable_autoupdate" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_autoupdate_progress"
+            android:title="@string/pref_autoupdate_progress_title"
+            android:summary="@string/pref_autoupdate_progress_summary"
             android:dependency="@string/pref_key_enable_autoupdate" />
     </PreferenceCategory>
     
