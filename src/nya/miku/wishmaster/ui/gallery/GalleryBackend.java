@@ -288,24 +288,26 @@ public class GalleryBackend extends Service {
                 while (downloadingLocker.isLocked(filename)) downloadingLocker.waitUnlock(filename);
                 if (callback.isCancelled()) return null;
             }
-            if (file == null || !file.exists() || file.isDirectory() || file.length() == 0) {
-                File dir = new File(settings.getDownloadDirectory(), chan.getChanName());
-                file = new File(dir, Attachments.getAttachmentLocalFileName(attachmentModel, boardModel));
-                String filename = file.getAbsolutePath();
-                while (downloadingLocker.isLocked(filename)) downloadingLocker.waitUnlock(filename);
-                if (callback.isCancelled()) return null;
-            }
-            if (customSubdir != null) {
+            if (!settings.isDownloadOriginalNames()) {
                 if (file == null || !file.exists() || file.isDirectory() || file.length() == 0) {
                     File dir = new File(settings.getDownloadDirectory(), chan.getChanName());
-                    dir = new File(dir, customSubdir);
                     file = new File(dir, Attachments.getAttachmentLocalFileName(attachmentModel, boardModel));
                     String filename = file.getAbsolutePath();
                     while (downloadingLocker.isLocked(filename)) downloadingLocker.waitUnlock(filename);
                     if (callback.isCancelled()) return null;
                 }
+                if (customSubdir != null) {
+                    if (file == null || !file.exists() || file.isDirectory() || file.length() == 0) {
+                        File dir = new File(settings.getDownloadDirectory(), chan.getChanName());
+                        dir = new File(dir, customSubdir);
+                        file = new File(dir, Attachments.getAttachmentLocalFileName(attachmentModel, boardModel));
+                        String filename = file.getAbsolutePath();
+                        while (downloadingLocker.isLocked(filename)) downloadingLocker.waitUnlock(filename);
+                        if (callback.isCancelled()) return null;
+                    }
+                }
             }
-            if (!file.exists() || file.isDirectory() || file.length() == 0) {
+            if (file == null || !file.exists() || file.isDirectory() || file.length() == 0) {
                 callback.getCallback().showLoading();
                 file = fileCache.create(FileCache.PREFIX_ORIGINALS + attachmentHash + Attachments.getAttachmentExtention(attachmentModel));
                 String filename = file.getAbsolutePath();

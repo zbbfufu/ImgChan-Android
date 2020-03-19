@@ -294,14 +294,34 @@ public class DownloadingService extends Service {
                         getString(R.string.downloading_title, downloadingQueue.size() + 1) : getString(R.string.downloading_title_simple));
                 
                 if (item.type == DownloadingQueueItem.TYPE_ATTACHMENT) {
-                    final String filename = Attachments.getAttachmentLocalFileName(item.attachment, item.boardModel);
+                    String filename = Attachments.getAttachmentLocalFileName(item.attachment, item.boardModel, settings.isDownloadOriginalNames());
                     if (filename == null) continue;
                     String elementName = getString(R.string.downloading_element_format, item.chanName,
-                            Attachments.getAttachmentLocalShortName(item.attachment, item.boardModel));
+                            Attachments.getAttachmentLocalShortName(item.attachment, item.boardModel, settings.isDownloadOriginalNames()));
                     currentItemName = elementName;
-                    
+
+                    File directory = new File(settings.getDownloadDirectory(), item.chanName);
+                    if (item.subdirectory != null && item.subdirectory.length() > 0) directory = new File(directory, item.subdirectory);
+                    if (!directory.mkdirs() && !directory.isDirectory()) {
+                        addError(item, elementName, getString(R.string.downloading_error_mkdir));
+                        continue;
+                    }
+                    File target = new File(directory, filename);
+                    if (target.exists()) {
+                        int extensionPos = filename.lastIndexOf(".");
+                        String name = (extensionPos >= 0) ? filename.substring(0, extensionPos) : filename;
+                        String extension = (extensionPos >= 0) ? filename.substring(extensionPos) : "";
+                        int n = 1;
+                        do {
+                            filename = name + "(" + n + ")" + extension;
+                            target = new File(directory, filename);
+                            ++n;
+                        } while (target.exists());
+                    }
+                    final String finalName = filename;
+
                     curProgress = -1;
-                    progressNotifBuilder.setContentText(filename).setProgress(100, 0, true);
+                    progressNotifBuilder.setContentText(finalName).setProgress(100, 0, true);
                     notifyForeground(DOWNLOADING_NOTIFICATION_ID, progressNotifBuilder.build());
                     sendBroadcast(new Intent(BROADCAST_UPDATED));
                     
@@ -313,7 +333,7 @@ public class DownloadingService extends Service {
                             curProgress = newProgress;
                             progressNotifBuilder.setProgress(100, newProgress, false);
                             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-                                progressNotifBuilder.setContentText("("+newProgress+"%) "+filename);
+                                progressNotifBuilder.setContentText("("+newProgress+"%) "+finalName);
                             }
                             notifyForeground(DOWNLOADING_NOTIFICATION_ID, progressNotifBuilder.build());
                             sendBroadcast(new Intent(BROADCAST_UPDATED));
@@ -327,62 +347,32 @@ public class DownloadingService extends Service {
                             if (curProgress == -1) return;
                             progressNotifBuilder.setProgress(100, 0, true);
                             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-                                progressNotifBuilder.setContentText(filename);
+                                progressNotifBuilder.setContentText(finalName);
                             }
                             notifyForeground(DOWNLOADING_NOTIFICATION_ID, progressNotifBuilder.build());
                             sendBroadcast(new Intent(BROADCAST_UPDATED));
                             curProgress = -1;
                         }
                     };
-                    
-                    File directory = new File(settings.getDownloadDirectory(), item.chanName);
-                    if (item.subdirectory != null && item.subdirectory.length() > 0) directory = new File(directory, item.subdirectory);
-                    if (!directory.mkdirs() && !directory.isDirectory()) {
-                        addError(item, elementName, getString(R.string.downloading_error_mkdir));
-                        continue;
-                    }
-                    File target = new File(directory, filename);
-                    if (target.exists()) {
-                        addError(item, elementName, getString(R.string.downloading_error_file_exists));
-                        continue;
-                    }
-                    File fromCache = fileCache.get(FileCache.PREFIX_ORIGINALS + ChanModels.hashAttachmentModel(item.attachment) +
+                    File cachedFile = fileCache.get(FileCache.PREFIX_ORIGINALS + ChanModels.hashAttachmentModel(item.attachment) +
                             Attachments.getAttachmentExtention(item.attachment));
-                    if (fromCache != null) {
-                        String fromCacheFilename = fromCache.getAbsolutePath();
-                        while (downloadingLocker.isLocked(fromCacheFilename)) downloadingLocker.waitUnlock(fromCacheFilename);
-                        if (isCancelled()) continue;
-                        boolean success = false;
-                        InputStream is = null;
-                        OutputStream os = null;
-                        try {
-                            if (listener != null) listener.setMaxValue(fromCache.length());
-                            is = IOUtils.modifyInputStream(new FileInputStream(fromCache), listener, this);
-                            os = new FileOutputStream(target);
-                            IOUtils.copyStream(is, os);
-                            success = true;
-                        } catch (Exception e) {
-                            if (!isCancelled()) {
-                                addError(item, elementName,
-                                        getString(IOUtils.isENOSPC(e) ? R.string.error_no_space : R.string.downloading_error_copy));
-                            }
-                        } finally {
-                            IOUtils.closeQuietly(is);
-                            IOUtils.closeQuietly(os);
-                            if (!success) target.delete();
-                            else notifyMediaScanner(target);
-                        }
+                    String cachedFileFilename;
+                    if (cachedFile != null) {
+                        cachedFileFilename = cachedFile.getAbsolutePath();
                     } else {
-                        String targetFilename = target.getAbsolutePath();
-                        while (!downloadingLocker.lock(targetFilename)) downloadingLocker.waitUnlock(targetFilename);
+                        cachedFile = fileCache.create(FileCache.PREFIX_ORIGINALS + ChanModels.hashAttachmentModel(item.attachment) +
+                            Attachments.getAttachmentExtention(item.attachment));
+                        cachedFileFilename = cachedFile.getAbsolutePath();
+                        while (!downloadingLocker.lock(cachedFileFilename)) downloadingLocker.waitUnlock(cachedFileFilename);
                         if (isCancelled()) {
-                            downloadingLocker.unlock(targetFilename);
+                            fileCache.abort(cachedFile);
+                            downloadingLocker.unlock(cachedFileFilename);
                             continue;
                         }
                         boolean success = false;
                         FileOutputStream out = null;
                         try {
-                            out = new FileOutputStream(target);
+                            out = new FileOutputStream(cachedFile);
                             MainApplication.getInstance().getChanModule(item.chanName).downloadFile(item.attachment.path, out, listener, this);
                             success = true;
                         } catch (Exception e) {
@@ -392,10 +382,32 @@ public class DownloadingService extends Service {
                                         getMessageOrENOSPC(e));
                         } finally {
                             IOUtils.closeQuietly(out);
-                            if (!success) target.delete();
-                            else notifyMediaScanner(target);
-                            downloadingLocker.unlock(targetFilename);
+                            if (!success) fileCache.abort(cachedFile);
+                            else fileCache.put(cachedFile);
+                            downloadingLocker.unlock(cachedFileFilename);
                         }
+                        if (!success) continue;
+                    }
+                    while (downloadingLocker.isLocked(cachedFileFilename)) downloadingLocker.waitUnlock(cachedFileFilename);
+                    if (isCancelled()) continue;
+                    boolean success = false;
+                    InputStream is = null;
+                    OutputStream os = null;
+                    try {
+                        is = IOUtils.modifyInputStream(new FileInputStream(cachedFile), null, this);
+                        os = new FileOutputStream(target);
+                        IOUtils.copyStream(is, os);
+                        success = true;
+                    } catch (Exception e) {
+                        if (!isCancelled()) {
+                            addError(item, elementName,
+                                    getString(IOUtils.isENOSPC(e) ? R.string.error_no_space : R.string.downloading_error_copy));
+                        }
+                    } finally {
+                        IOUtils.closeQuietly(is);
+                        IOUtils.closeQuietly(os);
+                        if (!success) target.delete();
+                        else notifyMediaScanner(target);
                     }
                     
                 } else if (item.type == DownloadingQueueItem.TYPE_THREAD) {
@@ -603,7 +615,7 @@ public class DownloadingService extends Service {
                             String curFile = Attachments.getAttachmentLocalFileName(attachment, item.boardModel);
                             if (curFile == null) continue;
                             String curElementName = getString(R.string.downloading_element_format, item.chanName,
-                                    Attachments.getAttachmentLocalShortName(attachment, item.boardModel));
+                                    Attachments.getAttachmentLocalShortName(attachment, item.boardModel, settings.isDownloadOriginalNames()));
                             String curThumbElementName = getString(R.string.downloading_thumbnail_format, curElementName);
                             String curHash = ChanModels.hashAttachmentModel(attachment);
                             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
