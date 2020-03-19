@@ -21,6 +21,7 @@ package nya.miku.wishmaster.ui.posting;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.lang.System;
 import java.util.ArrayList;
 
 import nya.miku.wishmaster.R;
@@ -76,7 +77,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class PostFormActivity extends Activity implements View.OnClickListener {
+public class PostFormActivity extends Activity implements View.OnClickListener, View.OnLongClickListener {
     protected static final String TAG = "PostFormActivity";
     
     private static final int REQUEST_CODE_ATTACH_FILE = 1;
@@ -112,7 +113,20 @@ public class PostFormActivity extends Activity implements View.OnClickListener {
     
     private ArrayList<File> attachments;
     private String currentPath;
+    private long lastClickTime = 0;
     
+    @Override
+    public boolean onLongClick(View v) {
+        switch (v.getId()) {
+            case R.id.postform_send_button:
+                if (settings.isSafePosting()) {
+                    send();
+                    return true;
+                }
+        }
+        return false;
+    }
+
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -123,7 +137,12 @@ public class PostFormActivity extends Activity implements View.OnClickListener {
                 updateCaptcha();
                 break;
             case R.id.postform_send_button:
-                send();
+                long currentTime = System.currentTimeMillis();
+                if (!settings.isSafePosting() || (currentTime - lastClickTime < 1000)) {
+                    send();
+                } else {
+                    lastClickTime = currentTime;
+                }
                 break;
             case R.id.postform_mark_bold:
             case R.id.postform_mark_italic:
@@ -497,6 +516,7 @@ public class PostFormActivity extends Activity implements View.OnClickListener {
 
         sendButton = (Button) findViewById(R.id.postform_send_button);
         sendButton.setOnClickListener(this);
+        sendButton.setOnLongClickListener(this);
         
         if (settings.isHidePersonalData()) {
             nameLayout.setVisibility(View.GONE);

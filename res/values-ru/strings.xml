@@ -484,6 +484,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_hide_personal_summary">Всегда использовать значения по умолчанию</string>
     <string name="pref_ssl_certificates_title">SSL сертификаты</string>
     <string name="pref_ssl_certificates_summary">Доверенные SSL сертификаты (исключения)</string>
+    <string name="pref_safe_posting_title">Безопасная отправка постов</string>
+    <string name="pref_safe_posting_summary">Отправлять посты по двойному или долгому нажатию кнопки</string>
     <string name="pref_random_hash_title">Произвольный хэш</string>
     <string name="pref_random_hash_summary">Добавлять несколько байт в конец прикрепляемых файлов</string>
     <string name="pref_show_all_chans_list_title">Список имиджборд</string>

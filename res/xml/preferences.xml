@@ -213,6 +213,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         
         <CheckBoxPreference
             android:defaultValue="false"
+            android:key="@string/pref_key_safe_posting"
+            android:title="@string/pref_safe_posting_title"
+            android:summary="@string/pref_safe_posting_summary" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
             android:key="@string/pref_key_random_hash"
             android:title="@string/pref_random_hash_title"
             android:summary="@string/pref_random_hash_summary" />
