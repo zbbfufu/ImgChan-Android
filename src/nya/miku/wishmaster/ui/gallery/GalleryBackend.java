@@ -219,6 +219,16 @@ public class GalleryBackend extends Service {
             }
             
             PresentationModel presentationModel = MainApplication.getInstance().pagesCache.getPresentationModel(initData.pageHash);
+            if (presentationModel == null) {
+                TabsSwitcher tabsSwitcher = MainApplication.getInstance().tabsSwitcher;
+                if (tabsSwitcher.currentFragment instanceof BoardFragment) {
+                    BoardFragment fragment = (BoardFragment)tabsSwitcher.currentFragment;
+                    TabModel currentTab = fragment.getCurrentTabModel();
+                    if (currentTab != null && currentTab.hash != null && currentTab.hash.equals(initData.pageHash)) {
+                        presentationModel = fragment.getCurrentPresentationModel();
+                    }
+                }
+            }
             if (presentationModel != null) {
                 boolean isThread = presentationModel.source.pageModel.type == UrlPageModel.TYPE_THREADPAGE;
                 this.customSubdir = BoardFragment.getCustomSubdir(presentationModel.source.pageModel);
@@ -259,11 +269,39 @@ public class GalleryBackend extends Service {
                         Triple.of(initData.attachment, ChanModels.hashAttachmentModel(initData.attachment), (String)null));
                 initResult.initPosition = 0;
             }
+            initResult.hasMoreAttachments = initResult.attachments.size();
         }
         
         public GalleryInitResult getInitResult() {
-            GalleryInitResult result = initResult;
-            initResult = null;
+            if (initResult == null)
+                return null;
+            GalleryInitResult result = new GalleryInitResult();
+            result.initPosition = initResult.initPosition;
+            result.shouldWaitForPageLoaded = initResult.shouldWaitForPageLoaded;
+            final int sent = initResult.attachments.size() - initResult.hasMoreAttachments;
+            final int limit = 512 * 1024;
+            int total = 16;
+            int n = 0;
+            for (int i = sent; i < initResult.attachments.size(); ++i) {
+                int size = 40;
+                Triple<AttachmentModel, String, String> tuple = initResult.attachments.get(i);
+                AttachmentModel attachment = tuple.getLeft();
+                String hash = tuple.getMiddle();
+                String post = tuple.getRight();
+                if (attachment.thumbnail != null) size += attachment.thumbnail.length() * 2;
+                if (attachment.path != null) size += attachment.path.length() * 2;
+                if (attachment.originalName != null) size += attachment.originalName.length() * 2;
+                if (hash != null) size += hash.length() * 2;
+                if (post != null) size += post.length() * 2;
+                if (total + size > limit)
+                    break;
+                total += size;
+                ++n;
+            }
+            result.attachments = initResult.attachments.subList(sent, sent + n);
+            result.hasMoreAttachments = initResult.hasMoreAttachments -= n;
+            if (initResult.hasMoreAttachments == 0)
+                initResult = null;
             return result;
         }
         
