@@ -1032,6 +1032,13 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         adapter.notifyDataSetChanged();
     }
     
+    private void updateFirstUnreadPosition(View v) {
+        firstUnreadPosition = listView.getPositionForView(v) + 1;
+        tabModel.firstUnreadPosition = firstUnreadPosition;
+        MainApplication.getInstance().serializer.serializeTabsState(MainApplication.getInstance().tabsState);
+        adapter.notifyDataSetChanged();
+    }
+
     @Override
     public void onURLSpanLongClick(View v, ClickableURLSpan span, String url, String referer) {
         Clipboard.copyText(activity, url);
@@ -1828,7 +1835,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             }
             @Override
             public boolean onLongClick(View v) {
-                fragmentRef.get().resetFirstUnreadPosition();
+                fragmentRef.get().updateFirstUnreadPosition(v);
                 return true;
             }
             @Override
