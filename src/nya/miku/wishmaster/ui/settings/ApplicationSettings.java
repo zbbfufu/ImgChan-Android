@@ -327,6 +327,10 @@ public class ApplicationSettings {
         return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_swipe_to_close), true);
     }
     
+    public boolean autoplayMedia() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_autoplay), false);
+    }
+
     public boolean scrollThreadFromGallery() {
         return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_scroll_thread), false);
     }
