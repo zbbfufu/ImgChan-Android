@@ -278,6 +278,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <string name="downloading_start_ticker">Downloading files</string>
     <string name="downloading_success_ticker">All downloads are completed</string>
+    <string name="downloading_success">Downloaded</string>
     <string name="downloading_error_ticker">Some files are not loaded</string>
     <string name="downloading_error_title">Error while downloading</string>
     <string name="downloading_error_report_title">The following files have not been downloaded.</string>

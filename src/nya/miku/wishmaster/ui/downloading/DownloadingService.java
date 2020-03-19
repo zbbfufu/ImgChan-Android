@@ -62,6 +62,7 @@ import nya.miku.wishmaster.http.interactive.InteractiveException;
 import nya.miku.wishmaster.lib.base64.Base64;
 import nya.miku.wishmaster.lib.base64.Base64OutputStream;
 import nya.miku.wishmaster.ui.Attachments;
+import nya.miku.wishmaster.ui.MainActivity;
 import nya.miku.wishmaster.ui.settings.ApplicationSettings;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -132,6 +133,7 @@ public class DownloadingService extends Service {
     
     private static DownloadingTask sCurrentTask;
     private static Queue<DownloadingQueueItem> sQueue;
+    private static Runnable clearNotificationCallback = null;
     
     public static boolean isInQueue(DownloadingQueueItem item) {
         DownloadingTask currentTask = sCurrentTask;
@@ -180,7 +182,7 @@ public class DownloadingService extends Service {
         }
     }
     
-    private void cancelForeground(int id) {
+    private void cancelForeground(final int id, final int delay) {
         if (isForeground) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ECLAIR) {
                 notificationManager.cancel(id);
@@ -190,7 +192,19 @@ public class DownloadingService extends Service {
                     Logger.e(TAG, "cannot invoke setForeground(false)", e);
                 }
             } else {
-                ForegroundCompat.stopForeground(this);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && delay > 0) {
+                    ForegroundCompat.stopForeground(this, true);
+                    clearNotificationCallback = new Runnable() {
+                        @Override
+                        public void run() {
+                            notificationManager.cancel(id);
+                            clearNotificationCallback = null;
+                        }
+                    };
+                    Async.runOnUiThreadDelayed(clearNotificationCallback, delay);
+                } else {
+                    ForegroundCompat.stopForeground(this, false);
+                }
             }
             isForeground = false;
         } else {
@@ -203,8 +217,12 @@ public class DownloadingService extends Service {
         static void startForeground(Service service, int id, Notification notification) {
             service.startForeground(id, notification);
         }
-        static void stopForeground(Service service) {
-            service.stopForeground(true);
+        static void stopForeground(Service service, boolean detach) {
+            if (detach) {
+                service.stopForeground(Service.STOP_FOREGROUND_DETACH);
+            } else {
+                service.stopForeground(true);
+            }
         }
     }
     
@@ -222,6 +240,10 @@ public class DownloadingService extends Service {
     
     @Override
     public void onStart(Intent intent, int startId) {
+        if (clearNotificationCallback != null) {
+            Async.runOnUiThreadCancel(clearNotificationCallback);
+            clearNotificationCallback = null;
+        }
         if (intent != null) {
             DownloadingQueueItem item = (DownloadingQueueItem) intent.getSerializableExtra(EXTRA_DOWNLOADING_ITEM);
             if (item != null) downloadingQueue.add(item);
@@ -754,17 +776,26 @@ public class DownloadingService extends Service {
             currentItemName = null;
             
             nowTaskRunning = false;
+            int clearNotificationDelay = 0;
             if (!isCancelled()) {
                 while (errorReport.length() > 0 && errorReport.charAt(errorReport.length()-1) == '\n') {
                     errorReport.setLength(errorReport.length()-1);
                 }
                 if (errorReport.length() == 0) {
+                    Intent activityIntent = new Intent(DownloadingService.this, MainActivity.class);
+                    PendingIntent pendingIntent = PendingIntent.getActivity(DownloadingService.this, 0, activityIntent, PendingIntent.FLAG_CANCEL_CURRENT);
                     progressNotifBuilder.setTicker(getString(R.string.downloading_success_ticker)).
+                        setContentTitle(getString(R.string.downloading_success)).
+                        setContentIntent(pendingIntent).
+                        setProgress(100, 100, false).
+                        setOngoing(false).
+                        setAutoCancel(true).
                         setSmallIcon(android.R.drawable.stat_sys_download_done);
                     notifyForeground(DOWNLOADING_NOTIFICATION_ID, progressNotifBuilder.build());
                     Intent broadcast = new Intent(BROADCAST_UPDATED);
                     broadcast.putExtra(EXTRA_DOWNLOADING_REPORT, REPORT_OK);
                     sendBroadcast(broadcast);
+                    clearNotificationDelay = 5000;
                 } else {
                     Intent intentToErrorReport = new Intent(DownloadingService.this, DownloadingErrorReportActivity.class);
                     PendingIntent pIntentToErrorReport =
@@ -793,7 +824,7 @@ public class DownloadingService extends Service {
             errorItems.clear();
             errorItems.trimToSize();
             Logger.d(TAG, "stopped downloading task");
-            cancelForeground(DOWNLOADING_NOTIFICATION_ID);
+            cancelForeground(DOWNLOADING_NOTIFICATION_ID, clearNotificationDelay);
             stopSelf(startId);
         }
         

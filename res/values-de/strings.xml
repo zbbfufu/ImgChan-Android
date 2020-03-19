@@ -278,6 +278,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <string name="downloading_start_ticker">Herunterladung von Dateien</string>
     <string name="downloading_success_ticker">Alle Herunterladungen sind abgeschlossen</string>
+    <string name="downloading_success">Heruntergeladen</string>
     <string name="downloading_error_ticker">Einige Dateien werden nicht geladen</string>
     <string name="downloading_error_title">Fehler beim Herunterladen</string>
     <string name="downloading_error_report_title">Die folgenden Dateien wurden nicht heruntergeladen:</string>
