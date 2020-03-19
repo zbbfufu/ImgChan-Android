@@ -448,6 +448,10 @@ public class ApplicationSettings {
         preferences.edit().putBoolean(resources.getString(R.string.pref_key_enable_autoupdate), value).commit();
     }
     
+    public boolean isAutoupdateStopOnExit() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_autoupdate_stop_on_exit), false);
+    }
+
     public boolean isAutoupdateWifiOnly() {
         return preferences.getBoolean(resources.getString(R.string.pref_key_autoupdate_only_wifi), false);
     }
