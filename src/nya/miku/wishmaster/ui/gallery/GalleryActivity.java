@@ -57,6 +57,7 @@ import nya.miku.wishmaster.ui.settings.ApplicationSettings;
 import nya.miku.wishmaster.ui.tabs.UrlHandler;
 import nya.miku.wishmaster.ui.theme.ThemeUtils;
 import android.annotation.SuppressLint;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -87,6 +88,7 @@ import android.text.style.ForegroundColorSpan;
 import android.util.SparseArray;
 import android.view.GestureDetector;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -107,7 +109,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
-public class GalleryActivity extends Activity implements View.OnClickListener {
+public class GalleryActivity extends Activity implements View.OnClickListener, View.OnLongClickListener {
     private static final String TAG = "GalleryActivity";
     
     public static final String EXTRA_SETTINGS = "settings";
@@ -116,15 +118,21 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     public static final String EXTRA_BOARDMODEL = "boardmodel";
     public static final String EXTRA_PAGEHASH = "pagehash";
     public static final String EXTRA_LOCALFILENAME = "localfilename";
+    public static final String EXTRA_FROMTHREAD = "fromthread";
+    public static final String EXTRA_FROMDIALOG = "fromdialog";
     
     @SuppressLint("InlinedApi")
     private static final int BINDING_FLAGS = Context.BIND_AUTO_CREATE | Context.BIND_IMPORTANT;
     
     private static final int REQUEST_HANDLE_INTERACTIVE_EXCEPTION = 1;
     
+    private static final String initialTitleText = new String(new char[128]).replaceAll(".", " ");
+
     private LayoutInflater inflater;
     private ExecutorService tnDownloadingExecutor;
     
+    private boolean fromThread;
+    private boolean fromDialog;
     private BoardModel boardModel;
     private String chan;
     
@@ -148,6 +156,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     private Menu menu;
     private boolean loadingError;
     private boolean currentLoaded;
+    private TextView titleView;
     
     private static class ProgressHandler extends Handler {
         private final WeakReference<GalleryActivity> reference;
@@ -162,7 +171,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
             if (activity == null) return;
             int progress = msg.arg1;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                if (progress != Window.PROGRESS_END) {
+                if (progress < Window.PROGRESS_END) {
                     if (activity.progressBar.getVisibility() == View.GONE) activity.progressBar.setVisibility(View.VISIBLE);
                     activity.progressBar.setProgress(progress);
                 } else {
@@ -248,6 +257,20 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         viewPager = (ViewPager) findViewById(R.id.gallery_viewpager);
         navigationInfo = (TextView) findViewById(R.id.gallery_navigation_info);
         for (int id : new int[] { R.id.gallery_navigation_previous, R.id.gallery_navigation_next }) findViewById(id).setOnClickListener(this);
+
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayShowCustomEnabled(true);
+        View customView = getLayoutInflater().inflate(R.layout.action_bar_title, null);
+        titleView = (TextView)customView.findViewById(R.id.action_bar_title);
+        titleView.setText(initialTitleText);
+        titleView.setOnClickListener(this);
+        titleView.setOnLongClickListener(this);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            titleView.setPadding(10, 0, 0, 0);
+            titleView.setLines(1);
+        }
+        actionBar.setCustomView(customView);
         
         bindService(new Intent(this, GalleryBackend.class), new ServiceConnection() {
             { serviceConnection = this; }
@@ -258,6 +281,8 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 try {
                     GalleryInitData initData = new GalleryInitData(getIntent(), savedInstanceState);
                     boardModel = initData.boardModel;
+                    fromThread = initData.fromThread;
+                    fromDialog = initData.fromDialog;
                     chan = boardModel.chan;
                     remote = new GalleryRemote(galleryBinder, galleryBinder.initContext(initData));
                     GalleryInitResult initResult = remote.getInitResult();
@@ -356,6 +381,19 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     }
     
     @Override
+    public boolean onLongClick(View v) {
+        switch (v.getId()) {
+            case R.id.action_bar_title:
+                if (fromDialog || fromThread) {
+                    remote.tryScrollParent(attachments.get(currentPosition).getRight(), fromDialog);
+                }
+                finish();
+                return true;
+        }
+        return false;
+    }
+
+    @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.gallery_navigation_previous:
@@ -369,6 +407,13 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                     viewPager.setCurrentItem(++currentPosition);
                     updateItem();
                 }
+                break;
+            case R.id.action_bar_title:
+                GalleryItemViewTag tag = getCurrentTag();
+                String info = remote.getAttachmentInfoString(new GalleryAttachmentInfo(tag.attachmentModel, tag.attachmentHash));
+                Toast toast = Toast.makeText(this, info, Toast.LENGTH_LONG);
+                toast.setGravity(Gravity.BOTTOM|Gravity.CENTER, 0, navigationInfo.getHeight() * 10 / 8);
+                toast.show();
                 break;
         }
     }
@@ -697,10 +742,20 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         if (requestCode == REQUEST_HANDLE_INTERACTIVE_EXCEPTION && resultCode == RESULT_OK) updateItem();
     }
     
+    private void setTitle(String title) {
+        final String text = title.replaceAll(".(?!$)", "$0\u200b");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                titleView.setText(text);
+            }
+        });
+    }
+
     private void updateItem() {
         stopWebView();
         AttachmentModel attachment = attachments.get(currentPosition).getLeft();
-        if (settings.scrollThreadFromGallery() && !firstScroll) remote.tryScrollParent(attachments.get(currentPosition).getRight());
+        if (settings.scrollThreadFromGallery() && !firstScroll && !fromDialog) remote.tryScrollParent(attachments.get(currentPosition).getRight(), false);
         firstScroll = false;
         String navText = attachment.size == -1 ? (currentPosition + 1) + "/" + attachments.size() :
                 (currentPosition + 1) + "/" + attachments.size() + " (" + Attachments.getAttachmentSizeString(attachment, getResources()) + ")";
@@ -1392,6 +1447,29 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         return super.onMenuOpened(featureId, menu);
     }
     
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_BACK:
+                event.startTracking();
+                return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_BACK:
+                if (fromDialog || fromThread) {
+                    remote.tryScrollParent(attachments.get(currentPosition).getRight(), fromDialog);
+                }
+                finish();
+                return true;
+        }
+        return super.onKeyLongPress(keyCode, event);
+    }
+
     private class GalleryItemViewTag {
         public CancellableTask downloadingTask;
         public Timer timer;

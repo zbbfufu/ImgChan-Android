@@ -166,8 +166,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_open_player">Open external player</string>
     <string name="menu_quickaccess_add">Add to Quick Access</string>
     
+    <string name="context_menu_copy_and_share">Copy/Share</string>
     <string name="context_menu_move">Move</string>
-    <string name="context_menu_copy_url">Copy the link</string>
+    <string name="context_menu_copy_url">Copy link</string>
     <string name="context_menu_add_favorites">Add to favorites</string>
     <string name="context_menu_remove_favorites">Remove from favorites</string>
     <string name="context_menu_remove_history">Remove from history</string>
@@ -177,13 +178,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_autoupdate_now">Run auto-update</string>
     <string name="context_menu_open_in_new_tab">Open in new tab</string>
     <string name="context_menu_thread_preview">Thread preview</string>
+    <string name="context_menu_goto_post">Go to post</string>
     <string name="context_menu_reply">Reply to this post</string>
     <string name="context_menu_reply_with_quote">Reply with quote</string>
     <string name="context_menu_reply_no_reading">Reply without reading</string>
     <string name="context_menu_show_thumbnail">Show thumbnail</string>
     <string name="context_menu_attachment_info">Show information</string>
     <string name="context_menu_download_file">Download file</string>
-    <string name="context_menu_select_text">Select text</string>
     <string name="context_menu_copy_text">Copy text</string>
     <string name="context_menu_hide_thread">Hide thread</string>
     <string name="context_menu_hide_post">Hide post</string>
@@ -191,7 +192,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_report">Report abuse</string>
     <string name="context_menu_subscribe">Subscribe</string>
     <string name="context_menu_unsubscribe">Unsubscribe</string>
-    <string name="context_menu_share">Share</string>
+    <string name="context_menu_share_text">Share text</string>
     <string name="context_menu_share_link">Share link</string>
     <string name="context_menu_reverse_search">Image search</string>
     <string name="context_menu_delete_autohide_rule">Remove the rule</string>

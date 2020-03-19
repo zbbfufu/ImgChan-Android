@@ -33,6 +33,7 @@ import org.apache.commons.lang3.tuple.Triple;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -179,16 +180,25 @@ public class GalleryBackend extends Service {
         }
         
         @Override
-        public void tryScrollParent(int contextId, String postNumber) {
+        public String getAttachmentInfoString(int contextId, GalleryAttachmentInfo attachment) {
+            GalleryBackend service = this.service.get();
+            if (service == null) return null;
+
+            return service.contexts.get(contextId).getAttachmentInfoString(attachment.attachment);
+        }
+
+        @Override
+        public void tryScrollParent(int contextId, String postNumber, boolean closeDialogs) {
             GalleryBackend service = this.service.get();
             if (service == null) return;
             
-            service.contexts.get(contextId).tryScrollParent(postNumber);
+            service.contexts.get(contextId).tryScrollParent(postNumber, closeDialogs);
         }
     }
     
     private class GalleryContext {
         private ChanModule chan;
+        private Resources resources;
         private String customSubdir;
         private BoardModel boardModel;
         private ReadableContainer localFile;
@@ -197,6 +207,7 @@ public class GalleryBackend extends Service {
         public GalleryContext(GalleryInitData initData) {
             initResult = new GalleryInitResult();
             boardModel = initData.boardModel;
+            resources = MainApplication.getInstance().resources;
             chan = MainApplication.getInstance().getChanModule(boardModel.chan);
             
             if (initData.localFileName != null) {
@@ -353,7 +364,11 @@ public class GalleryBackend extends Service {
             return chan.fixRelativeUrl(url);
         }
         
-        public void tryScrollParent(final String postNumber) {
+        public String getAttachmentInfoString(AttachmentModel attachment) {
+            return Attachments.getAttachmentInfoString(chan, attachment, resources);
+        }
+
+        public void tryScrollParent(final String postNumber, final boolean closeDialogs) {
             try {
                 TabsState tabsState = MainApplication.getInstance().tabsState;
                 final TabsSwitcher tabsSwitcher = MainApplication.getInstance().tabsSwitcher;
@@ -363,7 +378,7 @@ public class GalleryBackend extends Service {
                         Async.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                ((BoardFragment) tabsSwitcher.currentFragment).scrollToItem(postNumber);
+                                ((BoardFragment) tabsSwitcher.currentFragment).scrollToItem(postNumber, closeDialogs);
                             }
                         });
                     }

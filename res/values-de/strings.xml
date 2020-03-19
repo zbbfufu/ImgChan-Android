@@ -166,6 +166,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_open_player">Den externen Player öffnen</string>
     <string name="menu_quickaccess_add">Zum Schnellzugang</string>
     
+    <string name="context_menu_copy_and_share">Kopieren/Teilen</string>
     <string name="context_menu_move">Bewegen</string>
     <string name="context_menu_copy_url">Den Link Kopieren</string>
     <string name="context_menu_add_favorites">Zu den Favoriten hinzufügen</string>
@@ -177,13 +178,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_autoupdate_now">Auto-update starten</string>
     <string name="context_menu_open_in_new_tab">In neuem Tab öffnen</string>
     <string name="context_menu_thread_preview">Vorschau von Thread</string>
+    <string name="context_menu_goto_post">Zum Posten gehen</string>
     <string name="context_menu_reply">Antworten</string>
     <string name="context_menu_reply_with_quote">Mit Zitat antworten</string>
     <string name="context_menu_reply_no_reading">Ohne zu lesen Antworten</string>
     <string name="context_menu_show_thumbnail">Miniaturansicht anzeigen</string>
     <string name="context_menu_attachment_info">Informationen anzeigen</string>
     <string name="context_menu_download_file">Datei herunterladen</string>
-    <string name="context_menu_select_text">Text wählen</string>
     <string name="context_menu_copy_text">Text kopieren</string>
     <string name="context_menu_hide_thread">Thread verstecken</string>
     <string name="context_menu_hide_post">Post verstecken</string>
@@ -191,7 +192,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_report">Missbrauch melden</string>
     <string name="context_menu_subscribe">Abonnieren</string>
     <string name="context_menu_unsubscribe">Deabonnieren</string>
-    <string name="context_menu_share">Teile</string>
+    <string name="context_menu_share_text">Text teilen</string>
     <string name="context_menu_share_link">Link teilen</string>
     <string name="context_menu_reverse_search">Bildersuche</string>
     <string name="context_menu_delete_autohide_rule">Die Regel entfernen</string>

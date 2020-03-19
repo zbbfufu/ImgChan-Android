@@ -171,6 +171,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_open_player">Открыть в плеере</string>
     <string name="menu_quickaccess_add">В быстрый доступ</string>
     
+    <string name="context_menu_copy_and_share">Копировать/Поделиться</string>
     <string name="context_menu_move">Переместить</string>
     <string name="context_menu_copy_url">Копировать ссылку</string>
     <string name="context_menu_add_favorites">Добавить в избранное</string>
@@ -182,13 +183,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_autoupdate_now">Запустить автообновление</string>
     <string name="context_menu_open_in_new_tab">Открыть в новой вкладке</string>
     <string name="context_menu_thread_preview">Предпросмотр треда</string>
+    <string name="context_menu_goto_post">Перейти к посту</string>
     <string name="context_menu_reply">Ответить</string>
     <string name="context_menu_reply_with_quote">Ответить с цитатой</string>
     <string name="context_menu_reply_no_reading">Ответить не читая</string>
     <string name="context_menu_show_thumbnail">Показать миниатюру</string>
     <string name="context_menu_attachment_info">Показать информацию</string>
     <string name="context_menu_download_file">Скачать файл</string>
-    <string name="context_menu_select_text">Выделить текст</string>
     <string name="context_menu_copy_text">Копировать текст</string>
     <string name="context_menu_hide_thread">Скрыть тред</string>
     <string name="context_menu_hide_post">Скрыть сообщение</string>
@@ -196,7 +197,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_report">Пожаловаться</string>
     <string name="context_menu_subscribe">Подписаться</string>
     <string name="context_menu_unsubscribe">Отписаться</string>
-    <string name="context_menu_share">Поделиться</string>
+    <string name="context_menu_share_text">Поделиться текстом</string>
     <string name="context_menu_share_link">Поделиться ссылкой</string>
     <string name="context_menu_reverse_search">Поиск по картинке</string>
     <string name="context_menu_delete_autohide_rule">Удалить правило</string>

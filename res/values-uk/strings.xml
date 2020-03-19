@@ -176,6 +176,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_open_player">Відкрити у плеєрі</string>
     <string name="menu_quickaccess_add">До швидкого доступу</string>
     
+    <string name="context_menu_copy_and_share">Копіювати/Поділитися</string>
     <string name="context_menu_move">Перемістити</string>
     <string name="context_menu_copy_url">Копіювати лінк</string>
     <string name="context_menu_add_favorites">До обраного</string>
@@ -187,13 +188,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_autoupdate_now">Виконати автооновлення</string>
     <string name="context_menu_open_in_new_tab">У новій вкладці</string>
     <string name="context_menu_thread_preview">Переглянути тред</string>
+    <string name="context_menu_goto_post">Перейти до посту</string>
     <string name="context_menu_reply">Відповісти</string>
     <string name="context_menu_reply_with_quote">Відповісти з цитатою</string>
     <string name="context_menu_reply_no_reading">Відповісти не читаючи</string>
     <string name="context_menu_show_thumbnail">Прев’ю</string>
     <string name="context_menu_attachment_info">Інформація</string>
     <string name="context_menu_download_file">Звантажити файл</string>
-    <string name="context_menu_select_text">Виділити текст</string>
     <string name="context_menu_copy_text">Копіювати текст</string>
     <string name="context_menu_hide_thread">Сховати тред</string>
     <string name="context_menu_hide_post">Сховати пост</string>
@@ -201,7 +202,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_report">Поскаржитися</string>
     <string name="context_menu_subscribe">Підписатися</string>
     <string name="context_menu_unsubscribe">Відписатися</string>
-    <string name="context_menu_share">Поділитися</string>
+    <string name="context_menu_share_text">Поділитися текстом</string>
     <string name="context_menu_share_link">Поділитися лінком</string>
     <string name="context_menu_reverse_search">Пошук по картинці</string>
     <string name="context_menu_delete_autohide_rule">Стерти правило</string>
