@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
@@ -3538,12 +3539,21 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             }
         }
         if (position != -1) {
-            Spanned referencesString = presentationModel.presentationList.get(position).referencesString;
+            final Spanned referencesString = presentationModel.presentationList.get(position).referencesString;
             if (referencesString == null) {
                 Logger.e(TAG, "null referencesString");
                 return;
             }
             ClickableURLSpan[] spans = referencesString.getSpans(0, referencesString.length(), ClickableURLSpan.class);
+            if (Build.VERSION.SDK_INT == 24 || Build.VERSION.SDK_INT == 25) {
+                // Workaround for a bug in android 7.0/7.1
+                Arrays.sort(spans, new Comparator<ClickableURLSpan>() {
+                    @Override
+                    public int compare(ClickableURLSpan s1, ClickableURLSpan s2) {
+                        return referencesString.getSpanStart(s1) - referencesString.getSpanStart(s2);
+                    }
+                });
+            }
             for (ClickableURLSpan span : spans) {
                 String url = span.getURL();
                 try {
