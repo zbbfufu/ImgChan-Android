@@ -93,8 +93,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
+import android.webkit.WebResourceError;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -125,6 +129,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     
     private ProgressBar progressBar;
     private ViewPager viewPager;
+    private WebView webView;
     private TextView navigationInfo;
     private SparseArray<View> instantiatedViews;
     
@@ -140,6 +145,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     private boolean firstScroll = true;
     
     private Menu menu;
+    private boolean loadingError;
     private boolean currentLoaded;
     
     private static class ProgressHandler extends Handler {
@@ -315,6 +321,13 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         }, new IntentFilter(BoardFragment.BROADCAST_PAGE_LOADED));
     }
     
+    private void stopWebView() {
+        if (webView != null) {
+            webView.destroy();
+            webView = null;
+        }
+    }
+
     @Override
     protected void onStop() {
         super.onStop();
@@ -325,6 +338,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        stopWebView();
         if (instantiatedViews != null) {
             for (int i=0; i<instantiatedViews.size(); ++i) {
                 View v = instantiatedViews.valueAt(i);
@@ -391,8 +405,8 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         }
         GalleryItemViewTag tag = (GalleryItemViewTag) current.getTag();
         boolean externalVideo = tag.attachmentModel.type == AttachmentModel.TYPE_VIDEO && settings.doNotDownloadVideos();
-        menu.findItem(R.id.menu_update).setVisible(!currentLoaded);
-        menu.findItem(R.id.menu_save_attachment).setVisible(externalVideo ||
+        menu.findItem(R.id.menu_update).setVisible(!currentLoaded && !externalVideo || loadingError);
+        menu.findItem(R.id.menu_save_attachment).setVisible((externalVideo && !loadingError) ||
                 (currentLoaded && tag.attachmentModel.type != AttachmentModel.TYPE_OTHER_NOTFILE));
         menu.findItem(R.id.menu_open_external).setVisible(currentLoaded && (tag.attachmentModel.type == AttachmentModel.TYPE_OTHER_FILE ||
                 tag.attachmentModel.type == AttachmentModel.TYPE_AUDIO || tag.attachmentModel.type == AttachmentModel.TYPE_VIDEO));
@@ -683,6 +697,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     }
     
     private void updateItem() {
+        stopWebView();
         AttachmentModel attachment = attachments.get(currentPosition).getLeft();
         if (settings.scrollThreadFromGallery() && !firstScroll) remote.tryScrollParent(attachments.get(currentPosition).getRight());
         firstScroll = false;
@@ -707,6 +722,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         GalleryItemViewTag tag = getCurrentTag();
         if (tag == null) return;
         currentLoaded = false;
+        loadingError = false;
         updateMenu();
         tag.downloadingTask = new AttachmentGetter(tag);
         tag.loadingView.setVisibility(View.VISIBLE);
@@ -723,7 +739,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         @Override
         public void run() {
             if (tag.attachmentModel.type == AttachmentModel.TYPE_OTHER_NOTFILE ||
-                    (settings.doNotDownloadVideos() && tag.attachmentModel.type == AttachmentModel.TYPE_VIDEO)) {
+                (tag.attachmentModel.type == AttachmentModel.TYPE_VIDEO && settings.doNotDownloadVideos() && !settings.useInternalVideoPlayer())) {
                 setExternalLink(tag);
                 return;
             } else if (tag.attachmentModel.path == null || tag.attachmentModel.path.length() == 0) {
@@ -731,7 +747,8 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 return;
             }
             final String[] exception = new String[1];
-            File file = remote.getAttachment(new GalleryAttachmentInfo(tag.attachmentModel, tag.attachmentHash), new AbstractGetterCallback(this) {
+            boolean localOnly = (tag.attachmentModel.type == AttachmentModel.TYPE_VIDEO && settings.useWebViewVideoPlayer() && settings.doNotDownloadVideos());
+            File file = remote.getAttachment(new GalleryAttachmentInfo(tag.attachmentModel, tag.attachmentHash), localOnly, new AbstractGetterCallback(this) {
                 @Override
                 public void showLoading() {
                     runOnUiThread(new Runnable() {
@@ -756,16 +773,19 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
             
             if (isCancelled()) return;
             if (file == null) {
-                showError(tag, exception[0]);
-                return;
+                if (!localOnly) {
+                    showError(tag, exception[0]);
+                    return;
+                }
+            } else {
+                currentLoaded = true;
+                tag.file = file;
             }
-            tag.file = file;
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (isCancelled()) return;
                     hideProgress();
-                    currentLoaded = true;
                     updateMenu();
                 }
             });
@@ -799,11 +819,13 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     
     private void showError(final GalleryItemViewTag tag, final String message) {
         if (tag.downloadingTask.isCancelled()) return;
+        loadingError = true;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if (tag.downloadingTask.isCancelled()) return;
                 hideProgress();
+                updateMenu();
                 tag.layout.setVisibility(View.GONE);
                 recycleTag(tag, true);
                 tag.thumbnailView.setVisibility(View.GONE);
@@ -1174,7 +1196,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 settings.setUseWideViewPort(true);
                 settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
-                    CompatibilityImpl.setBlockNetworkLoads(settings, true);
+                    CompatibilityImpl.setBlockNetworkLoads(settings, false);
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
                     settings.setMediaPlaybackRequiresUserGesture(false);
@@ -1225,6 +1247,9 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
             }
             
             private Point getImageSize(File file) {
+                if (file == null) {
+                    return new Point(0, 0);
+                }
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inJustDecodeBounds = true;
                 BitmapFactory.decodeFile(file.getAbsolutePath(), options);
@@ -1232,6 +1257,9 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
             }
             
             private boolean useFallback(File file) {
+                if (file == null) {
+                    return true;
+                }
                 String path = file.getPath().toLowerCase(Locale.US);
                 if (path.endsWith(".png")) return false;
                 if (path.endsWith(".jpg")) return false;
@@ -1245,12 +1273,47 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
             public void run() {
                 try {
                     recycleTag(tag, false);
-                    WebView webView = new WebViewFixed(GalleryActivity.this);
+                    webView = new WebViewFixed(GalleryActivity.this);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        webView.setWebViewClient(new WebViewClient() {
+                            @Override
+                            public void onReceivedError(WebView webView, WebResourceRequest request, WebResourceError error) {
+                                if ((error.getErrorCode() == WebViewClient.ERROR_TOO_MANY_REQUESTS) ||
+                                    (error.getErrorCode() == WebViewClient.ERROR_UNKNOWN)) {
+                                    return;
+                                }
+                                showError(tag, "LOAD ERROR " + error.getErrorCode() + "\n" + error.getDescription().toString());
+                            }
+                            @Override
+                            public void onReceivedHttpError(WebView webView, WebResourceRequest request, WebResourceResponse error) {
+                                if (error.getStatusCode() == 404) {
+                                    showError(tag, "404 - Not Found");
+                                    return;
+                                }
+                                showError(tag, "HTTP ERROR " + error.getStatusCode());
+                            }
+                        });
+                    } else {
+                        webView.setWebViewClient(new WebViewClient() {
+                            @Override
+                            public void onReceivedError(WebView webView, int errorCode, String description, String failingUrl) {
+                                if ((errorCode == WebViewClient.ERROR_TOO_MANY_REQUESTS) ||
+                                    (errorCode == WebViewClient.ERROR_UNKNOWN)) {
+                                    return;
+                                }
+                                showError(tag, "LOAD ERROR " + errorCode + "\n" + description);
+                            }
+                        });
+                    }
                     webView.setLayoutParams(MATCH_PARAMS);
                     tag.layout.addView(webView);
                     if (settings.fallbackWebView() || useFallback(file)) {
                         prepareWebView(webView);
-                        webView.loadUrl(Uri.fromFile(file).toString());
+                        if (file == null) {
+                            webView.loadUrl(remote.getAbsoluteUrl(tag.attachmentModel.path));
+                        } else {
+                            webView.loadUrl(Uri.fromFile(file).toString());
+                        }
                     } else {
                         JSWebView.setImage(webView, file);
                     }
