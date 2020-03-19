@@ -86,7 +86,7 @@ public class ExtendedHttpClient extends HttpClientWrapper {
                 setConnectTimeout(timeout).
                 setConnectionRequestTimeout(timeout).
                 setSocketTimeout(timeout).
-                setCookieSpec(CookieSpecs.DEFAULT).
+                setCookieSpec(CookieSpecs.STANDARD).
                 setStaleConnectionCheckEnabled(false);
     }
     
