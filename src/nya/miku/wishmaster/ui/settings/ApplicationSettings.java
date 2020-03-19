@@ -97,6 +97,12 @@ public class ApplicationSettings {
         return preferences.getBoolean(resources.getString(R.string.pref_key_scroll_to_active_tab), true);
     }
 
+    public String getWebSearchUrl() {
+        String url = preferences.getString(resources.getString(R.string.pref_key_web_search_url), null);
+        if (url == null || url.length() == 0) return null;
+        return url;
+    }
+
     public enum DownloadThumbnailsMode {
         ALWAYS,
         WIFI_ONLY,

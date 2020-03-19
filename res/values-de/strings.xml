@@ -200,6 +200,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_quickaccess_remove">Von Schnellzugang entfernen</string>
     <string name="context_menu_quickaccess_custom_board">Benutzerdefinierte Board fügen</string>
     <string name="context_menu_save_captcha">Captcha speichern</string>
+    <string name="context_menu_web_search">Web-Suche</string>
     
     <string name="share_via">Teilen per</string>
     <string name="share_no_tabs">Keine offenen Tabs</string>
@@ -654,5 +655,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="newtab_select_local_directory">Speicherort angeben</string>
     <string name="pref_scroll_to_active_tab_title">Blättern Sie zur aktiven Registerkarte</string>
     <string name="pref_scroll_to_active_tab_summary">Blättern Sie zum aktiven Tab, wenn Sie die inaktive Registerkarte schließen</string>
+    <string name="pref_web_search_url_title">Websuch-URL</string>
+    <string name="pref_web_search_url_summary">Benutzerdefinierte URL für die Websuche</string>
     <string name="pref_makaba_passcode">Passcode</string>
 </resources>

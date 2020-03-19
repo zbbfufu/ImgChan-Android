@@ -200,6 +200,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_quickaccess_remove">Remove from Quick Access</string>
     <string name="context_menu_quickaccess_custom_board">Add custom board</string>
     <string name="context_menu_save_captcha">Save captcha</string>
+    <string name="context_menu_web_search">Web search</string>
     
     <string name="share_via">Share via</string>
     <string name="share_no_tabs">No open tabs</string>
@@ -653,5 +654,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="newtab_select_local_directory">Specify directory location</string>
     <string name="pref_scroll_to_active_tab_summary">Scroll to the active tab when closing inactive tab</string>
     <string name="pref_scroll_to_active_tab_title">Scroll to the active tab</string>
+    <string name="pref_web_search_url_title">Web search URL</string>
+    <string name="pref_web_search_url_summary">Custom Web search URL</string>
     <string name="pref_makaba_passcode">Passcode</string>
 </resources>

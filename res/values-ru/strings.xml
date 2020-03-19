@@ -205,6 +205,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_quickaccess_remove">Удалить из быстого доступа</string>
     <string name="context_menu_quickaccess_custom_board">Добавить свою доску</string>
     <string name="context_menu_save_captcha">Сохранить капчу</string>
+    <string name="context_menu_web_search">Web-поиск</string>
     
     <string name="share_via">Способ отправки</string>
     <string name="share_no_tabs">Нет открытых вкладок</string>
@@ -662,5 +663,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="newtab_select_local_directory">Указать расположение каталога</string>
     <string name="pref_scroll_to_active_tab_title">Прокрутка до активной вкладки</string>
     <string name="pref_scroll_to_active_tab_summary">Прокручивать до активной вкладки при закрытии неактивной вкладки</string>
+    <string name="pref_web_search_url_title">URL Web-поиска</string>
+    <string name="pref_web_search_url_summary">Персональный URL Web-поиска</string>
     <string name="pref_makaba_passcode">Пасскод</string>
 </resources>
