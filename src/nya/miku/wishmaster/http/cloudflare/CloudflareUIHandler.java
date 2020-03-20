@@ -90,16 +90,15 @@ import android.app.Activity;
                 });
             }
         } else {  // проверка с рекапчей
-            Recaptcha2.obtain(e.getCheckUrl(), e.getRecaptchaPublicKey(), e.getRecaptchaSecureToken(), chan.getChanName(), e.isRecaptchaFallback()).
+            Recaptcha2.obtain(e.getCheckUrl(), e.getRecaptchaPublicKey(), null, chan.getChanName(), e.isRecaptchaFallback()).
                     handle(activity, cfTask, new InteractiveException.Callback() {
                 @Override
                 public void onSuccess() {
                     Async.runAsync(new Runnable() {
                         @Override
                         public void run() {
-                            String url = e.getCheckCaptchaUrlPrefix() + Recaptcha2solved.pop(e.getRecaptchaPublicKey());
-                            Cookie cfCookie = CloudflareChecker.getInstance().
-                                    checkRecaptcha(e, (ExtendedHttpClient) chan.getHttpClient(), cfTask, url);
+                            Cookie cfCookie = CloudflareChecker.getInstance().checkRecaptcha(e, (ExtendedHttpClient)chan.getHttpClient(),
+                                    cfTask, e.getCheckCaptchaUrl(), Recaptcha2solved.pop(e.getRecaptchaPublicKey()));
                             if (cfCookie != null) {
                                 chan.saveCookie(cfCookie);
                                 if (!cfTask.isCancelled()) {

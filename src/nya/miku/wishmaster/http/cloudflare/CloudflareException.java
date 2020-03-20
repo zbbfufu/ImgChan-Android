@@ -42,15 +42,14 @@ public class CloudflareException extends InteractiveException {
     private static final String COOKIE_NAME = "cf_clearance";
     private static final String RECAPTCHA_KEY = "6LfBixYUAAAAABhdHynFUIMA_sa4s-XsJvnjtgB0";
     
-    private static final Pattern PATTERN_STOKEN = Pattern.compile("stoken=\"?([^\"&]+)");
-    private static final Pattern PATTERN_ID = Pattern.compile("data-ray=\"?([^\"&]+)");
-    private static final Pattern PATTERN_S = Pattern.compile("<input[^>]* name=\"s\"[^>]* value=\"(.+?)\"");
+    private static final Pattern PATTERN_RTOKEN = Pattern.compile("name=\"r\" value=\"([^\"]*)\"");
+    private static final Pattern PATTERN_ACTION = Pattern.compile("id=\"challenge-form\" action=\"([^\"]*)\"");
     
     private boolean recaptcha;
     private String url;
-    private String sToken;
+    private String rToken;
     private boolean fallback;
-    private String checkCaptchaUrlPrefix;
+    private String checkCaptchaUrl;
     private String chanName;
     
     //для создания экземплятов используются статические методы 
@@ -81,12 +80,12 @@ public class CloudflareException extends InteractiveException {
         return antiDDOS(url, chanName);
     }
     
-    public static CloudflareException withRecaptcha(String url, String chanName, String sToken, String checkUrlPrefix, boolean fallback) {
+    public static CloudflareException withRecaptcha(String url, String chanName, String rToken, String checkCaptchaUrl, boolean fallback) {
         CloudflareException e = new CloudflareException();
         e.url = url;
         e.recaptcha = true;
-        e.sToken = sToken;
-        e.checkCaptchaUrlPrefix = checkUrlPrefix;
+        e.rToken = rToken;
+        e.checkCaptchaUrl = checkCaptchaUrl;
         e.chanName = chanName;
         e.fallback = fallback;
         return e;
@@ -106,29 +105,22 @@ public class CloudflareException extends InteractiveException {
      * @return созданный объект
      */
     public static CloudflareException withRecaptcha(String url, String chanName, String htmlString, boolean fallback) {
-        String token = null;
-        Matcher m = PATTERN_STOKEN.matcher(htmlString);
-        if (m.find()) token = m.group(1);
-        
-        String id = null;
-        m = PATTERN_ID.matcher(htmlString);
-        if (m.find()) id = m.group(1);
-        
-        String s = null;
-        m = PATTERN_S.matcher(htmlString);
-        if (m.find()) s = m.group(1);
-        
+        Matcher m;
+
+        String action = null;
+        m = PATTERN_ACTION.matcher(htmlString);
+        if (m.find()) action = m.group(1);
+
+        String rToken = null;
+        m = PATTERN_RTOKEN.matcher(htmlString);
+        if (m.find()) rToken = m.group(1);
+
+        String checkCaptchaUrl = null;
         try {
             URL baseUrl = new URL(url);
-            url = baseUrl.getProtocol() + "://" + baseUrl.getHost() + "/";
-        } catch (Exception e) {
-            if (!url.endsWith("/")) url = url + "/";
-        }
-        String checkUrl = url + "cdn-cgi/l/chk_captcha?"
-                + (s != null ? ("s=" +  Uri.encode(s) + "&") : "")
-                + (id != null ? ("id=" + id + "&") : "")
-                + "g-recaptcha-response=";
-        return withRecaptcha(url, chanName, token, checkUrl, fallback);
+            checkCaptchaUrl = baseUrl.getProtocol() + "://" + baseUrl.getHost() + action;
+        } catch (Exception e) {}
+        return withRecaptcha(url, chanName, rToken, checkCaptchaUrl, fallback);
     }
     
     /**
@@ -156,10 +148,11 @@ public class CloudflareException extends InteractiveException {
     }
     
     /**
-     * получить secure token (data-stoken, stoken) для рекапчи
+     * получить значение параметра "r"
+     * @return параметр "r"
      */
-    /*package*/ String getRecaptchaSecureToken() {
-        return sToken;
+    /*package*/ String getRToken() {
+        return rToken;
     }
     
     /**
@@ -171,11 +164,11 @@ public class CloudflareException extends InteractiveException {
     }
     
     /**
-     * получить первую часть URL для проверки рекапчи
-     * @return строка, которую необходимо объединить со строкой ответа на капчу
+     * получить URL для проверки рекапчи
+     * @return строка, URL запроса
      */
-    /*package*/ String getCheckCaptchaUrlPrefix() {
-        return checkCaptchaUrlPrefix;
+    /*package*/ String getCheckCaptchaUrl() {
+        return checkCaptchaUrl;
     }
     
     /**
