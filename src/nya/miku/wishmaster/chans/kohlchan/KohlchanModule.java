@@ -328,6 +328,7 @@ public class KohlchanModule extends AbstractLynxChanModule {
             case "new":
             case "next":
                 throw new KohlchanCaptchaException();
+            case "ok":
             case "finish":
                 saveBypassCookie();
                 return;
