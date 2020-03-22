@@ -302,6 +302,8 @@ public class KohlchanModule extends AbstractLynxChanModule {
         String status = result.optString("status");
         if ("ok".equals(status)) {
             return true;
+        } else if ("hashcash".equals(status)) {
+            throw new Exception("Bypass required");
         } else if (status.equals("error")) {
             String errorMessage = result.optString("data");
             if (errorMessage.length() > 0) {
@@ -332,6 +334,8 @@ public class KohlchanModule extends AbstractLynxChanModule {
             case "finish":
                 saveBypassCookie();
                 return;
+            case "hashcash":
+                throw new Exception("Bypass required");
             case "error":
                 throw new Exception(response.optString("data", "Captcha Error"));
             default: throw new Exception("Unknown Error");
@@ -416,6 +420,8 @@ public class KohlchanModule extends AbstractLynxChanModule {
             }
         } else if ("bypassable".equals(status)) {
             throw new KohlchanCaptchaException();
+        } else if ("hashcash".equals(status)) {
+            throw new Exception("Bypass required");
         } else if("banned".equals(status)) {
             String banMessage = "You have been banned!";
             try {
@@ -461,6 +467,8 @@ public class KohlchanModule extends AbstractLynxChanModule {
             } catch (JSONException e) {
                 Logger.e(TAG, "Incorrect delete content result");
             }
+        } else if ("hashcash".equals(status)) {
+            throw new Exception("Bypass required");
         } else if (status.contains("error")) {
             String errorMessage = result.optString("data");
             if (errorMessage.length() > 0) {
@@ -502,6 +510,8 @@ public class KohlchanModule extends AbstractLynxChanModule {
         String status = result.optString("status");
         if ("ok".equals(status)) {
             return null;
+        } else if ("hashcash".equals(status)) {
+            throw new Exception("Bypass required");
         } else if (status.equals("error")) {
             String errorMessage = result.optString("data");
             if (errorMessage.length() > 0) {
