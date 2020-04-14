@@ -28,7 +28,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import android.app.Activity;
-import android.net.Uri;
 
 /**
  * Исключение, вызванное запросом проверки Cloudflare
@@ -40,15 +39,14 @@ public class CloudflareException extends InteractiveException {
     
     private static final String SERVICE_NAME = "Cloudflare";
     private static final String COOKIE_NAME = "cf_clearance";
-    private static final String RECAPTCHA_KEY = "6LfBixYUAAAAABhdHynFUIMA_sa4s-XsJvnjtgB0";
+    private static final String HCAPTCHA_KEY = "f9630567-8bfa-4fc9-8ee5-9c91c6276dff";
     
     private static final Pattern PATTERN_RTOKEN = Pattern.compile("name=\"r\" value=\"([^\"]*)\"");
     private static final Pattern PATTERN_ACTION = Pattern.compile("id=\"challenge-form\" action=\"([^\"]*)\"");
     
-    private boolean recaptcha;
+    private boolean hcaptcha;
     private String url;
     private String rToken;
-    private boolean fallback;
     private String checkCaptchaUrl;
     private String chanName;
     
@@ -61,9 +59,8 @@ public class CloudflareException extends InteractiveException {
     }
     
     /**
-     * Создать новый экземпляр cloudflare-исключения (обычная js-antiddos проверка, без рекапчи).
+     * Создать новый экземпляр cloudflare-исключения (обычная js-antiddos проверка, без капчи).
      * @param url адрес, по которому вызвана проверка
-     * @param cfCookieName название cloudflare-куки
      * @param chanName название модуля чана (модуль должен имплементировать {@link HttpChanModule})
      * @return созданный объект
      */
@@ -71,7 +68,7 @@ public class CloudflareException extends InteractiveException {
         CloudflareException e = new CloudflareException();
         e.url = url;
         e.chanName = chanName;
-        e.recaptcha = false;
+        e.hcaptcha = false;
         return e;
     }
     
@@ -80,31 +77,24 @@ public class CloudflareException extends InteractiveException {
         return antiDDOS(url, chanName);
     }
     
-    public static CloudflareException withRecaptcha(String url, String chanName, String rToken, String checkCaptchaUrl, boolean fallback) {
+    public static CloudflareException withHcaptcha(String url, String chanName, String rToken, String checkCaptchaUrl) {
         CloudflareException e = new CloudflareException();
         e.url = url;
-        e.recaptcha = true;
+        e.hcaptcha = true;
         e.rToken = rToken;
         e.checkCaptchaUrl = checkCaptchaUrl;
         e.chanName = chanName;
-        e.fallback = fallback;
         return e;
     }
     
-    @Deprecated
-    public static CloudflareException withRecaptcha(String key, String url, String cookie, String chanName) {
-        return withRecaptcha(url, chanName, "", true);
-    }
-    
     /**
-     * Создать новый экземпляр cloudflare-исключения (проверка с рекапчей).
+     * Создать новый экземпляр cloudflare-исключения (проверка с капчей).
      * @param url адрес, по которому вызвана проверка
      * @param chanName название модуля чана
      * @param htmlString строка с html-страницей, загрузившейся с запросом проверки
-     * @param fallback использовать ли проверку в fallback-режиме (без js)
      * @return созданный объект
      */
-    public static CloudflareException withRecaptcha(String url, String chanName, String htmlString, boolean fallback) {
+    public static CloudflareException withHcaptcha(String url, String chanName, String htmlString) {
         Matcher m;
 
         String action = null;
@@ -120,15 +110,15 @@ public class CloudflareException extends InteractiveException {
             URL baseUrl = new URL(url);
             checkCaptchaUrl = baseUrl.getProtocol() + "://" + baseUrl.getHost() + action;
         } catch (Exception e) {}
-        return withRecaptcha(url, chanName, rToken, checkCaptchaUrl, fallback);
+        return withHcaptcha(url, chanName, rToken, checkCaptchaUrl);
     }
     
     /**
-     * определить тип проверки (рекапча или обычная anti-ddos)
-     * @return true, если проверка с рекапчей
+     * определить тип проверки (с капчей или обычная anti-ddos)
+     * @return true, если проверка с капчей
      */
-    /*package*/ boolean isRecaptcha() {
-        return recaptcha;
+    /*package*/ boolean isHcaptcha() {
+        return hcaptcha;
     }
     
     /**
@@ -140,11 +130,11 @@ public class CloudflareException extends InteractiveException {
     }
     
     /**
-     * получить открытый ключ рекапчи
+     * получить открытый ключ капчи
      * @return открытый ключ
      */
-    /*package*/ String getRecaptchaPublicKey() {
-        return RECAPTCHA_KEY;
+    /*package*/ String getHcaptchaPublicKey() {
+        return HCAPTCHA_KEY;
     }
     
     /**
@@ -156,15 +146,7 @@ public class CloudflareException extends InteractiveException {
     }
     
     /**
-     * определяет, требуется ли использовать проверку recaptcha в fallback-режиме (без js)
-     * @return true, если в режиме fallback
-     */
-    /*package*/ boolean isRecaptchaFallback() {
-        return fallback;
-    }
-    
-    /**
-     * получить URL для проверки рекапчи
+     * получить URL для проверки капчи
      * @return строка, URL запроса
      */
     /*package*/ String getCheckCaptchaUrl() {

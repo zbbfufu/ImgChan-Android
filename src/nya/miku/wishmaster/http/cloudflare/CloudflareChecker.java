@@ -95,7 +95,7 @@ public class CloudflareChecker {
      * @return полученная cookie или null, если проверка не прошла по таймауту, или проверка уже проходит в другом потоке
      */
     public Cookie checkAntiDDOS(CloudflareException exception, HttpClient httpClient, CancellableTask task, Activity activity) {
-        if (exception.isRecaptcha()) throw new IllegalArgumentException();
+        if (exception.isHcaptcha()) throw new IllegalArgumentException();
         
         HttpHost proxy = null;
         if (httpClient instanceof ExtendedHttpClient) {
@@ -212,22 +212,21 @@ public class CloudflareChecker {
     }
     
     /**
-     * Проверить рекапчу cloudflare, получить cookie
+     * Проверить капчу cloudflare, получить cookie
      * @param exception Cloudflare исключение
      * @param httpClient HTTP клиент
      * @param task отменяемая задача
-     * @param challenge challenge рекапчи
-     * @param recaptchaAnswer ответ на рекапчу
+     * @param answer ответ на капчу
      * @return полученная cookie или null, если проверка не прошла
      */
-    public Cookie checkRecaptcha(CloudflareException exception, ExtendedHttpClient httpClient, CancellableTask task, String url, String answer) {
-        if (!exception.isRecaptcha()) throw new IllegalArgumentException("wrong type of CloudflareException");
+    public Cookie checkCaptcha(CloudflareException exception, ExtendedHttpClient httpClient, CancellableTask task, String url, String answer) {
+        if (!exception.isHcaptcha()) throw new IllegalArgumentException("wrong type of CloudflareException");
         HttpResponseModel responseModel = null;
         try {
             List<NameValuePair> pairs = new ArrayList<NameValuePair>();
             pairs.add(new BasicNameValuePair("r", exception.getRToken()));
-            pairs.add(new BasicNameValuePair("cf_captcha_kind", "re"));
-            pairs.add(new BasicNameValuePair("g-recaptcha-response", answer));
+            pairs.add(new BasicNameValuePair("cf_captcha_kind", "h"));
+            pairs.add(new BasicNameValuePair("h-captcha-response", answer));
             Header[] customHeaders = new Header[] {new BasicHeader(HttpHeaders.REFERER, exception.getCheckUrl())};
             HttpRequestModel rqModel = HttpRequestModel.builder().
                 setPOST(new UrlEncodedFormEntity(pairs)).
