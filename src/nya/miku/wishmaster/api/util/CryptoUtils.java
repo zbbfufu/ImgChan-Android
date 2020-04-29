@@ -32,7 +32,7 @@ public class CryptoUtils {
     private CryptoUtils() {}
     
     private static final Pattern CF_EMAIL =
-            Pattern.compile("<a class=\"__cf_email__\"(?:.*?)data-cfemail=\"([^\"]*)\"(?:.*?)</script>", Pattern.DOTALL);
+            Pattern.compile("<(a|span).+?class=\"__cf_email__\".+?data-cfemail=\"([^\"]*)\".*?</\\1>", Pattern.DOTALL);
     
     private static Random random = null;
     
@@ -148,7 +148,7 @@ public class CryptoUtils {
         
         StringBuffer sb = new StringBuffer();
         do {
-            String found = matcher.group(1);
+            String found = matcher.group(2);
             matcher.appendReplacement(sb, decodeCloudflareEmail(found));
         } while (matcher.find());
         matcher.appendTail(sb);
