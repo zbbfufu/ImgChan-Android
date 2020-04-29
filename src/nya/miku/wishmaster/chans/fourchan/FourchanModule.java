@@ -90,7 +90,7 @@ public class FourchanModule extends CloudflareChanModule {
     private static final String PREF_KEY_PASS_PIN = "PREF_KEY_PASS_PIN";
     private static final String PREF_KEY_PASS_COOKIE = "PREF_KEY_PASS_COOKIE";
     
-    static final String RECAPTCHA_KEY = "6Ldp2bsSAAAAAAJ5uyx_lx34lJeEpTLVkP5k04qc";
+    private static final String RECAPTCHA_KEY = "6Ldp2bsSAAAAAAJ5uyx_lx34lJeEpTLVkP5k04qc";
     
     private boolean usingPasscode = false;
     
@@ -293,23 +293,12 @@ public class FourchanModule extends CloudflareChanModule {
         fallbackRecaptchaPref.setTitle(R.string.fourchan_prefs_new_recaptcha_fallback);
         fallbackRecaptchaPref.setSummary(R.string.fourchan_prefs_new_recaptcha_fallback_summary);
         fallbackRecaptchaPref.setKey(getSharedKey(PREF_KEY_NEW_RECAPTCHA_FALLBACK));
-        fallbackRecaptchaPref.setDefaultValue(true);
+        fallbackRecaptchaPref.setDefaultValue(false);
         preferenceGroup.addPreference(fallbackRecaptchaPref);
         
         addPasswordPreference(preferenceGroup);
         addHttpsPreference(preferenceGroup, true);
         addProxyPreferences(preferenceGroup);
-        
-        final CheckBoxPreference proxyPreference = (CheckBoxPreference) preferenceGroup.findPreference(getSharedKey(PREF_KEY_USE_PROXY));
-        fallbackRecaptchaPref.setEnabled(!proxyPreference.isChecked());
-        proxyPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {            
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                fallbackRecaptchaPref.setEnabled(!proxyPreference.isChecked());
-                if (proxyPreference.isChecked() && !fallbackRecaptchaPref.isChecked()) fallbackRecaptchaPref.setChecked(true);
-                return false;
-            }
-        });
     }
     
     private boolean useHttps() {
@@ -317,13 +306,7 @@ public class FourchanModule extends CloudflareChanModule {
     }
     
     private boolean newRecaptchaFallback() {
-        return preferences.getBoolean(getSharedKey(PREF_KEY_USE_PROXY), false) ||
-                preferences.getBoolean(getSharedKey(PREF_KEY_NEW_RECAPTCHA_FALLBACK), true);
-    }
-    
-    @Override
-    protected boolean cloudflareRecaptchaFallback() {
-        return newRecaptchaFallback();
+        return preferences.getBoolean(getSharedKey(PREF_KEY_NEW_RECAPTCHA_FALLBACK), false);
     }
     
     @Override
