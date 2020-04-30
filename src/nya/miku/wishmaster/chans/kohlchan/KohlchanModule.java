@@ -75,10 +75,9 @@ public class KohlchanModule extends AbstractLynxChanModule {
     private static final String DEFAULT_DOMAIN = "kohlchan.net";
     private static final String PREF_KEY_DOMAIN = "domain";
     private static final List<String> DOMAINS_LIST = Arrays.asList(
-            DEFAULT_DOMAIN, "kohlchan.mett.ru", "kohlchankxguym67.onion", "fastkohlp6h2seef.onion",
-            "kohlchan7cwtdwfuicqhxgqx4k47bsvlt2wn5eduzovntrzvonv4cqyd.onion",
-            "fastkohlt5rxcxtl5no7k3efmahlt7mafry7be6yvxdovekhq2hdnwqd.onion");
-    private static final String DOMAINS_HINT = "kohlchan.net, kohlchan.mett.ru, kohlchankxguym67.onion, fastkohlp6h2seef.onion";
+            DEFAULT_DOMAIN, "kohlkanal.net", "kohlchanagb7ih5g.onion",
+            "kohlchanvwpfx6hthoti5fvqsjxgcwm3tmddvpduph5fqntv5affzfqd.onion");
+    private static final String DOMAINS_HINT = "kohlchan.net, kohlkanal.net, kohlchanagb7ih5g.onion, kohlchanvwpfx6hthoti5fvqsjxgcwm3tmddvpduph5fqntv5affzfqd.onion";
     
     private static final String[] ATTACHMENT_FORMATS = new String[] {
             "jpg", "jpeg", "bmp", "gif", "png", "webp", "mp3", "ogg", "flac", "opus", "webm", "mp4",
