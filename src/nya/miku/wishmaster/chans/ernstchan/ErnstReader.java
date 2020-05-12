@@ -18,6 +18,8 @@
 
 package nya.miku.wishmaster.chans.ernstchan;
 
+import android.annotation.SuppressLint;
+
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
@@ -25,6 +27,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.text.DateFormat;
+import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,12 +45,15 @@ import nya.miku.wishmaster.common.Logger;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
+@SuppressLint("SimpleDateFormat")
 public class ErnstReader implements Closeable {
     private static final String TAG = "ErnstReader";
     
     private static final DateFormat ERNST_DATEFORMAT;
     static {
-        ERNST_DATEFORMAT = new SimpleDateFormat("dd. MMMMM yyyy HH:mm:ss", Locale.GERMANY);
+        DateFormatSymbols symbols = new DateFormatSymbols();
+        symbols.setMonths(new String[] { "Jänner", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"});
+        ERNST_DATEFORMAT = new SimpleDateFormat("dd. MMMMM yyyy HH:mm:ss", symbols);
         ERNST_DATEFORMAT.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
     }
     
@@ -220,6 +226,7 @@ public class ErnstReader implements Closeable {
             case FILTER_DATE:
                 String date = readUntilSequence(FILTERS_CLOSE[filterIndex]);
                 date = date.replaceFirst("\\([A-Za-z]+\\.?\\)\\s", ""); //remove day name
+                date = StringEscapeUtils.unescapeHtml4(date).replace("&auml", "\u00e4");
                 try {
                     currentPost.timestamp = ERNST_DATEFORMAT.parse(date).getTime();
                 } catch (Exception e) {
@@ -282,8 +289,7 @@ public class ErnstReader implements Closeable {
             model.width = -1;
             model.height = -1;
             model.path = attachmentMatcher.group(1);
-            String thumbnailGroup = attachmentMatcher.group(2);
-            model.thumbnail = thumbnailGroup;
+            model.thumbnail = attachmentMatcher.group(2);
             String ext = model.path.substring(model.path.lastIndexOf('.') + 1).toLowerCase(Locale.US);
             if (ext.equals("png") || ext.equals("jpg") || ext.equals("jpeg")) model.type = AttachmentModel.TYPE_IMAGE_STATIC;
             else if (ext.equals("gif")) model.type = AttachmentModel.TYPE_IMAGE_GIF;
@@ -314,8 +320,7 @@ public class ErnstReader implements Closeable {
                             if (prefix.equalsIgnoreCase("k")) multiplier = 1024;
                             else if (prefix.equalsIgnoreCase("m")) multiplier = 1024 * 1024;
                         }
-                        int value = Math.round(Float.parseFloat(digits) / 1024 * multiplier);
-                        model.size = value;
+                        model.size = Math.round(Float.parseFloat(digits) / 1024 * multiplier);
                     } catch (NumberFormatException e) {}
                 }
             }
