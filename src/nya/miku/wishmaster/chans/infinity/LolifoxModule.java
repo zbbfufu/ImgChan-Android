@@ -124,8 +124,7 @@ public class LolifoxModule extends InfinityModule {
     @Override
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel model = super.getBoard(shortName, listener, task);
-        if (model.attachmentsMaxCount > 0) model.attachmentsMaxCount = 4;
-        model.timeZoneId = "Brazil/East";
+        model.timeZoneId = "GMT";
         model.markType = BoardModel.MARK_BBCODE;
         return model;
     }
@@ -174,8 +173,8 @@ public class LolifoxModule extends InfinityModule {
         if (model.custommark) postEntityBuilder.addString("spoiler", "on");
         postEntityBuilder.addString("password", TextUtils.isEmpty(model.password) ? getDefaultPassword() : model.password).
                 addString("json_response", "1");
-        if (model.attachments != null) {
-            String[] images = new String[]{"file", "file2", "file3", "file4"};
+        if (model.attachments != null && model.attachments.length > 0) {
+            String[] images = new String[] { "file", "file2", "file3", "file4", "file5" };
             for (int i = 0; i < model.attachments.length; ++i) {
                 postEntityBuilder.addFile(images[i], model.attachments[i], model.randomHash);
             }
