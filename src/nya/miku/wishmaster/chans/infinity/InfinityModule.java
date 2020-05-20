@@ -280,29 +280,28 @@ public class InfinityModule extends AbstractVichanModule {
     @Override
     protected AttachmentModel mapAttachment(JSONObject object, String boardName, boolean isSpoiler) {
         AttachmentModel attachment = super.mapAttachment(object, boardName, isSpoiler);
+        String tim = object.optString("tim", "");
         String ext = object.optString("ext", "");
-        String thumbnail_ext = ext;
-        if (attachment != null) {
-            String tim = object.optString("tim", "");
+        if (attachment != null && tim.length() > 0 && ext.length() > 0) {
             String thumbLocation = tim.length() == 64 ? "/file_store/thumb/" : "/" + boardName + "/thumb/";
             String fileLocation = tim.length() == 64 ? "/file_store/" : "/" + boardName + "/src/";
-            if (tim.length() > 0) {
-                if(tim.length()!=64 || (tim.length() == 64 && attachment.type == AttachmentModel.TYPE_VIDEO)){
-                    thumbnail_ext = ".jpg";
-                }
-                attachment.thumbnail = isSpoiler || attachment.type == AttachmentModel.TYPE_AUDIO ? null :
-                        (thumbLocation + tim + thumbnail_ext);
-                attachment.path = fileLocation + tim + ext;
-                if (getUsingDomain().equals(DEFAULT_DOMAIN)){
-                    if (attachment.thumbnail != null) {
-                        attachment.thumbnail = fixRelativeUrl(attachment.thumbnail).replaceFirst(DEFAULT_DOMAIN, MEDIA_DOMAIN);
-                    }
-                    attachment.path = fixRelativeUrl(attachment.path).replaceFirst(DEFAULT_DOMAIN, MEDIA_DOMAIN);
-                }
-                return attachment;
+            String thumbnailExt = ext;
+            if (tim.length() != 64 || attachment.type == AttachmentModel.TYPE_VIDEO) {
+                thumbnailExt = ".jpg";
             }
+            attachment.thumbnail = isSpoiler || attachment.type == AttachmentModel.TYPE_AUDIO
+                    || attachment.type == AttachmentModel.TYPE_OTHER_FILE ? null
+                    : thumbLocation + tim + thumbnailExt;
+            attachment.path = fileLocation + tim + ext;
+            if (getUsingDomain().equals(DEFAULT_DOMAIN)) {
+                if (attachment.thumbnail != null) {
+                    attachment.thumbnail = fixRelativeUrl(attachment.thumbnail).replaceFirst(DEFAULT_DOMAIN, MEDIA_DOMAIN);
+                }
+                attachment.path = fixRelativeUrl(attachment.path).replaceFirst(DEFAULT_DOMAIN, MEDIA_DOMAIN);
+            }
+            return attachment;
         }
-        return attachment;
+        return null;
     }
 
     @Override
