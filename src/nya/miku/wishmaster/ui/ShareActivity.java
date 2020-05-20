@@ -19,6 +19,7 @@
 package nya.miku.wishmaster.ui;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -56,7 +57,7 @@ public class ShareActivity extends ListActivity {
     private String postNumber;
     private String postURI;
     private boolean shareText = false;
-    private File selectedFile;
+    private ArrayList<File> selectedFiles = new ArrayList<File>();
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -152,10 +153,16 @@ public class ShareActivity extends ListActivity {
     }
     
     private boolean handleFile(Intent intent) {
-        selectedFile = null;
+        selectedFiles.clear();
         if (intent != null) {
-            Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
-            if (uri != null) {
+            ArrayList<Uri> uris;
+            if (intent.getAction().equals(Intent.ACTION_SEND)) {
+                uris = new ArrayList<Uri>();
+                uris.add(intent.<Uri>getParcelableExtra(Intent.EXTRA_STREAM));
+            } else {
+                uris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+            }
+            for (Uri uri: uris) {
                 File file = UriFileUtils.getFile(this, uri);
                 if (file == null && "content".equalsIgnoreCase(uri.getScheme())) {
                     String name = UriFileUtils.getContentName(this, uri);
@@ -171,11 +178,11 @@ public class ShareActivity extends ListActivity {
                     }
                 }
                 if (file != null) {
-                    selectedFile = file;
+                    selectedFiles.add(file);
                 }
             }
         }
-        return selectedFile != null;
+        return selectedFiles.size() > 0;
     }
     
     private void insertQuoteText(BoardModel boardModel, SendPostModel draft) {
@@ -201,15 +208,18 @@ public class ShareActivity extends ListActivity {
     }
     
     private boolean attachFile(BoardModel boardModel, SendPostModel draft){
-        int attachmentsCount = draft.attachments == null ? 0 : draft.attachments.length;
-        ++attachmentsCount;
-        if (attachmentsCount > boardModel.attachmentsMaxCount) {
+        int oldAttachmentsCount = draft.attachments == null ? 0 : draft.attachments.length;
+        int newAttachmentsCount = oldAttachmentsCount + selectedFiles.size();
+        if (newAttachmentsCount > boardModel.attachmentsMaxCount) {
+            newAttachmentsCount = boardModel.attachmentsMaxCount;
             Toast.makeText(this, R.string.postform_max_attachments, Toast.LENGTH_LONG).show();
-            return false;
         }
-        File[] attachments = new File[attachmentsCount];
-        for (int i=0; i<(attachmentsCount-1); ++i) attachments[i] = draft.attachments[i];
-        attachments[attachmentsCount-1] = selectedFile;
+        if (newAttachmentsCount == oldAttachmentsCount) return false;
+        File[] attachments = new File[newAttachmentsCount];
+        for (int i = 0; i < oldAttachmentsCount; ++i)
+            attachments[i] = draft.attachments[i];
+        for (int j = 0, i = oldAttachmentsCount; i < newAttachmentsCount; ++i, ++j)
+            attachments[i] = selectedFiles.get(j);
         draft.attachments = attachments;
         return true;
     }
