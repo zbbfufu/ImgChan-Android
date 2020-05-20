@@ -19,7 +19,6 @@
 package nya.miku.wishmaster.chans.infinity;
 
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,7 +42,6 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.preference.CheckBoxPreference;
 import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
@@ -81,7 +79,7 @@ public class InfinityModule extends AbstractVichanModule {
     private static final String DEFAULT_DOMAIN = "8kun.top";
     private static final String SYSTEM_DOMAIN = "sys.8kun.top";
     private static final String MEDIA_DOMAIN = "media.8kun.top";
-    private static final String MEDIA2_DOMAIN = "media2.8kun.top";
+    //private static final String MEDIA2_DOMAIN = "media2.8kun.top";
     private static final String ONION_DOMAIN = "jthnx5wyvjvzsxtu.onion";
     private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN, "8ch.net", "8kun.net", "8chan.co" };
     
@@ -314,7 +312,7 @@ public class InfinityModule extends AbstractVichanModule {
         }
         return null;
     }
-
+/*
     @Override
     public void downloadFile(String url, OutputStream out, ProgressListener listener, CancellableTask task) throws Exception {
         String fixedUrl = fixRelativeUrl(url);
@@ -337,6 +335,7 @@ public class InfinityModule extends AbstractVichanModule {
             }
         }
     }
+*/
     
     @Override
     public ThreadModel[] getThreadsList(String boardName, int page, ProgressListener listener, CancellableTask task, ThreadModel[] oldList)
