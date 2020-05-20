@@ -30,8 +30,8 @@ import android.text.TextUtils;
 import nya.miku.wishmaster.R;
 
 public class NullchanoneModule extends AbstractInstant0chan {
-    private static final String CHAN_NAME = "0chan.one";
-    private static final String CHAN_DOMAIN = "0chan.one";
+    private static final String CHAN_NAME = "metator.onion";
+    private static final String CHAN_DOMAIN = "metatorjq65tshfy.onion";
     
     private static final String PREF_KEY_DOMAIN = "PREF_KEY_DOMAIN";
     
@@ -46,7 +46,7 @@ public class NullchanoneModule extends AbstractInstant0chan {
     
     @Override
     public String getDisplayingName() {
-        return "Овернульч";
+        return "METATOR";
     }
     
     @Override
