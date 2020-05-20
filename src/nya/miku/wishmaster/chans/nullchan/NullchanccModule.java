@@ -18,6 +18,18 @@
 
 package nya.miku.wishmaster.chans.nullchan;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
+import java.text.DateFormat;
+import java.text.DateFormatSymbols;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -28,28 +40,20 @@ import android.support.v4.content.res.ResourcesCompat;
 import android.text.InputType;
 import android.text.TextUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.SequenceInputStream;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
+import nya.miku.wishmaster.api.models.AttachmentModel;
 import nya.miku.wishmaster.api.models.BoardModel;
 import nya.miku.wishmaster.api.models.UrlPageModel;
 import nya.miku.wishmaster.api.util.WakabaReader;
 
-public class NullchanclubModule extends AbstractInstant0chan {
-    private static final String CHAN_NAME = "0chan.club";
-    private static final String DEFAULT_DOMAIN = "0chan.club";
-    private static final String DOMAINS_HINT = "0chan.club, 0chan.ml";
-    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, "0chan.ml"};
-    
+public class NullchanccModule extends AbstractInstant0chan {
+    private static final String CHAN_NAME = "0chan.cc";
+    private static final String DEFAULT_DOMAIN = "0chan.cc";
     private static final String PREF_KEY_DOMAIN = "PREF_KEY_DOMAIN";
     
-    public NullchanclubModule(SharedPreferences preferences, Resources resources) {
+    public NullchanccModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
     }
     
@@ -60,7 +64,7 @@ public class NullchanclubModule extends AbstractInstant0chan {
     
     @Override
     public String getDisplayingName() {
-        return "Øчан (0chan.club)";
+        return "Øчан (0chan.cc)";
     }
     
     @Override
@@ -76,12 +80,9 @@ public class NullchanclubModule extends AbstractInstant0chan {
     
     @Override
     protected String[] getAllDomains() {
-        String domain = getUsingDomain();
-        for (String d : DOMAINS) if (domain.equals(d)) return DOMAINS;
-        String[] domains = new String[DOMAINS.length + 1];
-        for (int i=0; i<DOMAINS.length; ++i) domains[i] = DOMAINS[i];
-        domains[DOMAINS.length] = domain;
-        return domains;
+        if (!getChanName().equals(CHAN_NAME) || getUsingDomain().equals(DEFAULT_DOMAIN))
+            return super.getAllDomains();
+        return new String[] { DEFAULT_DOMAIN, getUsingDomain() };
     }
     
     @Override
@@ -98,7 +99,6 @@ public class NullchanclubModule extends AbstractInstant0chan {
         Context context = group.getContext();
         EditTextPreference domainPref = new EditTextPreference(context);
         domainPref.setTitle(R.string.pref_domain);
-        domainPref.setSummary(resources.getString(R.string.pref_domain_summary, DOMAINS_HINT));
         domainPref.setDialogTitle(R.string.pref_domain);
         domainPref.setKey(getSharedKey(PREF_KEY_DOMAIN));
         domainPref.getEditText().setHint(DEFAULT_DOMAIN);
@@ -119,29 +119,49 @@ public class NullchanclubModule extends AbstractInstant0chan {
         model.defaultUserName = "Аноним";
         return model;
     }
-
+    
     @Override
     protected WakabaReader getKusabaReader(InputStream stream, UrlPageModel urlModel) {
         if ((urlModel != null) && (urlModel.chanName != null) && urlModel.chanName.equals("expand")) {
             stream = new SequenceInputStream(new ByteArrayInputStream("<form id=\"delform\">".getBytes()), stream);
         }
-        return new NullclubReader(stream, canCloudflare());
+        return new NullccReader(stream, canCloudflare());
     }
-
-    private static class NullclubReader extends Instant0chanReader {
-        private static final Pattern PATTERN_TIMESTAMP = Pattern.compile("<span[^>]+class=\"timestamp\"[^>]*\">(\\d+)</span>");
-
-        public NullclubReader(InputStream in, boolean canCloudflare) {
-            super(in, canCloudflare);
+    
+    private static class NullccReader extends Instant0chanReader {
+        private static final DateFormat DATE_FORMAT;
+        static {
+            DateFormatSymbols symbols = new DateFormatSymbols();
+            symbols.setShortMonths(new String[] { "Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"});
+            DATE_FORMAT = new SimpleDateFormat("yyyy MMM dd HH:mm:ss", symbols) {
+                @Override
+                public Date parse(String string) throws ParseException {
+                    return super.parse(string.replaceFirst("\\D+(?=\\d{4})", ""));
+                }
+            };
+            DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT+3"));
         }
-
+        private static final Pattern PATTERN_ORIGINAL_FILENAME = Pattern.compile("<a.+?title=\"(.+?)\"");
+        
+        public NullccReader(InputStream stream, boolean canCloudflare) {
+            super(stream, DATE_FORMAT, canCloudflare);
+        }
+        
         @Override
-        protected void parseDate(String date) {
-            Matcher matcher = PATTERN_TIMESTAMP.matcher(date);
-            if (matcher.find()) {
-                currentPost.timestamp = Integer.parseInt(matcher.group(1)) * 1000L;
-            } else {
-                super.parseDate(date);
+        protected void parseAttachment(String html) {
+            int oldAttachmentsSize = currentAttachments.size();
+            super.parseAttachment(html);
+            if (currentAttachments.size() > oldAttachmentsSize) {
+                AttachmentModel attachment = currentAttachments.get(currentAttachments.size() - 1);
+                if (attachment.originalName == null) {
+                    Matcher matcher = PATTERN_ORIGINAL_FILENAME.matcher(html);
+                    if (matcher.find()) {
+                        String originalName = matcher.group(1);
+                        if (originalName.length() > 0 && !attachment.path.endsWith(originalName)) {
+                            attachment.originalName = originalName;
+                        }
+                    }
+                }
             }
         }
     }
