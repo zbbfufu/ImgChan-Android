@@ -172,6 +172,14 @@ public class InfinityModule extends AbstractVichanModule {
         return preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) ? ONION_DOMAIN : DEFAULT_DOMAIN;
     }
     
+    private String getSystemUrl() {
+        String domain = getUsingDomain();
+        if (DEFAULT_DOMAIN.equals(domain)) {
+            domain = SYSTEM_DOMAIN;
+        }
+        return (useHttps() ? "https://" : "http://") + domain + "/"; 
+    }
+    
     @Override
     protected String[] getAllDomains() {
         return DOMAINS;
@@ -221,7 +229,7 @@ public class InfinityModule extends AbstractVichanModule {
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel fromMap = boardsMap.get(shortName);
         if (fromMap != null) return fromMap;
-        String url = getUsingUrl() + "settings.php?board=" + shortName;
+        String url = getSystemUrl() + "settings.php?board=" + shortName;
         JSONObject json;
         try {
             json = downloadJSONObject(url, false, listener, task);
@@ -240,7 +248,7 @@ public class InfinityModule extends AbstractVichanModule {
         model.bumpLimit = json.optInt("reply_limit", 500);
         model.readonlyBoard = false;
         model.requiredFileForNewThread = json.optBoolean("force_image_op", false);
-        model.allowDeletePosts = json.optBoolean("allow_delete", false);
+        model.allowDeletePosts = json.optBoolean("allow_delete", true);
         model.allowDeleteFiles = model.allowDeletePosts;
         model.allowNames = !json.optBoolean("field_disable_name", false);
         model.allowSubjects = true;
@@ -347,7 +355,7 @@ public class InfinityModule extends AbstractVichanModule {
                 boardsThreadCaptcha.contains(boardName) :
                     boardsPostCaptcha.contains(boardName);
         if (needTorCaptcha) {
-            String url = getUsingUrl() + "dnsbls_bypass.php";
+            String url = getSystemUrl() + "dnsbls_bypass.php";
             String response =
                     HttpStreamer.getInstance().getStringFromUrl(url, HttpRequestModel.DEFAULT_GET, httpClient, listener, task, false);
             Matcher base64Matcher = CAPTCHA_BASE64.matcher(response);
@@ -362,7 +370,7 @@ public class InfinityModule extends AbstractVichanModule {
             }
         }
         if (needNewThreadCaptcha) {
-            String url = getUsingUrl() + "8chan-captcha/entrypoint.php?mode=get&extra=abcdefghijklmnopqrstuvwxyz&nojs=true";
+            String url = getSystemUrl() + "8kun-captcha/entrypoint.php?mode=get&extra=abcdefghijklmnopqrstuvwxyz&nojs=true";
             HttpRequestModel request = HttpRequestModel.builder().setGET()
                     .setCustomHeaders(new Header[] { new BasicHeader(HttpHeaders.CACHE_CONTROL, "max-age=0") }).build();
             String response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, listener, task, false);
@@ -383,7 +391,7 @@ public class InfinityModule extends AbstractVichanModule {
     private void checkCaptcha(String answer, CancellableTask task) throws Exception {
         try {
             if (torCaptchaCookie == null) throw new Exception("Invalid captcha");
-            String url = getUsingUrl() + "dnsbls_bypass.php";
+            String url = getSystemUrl() + "dnsbls_bypass.php";
             List<NameValuePair> pairs = new ArrayList<NameValuePair>();
             pairs.add(new BasicNameValuePair("captcha_text", answer));
             pairs.add(new BasicNameValuePair("captcha_cookie", torCaptchaCookie));
@@ -415,12 +423,7 @@ public class InfinityModule extends AbstractVichanModule {
             }
         }
         if (task != null && task.isCancelled()) throw new InterruptedException("interrupted");
-        String url;
-        if (DEFAULT_DOMAIN.equals(getUsingDomain())) {
-            url = (useHttps() ? "https://" : "http://") + SYSTEM_DOMAIN + "/post.php";
-        } else {
-            url = getUsingUrl() + "post.php";
-        }
+        String url = getSystemUrl() + "post.php";
         ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
                 addString("name", model.name).
                 addString("email", model.sage ? "sage" : model.email).
@@ -515,7 +518,7 @@ public class InfinityModule extends AbstractVichanModule {
     
     @Override
     public String deletePost(DeletePostModel model, ProgressListener listener, CancellableTask task) throws Exception {
-        String url = getUsingUrl() + "post.php";
+        String url = getSystemUrl() + "delete_post.php";
         List<NameValuePair> pairs = new ArrayList<NameValuePair>();
         pairs.add(new BasicNameValuePair("board", model.boardName));
         pairs.add(new BasicNameValuePair("delete_" + model.postNumber, "on"));
