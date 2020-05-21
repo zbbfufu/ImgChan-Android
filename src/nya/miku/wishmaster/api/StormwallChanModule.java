@@ -124,7 +124,11 @@ public abstract class StormwallChanModule extends AbstractChanModule {
         } catch (HttpRequestException e) {
             return;
         }
-        checkForStormwall(url, responseModel);
+        try {
+            checkForStormwall(url, responseModel);
+        } finally {
+            responseModel.release();
+        }
     }
     
     protected void checkForStormwall(String url, HttpResponseModel responseModel) throws InteractiveException {
