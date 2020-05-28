@@ -29,6 +29,8 @@ import java.util.regex.Pattern;
 
 import android.app.Activity;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 /**
  * Исключение, вызванное запросом проверки Cloudflare
  * @author miku-nyan
@@ -99,7 +101,9 @@ public class CloudflareException extends InteractiveException {
 
         String action = null;
         m = PATTERN_ACTION.matcher(htmlString);
-        if (m.find()) action = m.group(1);
+        if (m.find()) {
+            action = StringEscapeUtils.unescapeXml(m.group(1));  //fix ampersands in query string
+        }
 
         String rToken = null;
         m = PATTERN_RTOKEN.matcher(htmlString);
