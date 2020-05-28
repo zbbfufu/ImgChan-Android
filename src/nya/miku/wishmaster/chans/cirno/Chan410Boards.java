@@ -30,28 +30,29 @@ import nya.miku.wishmaster.api.models.BoardModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
 
 public class Chan410Boards {
-    static final Set<String> ALL_BOARDS_SET = new HashSet<String>(Arrays.asList(new String[] {
-            "b", "int", "cu", "dev", "r", "a", "ts", "tm", "gnx", "ci" }));
+    static final Set<String> ALL_BOARDS_SET = new HashSet<>(
+            Arrays.asList("d", "b", "int", "cu", "dev", "r", "a", "ts", "tm", "gnx", "ci" ));
     
-    private static final String[] ATTACHMENT_FILTERS = new String[] { "jpg", "jpeg", "png", "gif" };
-    private static final String[] ATTACHMENT_FILTERS_B = new String[] { "jpg", "jpeg", "png", "gif", "ass", "srt", "ssa" };
-    private static final String[] ATTACHMENT_FILTERS_A = new String[] { "jpg", "jpeg", "png", "gif", "pdf" };
+    private static final String[] ATTACHMENT_FILTERS = new String[] {
+            "jpg", "jpeg", "png", "gif", "webm", "mp4", "ogv" };
+    private static final String[] ATTACHMENT_FILTERS_A = new String[] {
+            "jpg", "jpeg", "png", "gif", "webm", "mp4", "ogv", "ass", "srt", "ssa" };
     private static final String[] ATTACHMENT_FILTERS_DEV = new String[] {
-        "jpg", "jpeg", "png", "gif", "7z", "bz", "bz2", "gz", "mo", "mp3", "ogg", "pdf", "psd", "rar", "svg", "swf", "txt", "xcf", "zip" };
+            "jpg", "jpeg", "png", "gif", "webm", "mp4", "ogv", "7z", "bz", "bz2", "gz",
+            "mo", "mp3", "ogg", "pdf", "psd", "rar", "svg", "swf", "txt", "xcf", "zip" };
     
     private static final List<BoardModel> LIST = new ArrayList<BoardModel>();
     private static final Map<String, BoardModel> MAP = new HashMap<String, BoardModel>();
     private static final SimpleBoardModel[] SIMPLE_ARRAY;
     
     static {
+        addBoard("d", "/d/испетчерская", "Работа сайта", "Аноним", false);
         addBoard("b", "Авто/b/ус", "Общее", "Пассажир", true);
-        addBoard("int", "International", "Общее", "Anonymous", false);
         addBoard("cu", "Кулинария", "Общее", "Аноним", false);
         addBoard("dev", "Разработка", "Общее", "Стив Балмер", false);
         addBoard("r", "Радио 410", "Радио", "Аноним", false);
         addBoard("a", "Аниме и манга", "Аниме", "Нінгенъ", false);
         addBoard("ts", "Цундере", "Аниме", "Baka Inu", false);
-        addBoard("tm", "Type-Moon", "Аниме", "Шики", false);
         addBoard("ci", "Городская жизнь", "На пробу", "Аноним", false);
         
         SIMPLE_ARRAY = new SimpleBoardModel[LIST.size()];
@@ -100,15 +101,14 @@ public class Chan410Boards {
         model.allowRandomHash = true;
         model.allowIcons = false;
         model.attachmentsMaxCount = 1;
-        if (name.equals("b")) model.attachmentsFormatFilters = ATTACHMENT_FILTERS_B;
-        else if (name.equals("a")) model.attachmentsFormatFilters = ATTACHMENT_FILTERS_A;
+        if (name.equals("a")) model.attachmentsFormatFilters = ATTACHMENT_FILTERS_A;
         else if (name.equals("dev")) model.attachmentsFormatFilters = ATTACHMENT_FILTERS_DEV;
         else model.attachmentsFormatFilters = ATTACHMENT_FILTERS;
         model.markType = BoardModel.MARK_WAKABAMARK;
         
         model.firstPage = 0;
         model.lastPage = BoardModel.LAST_PAGE_UNDEFINED;
-        model.catalogAllowed = !name.equals("d");
+        model.catalogAllowed = true;
         return model;
     }
 }
