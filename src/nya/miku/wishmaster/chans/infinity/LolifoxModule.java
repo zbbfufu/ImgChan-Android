@@ -27,6 +27,9 @@ import android.preference.CheckBoxPreference;
 import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
 
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -36,9 +39,10 @@ import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.HttpHeaders;
 import cz.msebera.android.httpclient.NameValuePair;
 import cz.msebera.android.httpclient.client.entity.UrlEncodedFormEntity;
+import cz.msebera.android.httpclient.entity.mime.content.ByteArrayBody;
 import cz.msebera.android.httpclient.message.BasicHeader;
 import cz.msebera.android.httpclient.message.BasicNameValuePair;
-import cz.msebera.android.httpclient.util.TextUtils;
+
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
@@ -53,6 +57,7 @@ import nya.miku.wishmaster.api.util.RegexUtils;
 import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
+import nya.miku.wishmaster.http.streamer.HttpWrongStatusCodeException;
 import nya.miku.wishmaster.lib.base64.Base64;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
@@ -61,7 +66,7 @@ public class LolifoxModule extends InfinityModule {
     private static final String DEFAULT_DOMAIN = "lolifox.cc";
     private static final String ONION_DOMAIN = "wn3ghyuon5eaqyxi7yauald3d53gsxrkanzpu2qdyc54vobif2qutsid.onion";
     private static final String[] DOMAINS = new String[]{DEFAULT_DOMAIN, ONION_DOMAIN};
-
+    private static final String[] ATTACHMENT_KEYS = new String[] { "file", "file2", "file3", "file4", "file5" };
     private static final Pattern PROTECTED_URL_PATTERN = Pattern.compile("<a[^>]*href=\"https?://privatelink.de/\\?([^\"]*)\"[^>]*>");
     private static final Pattern CAPTCHA_BASE64 = Pattern.compile("data:image/png;base64,([^\"]+)\"");
 
@@ -125,6 +130,7 @@ public class LolifoxModule extends InfinityModule {
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel model = super.getBoard(shortName, listener, task);
         model.timeZoneId = "GMT";
+        model.ignoreEmailIfSage = false;
         model.markType = BoardModel.MARK_BBCODE;
         return model;
     }
@@ -138,17 +144,19 @@ public class LolifoxModule extends InfinityModule {
 
     @Override
     public CaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
+        getBoard(boardName, listener, task);
         needNewThreadCaptcha = threadNumber == null ?
                 boardsThreadCaptcha.contains(boardName) :
                 boardsPostCaptcha.contains(boardName);
         if (needNewThreadCaptcha) {
-            String url = getUsingUrl() + "captcha.php?board=" + boardName;
-            HttpRequestModel request = HttpRequestModel.builder().setGET().
-                    setCustomHeaders(new Header[]{new BasicHeader(HttpHeaders.CACHE_CONTROL, "max-age=0")}).build();
-            String response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, listener, task, false);
-            Matcher base64Matcher = CAPTCHA_BASE64.matcher(response);
-            if (base64Matcher.find()) {
+            String url = getUsingUrl() + "8chan-captcha/entrypoint.php?mode=get&extra=abcdefghijklmnopqrstuvwxyz";
+            HttpRequestModel request = HttpRequestModel.builder().setGET()
+                    .setCustomHeaders(new Header[] { new BasicHeader(HttpHeaders.CACHE_CONTROL, "max-age=0") }).build();
+            JSONObject jsonResponse = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, false);
+            Matcher base64Matcher = CAPTCHA_BASE64.matcher(jsonResponse.optString("captchahtml"));
+            if (jsonResponse.has("cookie") && base64Matcher.find()) {
                 byte[] bitmap = Base64.decode(base64Matcher.group(1), Base64.DEFAULT);
+                newThreadCaptchaId = jsonResponse.getString("cookie");
                 CaptchaModel captcha = new CaptchaModel();
                 captcha.type = CaptchaModel.TYPE_NORMAL;
                 captcha.bitmap = BitmapFactory.decodeByteArray(bitmap, 0, bitmap.length);
@@ -160,53 +168,106 @@ public class LolifoxModule extends InfinityModule {
 
     @Override
     public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
-        if (task != null && task.isCancelled()) throw new InterruptedException("interrupted");
-        String url = getUsingUrl() + "post.php";
-        ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
-                addString("name", model.name).
-                addString("email", model.sage ? "sage" : model.email).
-                addString("subject", model.subject).
-                addString("body", model.comment).
-                addString("post", "Ответ"). // Этот параметр можно не отправлять.
-                addString("board", model.boardName);
-        if (model.threadNumber != null) postEntityBuilder.addString("thread", model.threadNumber);
-        if (model.custommark) postEntityBuilder.addString("spoiler", "on");
-        postEntityBuilder.addString("password", TextUtils.isEmpty(model.password) ? getDefaultPassword() : model.password).
-                addString("json_response", "1");
-        if (model.attachments != null && model.attachments.length > 0) {
-            String[] images = new String[] { "file", "file2", "file3", "file4", "file5" };
-            for (int i = 0; i < model.attachments.length; ++i) {
-                postEntityBuilder.addFile(images[i], model.attachments[i], model.randomHash);
-            }
+        UrlPageModel urlModel = new UrlPageModel();
+        urlModel.chanName = getChanName();
+        urlModel.boardName = model.boardName;
+        if (model.threadNumber == null) {
+            urlModel.type = UrlPageModel.TYPE_BOARDPAGE;
+            urlModel.boardPage = UrlPageModel.DEFAULT_FIRST_PAGE;
+        } else {
+            urlModel.type = UrlPageModel.TYPE_THREADPAGE;
+            urlModel.threadNumber = model.threadNumber;
         }
-        if (needNewThreadCaptcha) {
-            postEntityBuilder.addString("captcha_text", model.captchaAnswer);
+        String refererUrl = buildUrl(urlModel);
+        List<Pair<String, String>> fields;
+        try {
+             fields = VichanAntiBot.getFormValues(refererUrl, task, httpClient);
+        } catch (HttpWrongStatusCodeException e) {
+            checkCloudflareError(e, refererUrl);
+            throw e;
         }
 
-        UrlPageModel refererPage = new UrlPageModel();
-        refererPage.chanName = getChanName();
-        refererPage.boardName = model.boardName;
-        if (model.threadNumber == null) {
-            refererPage.type = UrlPageModel.TYPE_BOARDPAGE;
-            refererPage.boardPage = UrlPageModel.DEFAULT_FIRST_PAGE;
-        } else {
-            refererPage.type = UrlPageModel.TYPE_THREADPAGE;
-            refererPage.threadNumber = model.threadNumber;
+        if (task != null && task.isCancelled()) throw new InterruptedException("interrupted");
+        String url = getUsingUrl() + "post.php";
+        ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().
+                setCharset(Charset.forName("UTF-8")).setDelegates(listener, task);
+        String key;
+        for (Pair<String, String> pair : fields) {
+            key = pair.getKey();
+            if (pair.getKey().equals("no-bump") && !model.sage) continue;
+            if (pair.getKey().equals("spoiler") && !model.custommark) continue;
+            if (key.equals("captcha_cookie") && !needNewThreadCaptcha) {
+                boardsThreadCaptcha.add(model.boardName);
+                if (model.threadNumber != null) {
+                    boardsPostCaptcha.add(model.boardName);
+                }
+                throw new Exception("Please complete your CAPTCHA");
+            }
+            String val;
+            switch (key) {
+                case "name": val = model.name; break;
+                case "email": val = model.email; break;
+                case "subject": val = model.subject; break;
+                case "body": val = model.comment; break;
+                case "password": val = model.password; break;
+                case "no-bump":
+                case "spoiler": val = "on"; break;
+                case "captcha_text": val = model.captchaAnswer; break;
+                case "captcha_cookie": val = newThreadCaptchaId == null ? "" : newThreadCaptchaId; break;
+                default: val = pair.getValue();
+            }
+            if (key.equals("file")) {
+                if (model.attachments != null && model.attachments.length > 0) {
+                    for (int i = 0; i < model.attachments.length; ++i) {
+                        postEntityBuilder.addFile(ATTACHMENT_KEYS[i], model.attachments[i], model.randomHash);
+                    }
+                } else {
+                    postEntityBuilder.addPart(key, new ByteArrayBody(new byte[0], ""));
+                }
+            } else {
+                postEntityBuilder.addString(key, val);
+            }
         }
-        Header[] customHeaders = new Header[]{new BasicHeader(HttpHeaders.REFERER, buildUrl(refererPage))};
-        HttpRequestModel request =
-                HttpRequestModel.builder().setPOST(postEntityBuilder.build()).setCustomHeaders(customHeaders).setNoRedirect(true).build();
-        JSONObject json = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, false);
+        postEntityBuilder.addString("json_response", "1");
+
+        Header[] customHeaders = new Header[]{new BasicHeader(HttpHeaders.REFERER, refererUrl)};
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build())
+                .setCustomHeaders(customHeaders).setNoRedirect(true).build();
+        JSONObject json;
+        try {
+            json = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, false);
+        } catch (HttpWrongStatusCodeException e) {
+            checkCloudflareError(e, url);
+            throw e;
+        }
         if (json.has("error")) {
             String error = json.optString("error");
             if (error.equals("true") && json.optBoolean("banned"))
                 throw new Exception("You are banned! ;_;");
+            if (error.contains("<script")) {
+                error = error.replaceAll("<script.*?</script>", "");
+            }
             throw new Exception(error);
         } else {
             String redirect = json.optString("redirect", "");
             if (redirect.length() > 0) return fixRelativeUrl(redirect);
-            return null;
+            /* vichan fallback */
+            String id = json.optString("id", "");
+            if (id.length() > 0) {
+                urlModel = new UrlPageModel();
+                urlModel.chanName = getChanName();
+                urlModel.type = UrlPageModel.TYPE_THREADPAGE;
+                urlModel.boardName = model.boardName;
+                if (model.threadNumber == null) {
+                    urlModel.threadNumber = id;
+                } else {
+                    urlModel.threadNumber = model.threadNumber;
+                    urlModel.postNumber = id;
+                }
+                return buildUrl(urlModel);
+            }
         }
+        throw new Exception("Unknown Error");
     }
 
     @Override
@@ -217,8 +278,7 @@ public class LolifoxModule extends InfinityModule {
         pairs.add(new BasicNameValuePair("delete_" + model.postNumber, "on"));
         if (model.onlyFiles) pairs.add(new BasicNameValuePair("file", "on"));
         pairs.add(new BasicNameValuePair("password", model.password));
-        pairs.add(new BasicNameValuePair("delete", "Apagar"));
-        pairs.add(new BasicNameValuePair("reason", ""));
+        pairs.add(new BasicNameValuePair("delete", ""));
         pairs.add(new BasicNameValuePair("json_response", "1"));
 
         UrlPageModel refererPage = new UrlPageModel();
@@ -229,9 +289,15 @@ public class LolifoxModule extends InfinityModule {
         Header[] customHeaders = new Header[]{new BasicHeader(HttpHeaders.REFERER, buildUrl(refererPage))};
         HttpRequestModel request = HttpRequestModel.builder().
                 setPOST(new UrlEncodedFormEntity(pairs, "UTF-8")).setCustomHeaders(customHeaders).setNoRedirect(true).build();
-        JSONObject jsonResponse = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, false);
-        String error = jsonResponse.optString("error");
-        if (error.length() > 0) throw new Exception(error);
+        JSONObject jsonResponse;
+        try {
+            jsonResponse = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, false);
+            String error = jsonResponse.optString("error");
+            if (error.length() > 0) throw new Exception(error);
+        } catch (HttpWrongStatusCodeException e) {
+            if (canCloudflare()) checkCloudflareError(e, url);
+            throw e;
+        }
         return null;
     }
 
