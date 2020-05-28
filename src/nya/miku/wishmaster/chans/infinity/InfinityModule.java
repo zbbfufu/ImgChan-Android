@@ -65,6 +65,7 @@ import nya.miku.wishmaster.api.util.LazyPreferences;
 import nya.miku.wishmaster.common.IOUtils;
 import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
+import nya.miku.wishmaster.http.cloudflare.CloudflareException;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
@@ -224,6 +225,8 @@ public class InfinityModule extends AbstractVichanModule {
         JSONObject json;
         try {
             json = downloadJSONObject(url, false, listener, task);
+        } catch (CloudflareException cf) {
+            throw cf;
         } catch (Exception e) {
             json = new JSONObject();
         }
@@ -255,7 +258,6 @@ public class InfinityModule extends AbstractVichanModule {
         model.lastPage = json.optInt("max_pages", BoardModel.LAST_PAGE_UNDEFINED);
         model.searchAllowed = false;
         model.catalogAllowed = true;
-        boardsMap.put(shortName, model);
         JSONObject captcha = json.optJSONObject("captcha");
         if ((captcha != null) && captcha.optBoolean("enabled")) {
             boardsPostCaptcha.add(shortName);
@@ -263,6 +265,7 @@ public class InfinityModule extends AbstractVichanModule {
         } else if (json.optBoolean("new_thread_capt")) {
             boardsThreadCaptcha.add(shortName);
         }
+        if (json.length() != 0) boardsMap.put(shortName, model);
         return model;
     }
     
