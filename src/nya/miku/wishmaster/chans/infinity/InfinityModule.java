@@ -81,6 +81,8 @@ public class InfinityModule extends AbstractVichanModule {
     private static final String MEDIA_DOMAIN = "media.8kun.top";
     //private static final String MEDIA2_DOMAIN = "media2.8kun.top";
     private static final String ONION_DOMAIN = "jthnx5wyvjvzsxtu.onion";
+    private static final String ONION_SYSTEM_DOMAIN = "sys.jthnx5wyvjvzsxtu.onion";
+    private static final String ONION_MEDIA_DOMAIN = "media.jthnx5wyvjvzsxtu.onion";
     private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN, "8ch.net", "8kun.net", "8chan.co" };
     
     private static final String[] ATTACHMENT_FORMATS = new String[] { "jpg", "jpeg", "gif", "png", "webm", "mp4", "swf", "pdf" };
@@ -169,13 +171,21 @@ public class InfinityModule extends AbstractVichanModule {
     protected String getUsingDomain() {
         return preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) ? ONION_DOMAIN : DEFAULT_DOMAIN;
     }
-    
+
     private String getSystemUrl() {
         String domain = getUsingDomain();
-        if (DEFAULT_DOMAIN.equals(domain)) {
-            domain = SYSTEM_DOMAIN;
+        if (DEFAULT_DOMAIN.equals(domain) || ONION_DOMAIN.equals(domain)) {
+            domain = preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) ?
+                    ONION_SYSTEM_DOMAIN : SYSTEM_DOMAIN;
         }
-        return (useHttps() ? "https://" : "http://") + domain + "/"; 
+        return (useHttps() ? "https://" : "http://") + domain + "/";
+    }
+
+    private String getMediaUrl(String urlPath) {
+        if (urlPath == null) return null;
+        String mediaDomain = preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) ?
+                ONION_MEDIA_DOMAIN : MEDIA_DOMAIN;
+        return fixRelativeUrl(urlPath).replaceFirst(getUsingDomain(), mediaDomain);
     }
     
     @Override
@@ -302,11 +312,9 @@ public class InfinityModule extends AbstractVichanModule {
                     || attachment.type == AttachmentModel.TYPE_OTHER_FILE ? null
                     : thumbLocation + tim + thumbnailExt;
             attachment.path = fileLocation + tim + ext;
-            if (getUsingDomain().equals(DEFAULT_DOMAIN)) {
-                if (attachment.thumbnail != null) {
-                    attachment.thumbnail = fixRelativeUrl(attachment.thumbnail).replaceFirst(DEFAULT_DOMAIN, MEDIA_DOMAIN);
-                }
-                attachment.path = fixRelativeUrl(attachment.path).replaceFirst(DEFAULT_DOMAIN, MEDIA_DOMAIN);
+            if (getUsingDomain().equals(DEFAULT_DOMAIN) || getUsingDomain().equals(ONION_DOMAIN)) {
+                attachment.thumbnail = getMediaUrl(attachment.thumbnail);
+                attachment.path = getMediaUrl(attachment.path);
             }
             return attachment;
         }
