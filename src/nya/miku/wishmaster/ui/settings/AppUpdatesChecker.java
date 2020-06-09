@@ -121,7 +121,7 @@ public class AppUpdatesChecker {
                                 };
                                 new AlertDialog.Builder(activity).
                                         setTitle(R.string.app_update_update_available).
-                                        setMessage(activity.getString(R.string.app_update_update_dialog_text, newVersionName, newVersionInfo)).
+                                        setMessage(activity.getString(R.string.app_update_update_dialog_text, currentVersionName, newVersionName, newVersionInfo)).
                                         setPositiveButton(android.R.string.yes, onClickYes).
                                         setNegativeButton(android.R.string.no, null).
                                         show();
