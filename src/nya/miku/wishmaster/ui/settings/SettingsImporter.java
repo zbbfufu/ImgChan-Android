@@ -35,6 +35,7 @@ import java.util.Map;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.models.UrlPageModel;
+import nya.miku.wishmaster.api.util.ChanModels;
 import nya.miku.wishmaster.common.Async;
 import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.common.MainApplication;
@@ -154,12 +155,13 @@ public class SettingsImporter {
                     page.boardPage = tab.optInt("boardPage", 0);
                     page.catalogType = tab.optInt("catalogType", 0);
                     page.threadNumber = tab.optString("threadNumber", "");
-                    page.postNumber = tab.optString("postNumber", "");
+                    page.postNumber = tab.optString("postNumber", null);
                     page.searchRequest = tab.optString("searchRequest", "");
                     page.otherPath = tab.optString("otherPath", "");
                     TabModel tabModel = new TabModel();
                     tabModel.title = tab.optString("title", "");
                     tabModel.pageModel = page;
+                    tabModel.hash = ChanModels.hashUrlPageModel(tabModel.pageModel);
                     pages.add(tabModel);
                 }
                 MainApplication.getInstance().pagesToOpen = pages;
