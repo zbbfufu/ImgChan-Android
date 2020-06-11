@@ -290,6 +290,9 @@ public class PreferencesActivity extends PreferenceActivity {
                         if (MainApplication.getInstance().tabsSwitcher.currentFragment instanceof NewTabFragment) {
                             ((NewTabFragment) MainApplication.getInstance().tabsSwitcher.currentFragment).updateList();
                         }
+                    } else if (getString(R.string.pref_key_chans_order_json).equals(key)) {
+                        MainApplication.getInstance().updateChanModulesOrder();
+                        updateChansScreen((PreferenceScreen) getPreferenceManager().findPreference(getString(R.string.pref_key_cat_chans)));
                     }
                 }
             }
