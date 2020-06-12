@@ -56,6 +56,10 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         }
     };
     
+    private final Drawable updateStateDrawableHidden;
+    private final Drawable updateStateDrawablePlanned;
+    private final Drawable updateStateDrawableUpdated;
+
     /**
      * Конструктор адаптера.
      * После создания и привязки к объекту списка необходимо дополнительно установить позицию текущей вкладки ({@link #setSelectedItem(int)})
@@ -70,6 +74,9 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         this.tabsState = tabsState;
         this.tabsIdStack = tabsState.tabsIdStack;
         this.selectListener = selectListener;
+        this.updateStateDrawableHidden = getUpdateStateDrawable(android.R.color.transparent);
+        this.updateStateDrawablePlanned = getUpdateStateDrawable(R.attr.urlLinkForeground);
+        this.updateStateDrawableUpdated = getUpdateStateDrawable(R.attr.postQuoteForeground);
     }
     
     /**
@@ -210,16 +217,8 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         return false;
     }
 
-    private Drawable getUpdateStateDrawable(TabModel model) {
-        TypedValue typedValue;
-        if ((TabsTrackerService.getCurrentUpdatingTabId() == -1) ||
-            (!MainApplication.getInstance().settings.isAutoupdateProgress())) {
-            typedValue = ThemeUtils.resolveAttribute(context.getTheme(), android.R.color.transparent, true);
-        } else if (model.autoupdateComplete) {
-            typedValue = ThemeUtils.resolveAttribute(context.getTheme(), R.attr.postQuoteForeground, true);
-        } else {
-            typedValue = ThemeUtils.resolveAttribute(context.getTheme(), R.attr.urlLinkForeground, true);
-        }
+    private Drawable getUpdateStateDrawable(int colorId) {
+        TypedValue typedValue = ThemeUtils.resolveAttribute(context.getTheme(), colorId, true);
         int color;
         if (typedValue.type >= TypedValue.TYPE_FIRST_COLOR_INT && typedValue.type <= TypedValue.TYPE_LAST_COLOR_INT) {
             color = typedValue.data;
@@ -234,6 +233,17 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         shape.setShape(GradientDrawable.RECTANGLE);
         shape.setColor(color);
         return shape;
+    }
+
+    private Drawable getUpdateStateDrawable(TabModel model) {
+        if ((TabsTrackerService.getCurrentUpdatingTabId() == -1) ||
+            (!MainApplication.getInstance().settings.isAutoupdateProgress())) {
+            return updateStateDrawableHidden;
+        } else if (model.autoupdateComplete) {
+            return updateStateDrawableUpdated;
+        } else {
+            return updateStateDrawablePlanned;
+        }
     }
 
     @Override
