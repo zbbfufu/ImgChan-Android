@@ -86,20 +86,13 @@ public class InfinityModule extends AbstractVichanModule {
     private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN, "8ch.net", "8kun.net", "8chan.co" };
     
     private static final String[] ATTACHMENT_FORMATS = new String[] { "jpg", "jpeg", "gif", "png", "webm", "mp4", "swf", "pdf" };
-    private static final FastHtmlTagParser.TagReplaceHandler QUOTE_REPLACER = new FastHtmlTagParser.TagReplaceHandler() {
-        @Override
-        public FastHtmlTagParser.TagsPair replace(FastHtmlTagParser.TagsPair source) {
-            if (source.openTag.equalsIgnoreCase("<p class=\"body-line ltr quote\">"))
-                return new FastHtmlTagParser.TagsPair("<span class=\"quote\">", "</span><br />");
-            return null;
-        }
-    };
     private static final FastHtmlTagParser.TagReplaceHandler PARAGRAPH_REPLACER = new FastHtmlTagParser.TagReplaceHandler() {
         @Override
         public FastHtmlTagParser.TagsPair replace(FastHtmlTagParser.TagsPair source) {
-            if (source.openTag.equalsIgnoreCase("<p class=\"body-line ltr \">"))
-                return new FastHtmlTagParser.TagsPair("", "<br />");
-            return null;
+            if (source.openTag.equals("<p class=\"body-line ltr quote\">")) {
+                return new FastHtmlTagParser.TagsPair("<span class=\"quote\">", "</span><br />");
+            }
+            return new FastHtmlTagParser.TagsPair("", "<br />");
         }
     };
     
@@ -289,7 +282,6 @@ public class InfinityModule extends AbstractVichanModule {
     protected PostModel mapPostModel(JSONObject object, String boardName) {
         PostModel model = super.mapPostModel(object, boardName);
         try {
-            model.comment = FastHtmlTagParser.getPTagParser().replace(model.comment, QUOTE_REPLACER);
             model.comment = FastHtmlTagParser.getPTagParser().replace(model.comment, PARAGRAPH_REPLACER);
             model.comment = model.comment.replaceAll("<br />$", "");
         } catch (Exception e) {}
