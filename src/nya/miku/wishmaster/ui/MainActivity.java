@@ -434,8 +434,22 @@ public class MainActivity extends FragmentActivity {
                             break;
                     }
                 } else if (action.equals(TabsTrackerService.BROADCAST_ACTION_NOTIFY)) {
-                    list.invalidateViews();
-                    TabsTrackerService.clearUnread();
+                    Bundle extras = intent.getExtras();
+                    long tabId = extras.getLong(TabsTrackerService.EXTRA_TAB_ID);
+                    if (tabId != -1) {
+                        int first = list.getFirstVisiblePosition();
+                        int last = list.getLastVisiblePosition();
+                        for (int i = first; i <= last; ++i) {
+                            TabModel tab = tabsAdapter.getItem(i);
+                            if (tab != null && tab.id == tabId) {
+                                list.invalidateViews();
+                                break;
+                            }
+                        }
+                    } else {
+                        list.invalidateViews();
+                        TabsTrackerService.clearUnread();
+                    }
                 }
             }
         };
