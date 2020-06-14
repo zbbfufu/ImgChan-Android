@@ -360,6 +360,9 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Logger.d(TAG, "main activity creating");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            getWindow().requestFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
+        }
         settings = MainApplication.getInstance().settings.getStaticSettings();
         autohideRulesHash = MainApplication.getInstance().settings.getAutohideRulesJson().hashCode();
         rootViewWeight = MainApplication.getInstance().settings.getRootViewWeight();
@@ -371,9 +374,6 @@ public class MainActivity extends FragmentActivity {
         (theme = MainApplication.getInstance().settings.getTheme()).setTo(this);
         thumbnailSize = MainApplication.getInstance().settings.getPostThumbnailSize();
         super.onCreate(savedInstanceState);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            getWindow().requestFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
-        }
         if (MainApplication.getInstance().settings.showSidePanel()) {
             setContentView(tabsPanelRight ? R.layout.main_activity_tablet_right : R.layout.main_activity_tablet);
             LinearLayout.LayoutParams sidebarLayoutParams = (LinearLayout.LayoutParams) findViewById(R.id.sidebar).getLayoutParams();
