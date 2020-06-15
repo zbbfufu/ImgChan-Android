@@ -38,7 +38,9 @@ public class Chan410Reader extends WakabaReader {
     
     private static final Pattern SPAN_ADMIN_PATTERN = Pattern.compile("<span class=\"admin\">(.*?)</span>(.*?)", Pattern.DOTALL);
     private static final char[] END_THREAD_FILTER = "<div id=\"thread".toCharArray();
+    private static final char[] BADGE_FILTER = "class=\"post-badge".toCharArray();
     private int curPos = 0;
+    private int badgePos = 0;
     
     public Chan410Reader(InputStream in) {
         super(in, DateFormats.CHAN_410_DATE_FORMAT);
@@ -55,11 +57,22 @@ public class Chan410Reader extends WakabaReader {
             if (curPos == END_THREAD_FILTER.length) {
                 skipUntilSequence(">".toCharArray());
                 finalizeThread();
-                
                 curPos = 0;
             }
         } else {
             if (curPos != 0) curPos = ch == END_THREAD_FILTER[0] ? 1 : 0;
+        }
+        
+        if (ch == BADGE_FILTER[badgePos]) {
+            ++badgePos;
+            if (badgePos == BADGE_FILTER.length) {
+                String threadBadge = readUntilSequence("\"".toCharArray());
+                if (threadBadge.contains("locked")) currentThread.isClosed = true;
+                if (threadBadge.contains("sticky")) currentThread.isSticky = true;
+                badgePos = 0;
+            }
+        } else {
+            if (badgePos != 0) badgePos = ch == BADGE_FILTER[0] ? 1 : 0;
         }
     }
     
@@ -78,12 +91,5 @@ public class Chan410Reader extends WakabaReader {
                 super.parseDate(matcher.group(2));
             }
         }
-    }
-    
-    @Override
-    protected void parseThumbnail(String imgTag) {
-        super.parseThumbnail(imgTag);
-        if (imgTag.contains("/css/locked.gif")) currentThread.isClosed = true;
-        if (imgTag.contains("/css/sticky.gif")) currentThread.isSticky = true;
     }
 }
