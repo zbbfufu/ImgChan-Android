@@ -153,6 +153,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_from_internet">Из Интернета</string>
     <string name="menu_catalog">Каталог</string>
     <string name="menu_search">Поиск</string>
+    <string name="menu_search_threads">Поиск в тредах</string>
     <string name="menu_open_browser">Браузер</string>
     <string name="menu_add_favorites">Добавить в избранное</string>
     <string name="menu_remove_favorites">Удалить из избранного</string>

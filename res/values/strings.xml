@@ -148,6 +148,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_from_internet">From Internet</string>
     <string name="menu_catalog">Catalog</string>
     <string name="menu_search">Search</string>
+    <string name="menu_search_threads">Search in threads</string>
     <string name="menu_open_browser">Open browser</string>
     <string name="menu_add_favorites">Add to favorites</string>
     <string name="menu_remove_favorites">Remove from favorites</string>

@@ -158,6 +158,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_from_internet">З інтернету</string>
     <string name="menu_catalog">Каталог</string>
     <string name="menu_search">Пошук</string>
+    <string name="menu_search_threads">Пошук в тредах</string>
     <string name="menu_open_browser">Браузер</string>
     <string name="menu_add_favorites">До обраного</string>
     <string name="menu_remove_favorites">Стерти з обраного</string>
