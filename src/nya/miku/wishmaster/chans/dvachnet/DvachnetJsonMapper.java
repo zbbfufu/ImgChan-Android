@@ -40,7 +40,7 @@ public class DvachnetJsonMapper {
         model.defaultUserName = "Аноним";
         model.bumpLimit = 500;
         model.readonlyBoard = false;
-        model.requiredFileForNewThread = shortName.equals("d") ? false : true;
+        model.requiredFileForNewThread = !shortName.equals("d");
         model.allowDeletePosts = true;
         model.allowDeleteFiles = false;
         model.allowReport = BoardModel.REPORT_NOT_ALLOWED;
@@ -57,7 +57,7 @@ public class DvachnetJsonMapper {
         model.markType = BoardModel.MARK_WAKABAMARK;
         model.firstPage = 0;
         model.lastPage = BoardModel.LAST_PAGE_UNDEFINED;
-        model.searchAllowed = false;
+        model.searchAllowed = true;
         model.catalogAllowed = false;
         return model;
     }
@@ -75,7 +75,7 @@ public class DvachnetJsonMapper {
         model.requiredFileForNewThread = json.optInt("enable_images") == 1;
         model.attachmentsMaxCount = model.requiredFileForNewThread ? 1 : 0;
         model.allowNames = json.optInt("enable_names") == 1;
-        model.allowSubjects = json.optInt("enable_subjects") == 1;
+        model.allowSubjects = json.optInt("enable_subject") == 1;
         try {
             int pages = json.getJSONArray("pages").length();
             if (pages > 0) model.lastPage = pages - 1;

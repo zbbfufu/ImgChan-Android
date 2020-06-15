@@ -58,6 +58,7 @@ import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
+import nya.miku.wishmaster.http.streamer.HttpWrongStatusCodeException;
 import nya.miku.wishmaster.lib.org_json.JSONArray;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
@@ -352,5 +353,37 @@ public class DvachnetModule extends AbstractWakabaModule {
         } finally {
             if (response != null) response.release();
         }
+    }
+
+    @Override
+    public PostModel[] search(String boardName, String searchRequest, ProgressListener listener, CancellableTask task) throws Exception {
+        String url = getUsingUrl() + "cgi/pihaba";
+        ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().
+                addString("task", "search").
+                addString("board", boardName).
+                addString("find", searchRequest).
+                addString("json", "1");
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build()).build();
+        JSONObject response;
+        try {
+            response = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, true);
+        } catch (HttpWrongStatusCodeException e) {
+            checkCloudflareError(e, url);
+            throw e;
+        }
+        if (listener != null) listener.setIndeterminate();
+        JSONArray posts = response.optJSONArray("posts");
+        if (posts != null) {
+            PostModel[] result = new PostModel[posts.length()];
+            for (int i=0, rlen=posts.length(); i<rlen; ++i) {
+                result[i] = DvachnetJsonMapper.mapPostModel(posts.getJSONObject(i));
+            }
+            return result;
+        } else {
+            if (response.optString("message_title").equalsIgnoreCase("Ошибка")) {
+                throw new Exception(response.optString("message", "Ошибка"));
+            }
+        }
+        return new PostModel[0];
     }
 }
