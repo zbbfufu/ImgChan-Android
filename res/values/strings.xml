@@ -84,6 +84,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="tabs_newtab">New Tab</string>
     <string name="tabs_favorites">Favorites</string>
     <string name="tabs_history">History</string>
+    <string name="tabs_autoupdate">Auto-update</string>
     
     <string name="tabs_tracker_title">Auto Update</string>
     <string name="tabs_tracker_title_unread">New Posts</string>
