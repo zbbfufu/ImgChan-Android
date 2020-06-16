@@ -12,7 +12,7 @@ import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.common.MainApplication;
 import nya.miku.wishmaster.http.interactive.InteractiveException;
 
-public class StormwallException extends InteractiveException {
+public class StormwallExceptionRecaptcha extends InteractiveException {
     private static final long serialVersionUID = 1L;
 
     private static final String SERVICE_NAME = "Stormwall";
@@ -33,7 +33,6 @@ public class StormwallException extends InteractiveException {
     private String recaptcha3Key;
     private String origin;
     private String chanName;
-    private boolean recaptcha;
     
     @Override
     public String getServiceName() {
@@ -68,15 +67,10 @@ public class StormwallException extends InteractiveException {
         return STORMWALL_COOKIE_NAME;
     }
 
-    public boolean isRecaptcha() {
-        return recaptcha;
-    }
-
-    public static StormwallException withRecaptcha(String url, String html, String chanName) {
-        StormwallException res = new StormwallException();
+    public static StormwallExceptionRecaptcha newInstance(String url, String html, String chanName) {
+        StormwallExceptionRecaptcha res = new StormwallExceptionRecaptcha();
         res.url = url;
         res.chanName = chanName;
-        res.recaptcha = true;
         
         Matcher m = PATTERN_SITEKEY.matcher(html);
         if (m.find()) res.siteKey = m.group(1);
@@ -101,16 +95,8 @@ public class StormwallException extends InteractiveException {
         return res;
     }
     
-    public static StormwallException antiDDOS(String url, String html, String chanName) {
-        StormwallException res = new StormwallException();
-        res.url = url;
-        res.chanName = chanName;
-        res.recaptcha = false;
-        return res;
-    }
-
     @Override
     public void handle(Activity activity, CancellableTask task, Callback callback) {
-        StormwallUIHandler.handleStormwall(this, (HttpChanModule) MainApplication.getInstance().getChanModule(chanName), activity, task, callback);
+        StormwallRecaptchaUIHandler.handleStormwall(this, (HttpChanModule) MainApplication.getInstance().getChanModule(chanName), activity, task, callback);
     }
 }

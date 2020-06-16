@@ -36,7 +36,8 @@ import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.CaptchaModel;
 import nya.miku.wishmaster.common.IOUtils;
 import nya.miku.wishmaster.http.interactive.InteractiveException;
-import nya.miku.wishmaster.http.stormwall.StormwallException;
+import nya.miku.wishmaster.http.stormwall.StormwallExceptionRecaptcha;
+import nya.miku.wishmaster.http.stormwall.StormwallExceptionAntiDDOS;
 import nya.miku.wishmaster.http.streamer.HttpRequestException;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
@@ -82,18 +83,18 @@ public abstract class StormwallChanModule extends AbstractChanModule {
         }
     };
 
-    private void handleWrongResponse(String url, HttpWrongResponseException e) throws HttpWrongResponseException, StormwallException {
+    private void handleWrongResponse(String url, HttpWrongResponseException e) throws HttpWrongResponseException, InteractiveException {
         if ("Stormwall".equals(e.getMessage())) {
             String fixedUrl = fixRelativeUrl(url);
             String html = e.getHtmlString();
-            StormwallException swe = StormwallException.withRecaptcha(fixedUrl, html, getChanName());
-            if (swe == null) swe = StormwallException.antiDDOS(fixedUrl, html, getChanName());
-            throw swe;
+            InteractiveException swe = StormwallExceptionRecaptcha.newInstance(fixedUrl, html, getChanName());
+            if (swe == null) swe = StormwallExceptionAntiDDOS.newInstance(fixedUrl, html, getChanName());
+            if (swe != null) throw swe;
         }
         throw e;
     }
 
-    protected void checkForStormwall(String url, HttpResponseModel model) throws HttpWrongResponseException, StormwallException {
+    protected void checkForStormwall(String url, HttpResponseModel model) throws HttpWrongResponseException, InteractiveException {
         try {
             stormwallDetector.check(model);
         } catch (HttpWrongResponseException e) {
@@ -111,7 +112,6 @@ public abstract class StormwallChanModule extends AbstractChanModule {
                 c.setDomain(stormwallCookieDomain);
                 httpClient.getCookieStore().addCookie(c);
             }
-            
         }
     }
     
