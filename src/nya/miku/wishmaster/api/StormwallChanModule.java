@@ -20,9 +20,12 @@ package nya.miku.wishmaster.api;
 
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 
 import cz.msebera.android.httpclient.Header;
@@ -38,6 +41,8 @@ import nya.miku.wishmaster.http.streamer.HttpRequestException;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
+import nya.miku.wishmaster.http.streamer.HttpWrongResponseDetector;
+import nya.miku.wishmaster.http.streamer.HttpWrongResponseException;
 import nya.miku.wishmaster.lib.org_json.JSONArray;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
@@ -63,6 +68,39 @@ public abstract class StormwallChanModule extends AbstractChanModule {
         return preferences.getString(getSharedKey(PREF_KEY_STORMWALL_COOKIE_DOMAIN), null);
     }
     
+    private static final HttpWrongResponseDetector stormwallDetector = new HttpWrongResponseDetector() {
+        @Override
+        public void check(final HttpResponseModel model) {
+            for (Header header: model.headers) {
+                if (header.getName().equalsIgnoreCase(STORMWALL_FIREWALL_HEADER_NAME) &&
+                    header.getValue().equalsIgnoreCase(STORMWALL_FIREWALL_TRUE_VALUE)) {
+                    HttpWrongResponseException e = new HttpWrongResponseException("Stormwall");
+                    e.setHtmlBytes(HttpStreamer.tryGetBytes(model.stream));
+                    throw e;
+                }
+            }
+        }
+    };
+
+    private void handleWrongResponse(String url, HttpWrongResponseException e) throws HttpWrongResponseException, StormwallException {
+        if ("Stormwall".equals(e.getMessage())) {
+            String fixedUrl = fixRelativeUrl(url);
+            String html = e.getHtmlString();
+            StormwallException swe = StormwallException.withRecaptcha(fixedUrl, html, getChanName());
+            if (swe == null) swe = StormwallException.antiDDOS(fixedUrl, html, getChanName());
+            throw swe;
+        }
+        throw e;
+    }
+
+    protected void checkForStormwall(String url, HttpResponseModel model) throws HttpWrongResponseException, StormwallException {
+        try {
+            stormwallDetector.check(model);
+        } catch (HttpWrongResponseException e) {
+            handleWrongResponse(url, e);
+        }
+    }
+
     @Override
     protected void initHttpClient() {
         if (canStormwall()) {
@@ -90,71 +128,65 @@ public abstract class StormwallChanModule extends AbstractChanModule {
     }
 
     @Override
-    protected CaptchaModel downloadCaptcha(String captchaUrl, ProgressListener listener, CancellableTask task) throws Exception {
-        checkForStormwall(captchaUrl);
-        return super.downloadCaptcha(captchaUrl, listener, task);
-    }
-    
-    @Override
-    public void downloadFile(String url, OutputStream out, ProgressListener listener, CancellableTask task) throws Exception {
-        checkForStormwall(url);
-        super.downloadFile(url, out, listener, task);
-    }
-    
-    @Override
-    protected JSONObject downloadJSONObject(String url, boolean checkIfModidied, ProgressListener listener, CancellableTask task) throws Exception {
-        checkForStormwall(url);
-        return super.downloadJSONObject(url, checkIfModidied, listener, task);
-    }
-    
-    @Override
-    protected JSONArray downloadJSONArray(String url, boolean checkIfModidied, ProgressListener listener, CancellableTask task) throws Exception {
-        checkForStormwall(url);
-        return super.downloadJSONArray(url, checkIfModidied, listener, task);
-    }
-
-    protected void checkForStormwall(String url) throws InteractiveException {
-        if (!canStormwall()) {
-            return;
-        }
-        HttpResponseModel responseModel = null;
-        HttpRequestModel rqModel = HttpRequestModel.builder().setOPTIONS().build();
-        try {
-            responseModel = HttpStreamer.getInstance().getFromUrl(url, rqModel, httpClient, null, null);
-        } catch (HttpRequestException e) {
-            return;
-        }
+    protected CaptchaModel downloadCaptcha(String url, ProgressListener listener, CancellableTask task) throws Exception {
+        Bitmap captchaBitmap = null;
+        HttpRequestModel requestModel = HttpRequestModel.DEFAULT_GET;
+        HttpResponseModel responseModel = HttpStreamer.getInstance().getFromUrl(url, requestModel, httpClient, listener, task);
         try {
             checkForStormwall(url, responseModel);
+            InputStream imageStream = responseModel.stream;
+            captchaBitmap = BitmapFactory.decodeStream(imageStream);
         } finally {
             responseModel.release();
         }
+        CaptchaModel captchaModel = new CaptchaModel();
+        captchaModel.type = CaptchaModel.TYPE_NORMAL;
+        captchaModel.bitmap = captchaBitmap;
+        return captchaModel;
     }
-    
-    protected void checkForStormwall(String url, HttpResponseModel responseModel) throws InteractiveException {
+
+    @Override
+    public void downloadFile(String url, OutputStream out, ProgressListener listener, CancellableTask task) throws Exception {
         if (!canStormwall()) {
+            super.downloadFile(url, out, listener, task);
             return;
         }
-        boolean firewall = false;
-        for (Header header: responseModel.headers) {
-            if (header.getName().equalsIgnoreCase(STORMWALL_FIREWALL_HEADER_NAME) &&
-                    header.getValue().equalsIgnoreCase(STORMWALL_FIREWALL_TRUE_VALUE)) {
-                firewall = true;
-                break;
-            }
-        }
-        if (!firewall) {
-            return;
-        }
-        ByteArrayOutputStream output = new ByteArrayOutputStream(8192);
+        String fixedUrl = fixRelativeUrl(url);
         try {
-            IOUtils.copyStream(responseModel.stream, output);
-        } catch (IOException e) {
-            return;
+            HttpRequestModel rqModel = HttpRequestModel.DEFAULT_GET;
+            HttpStreamer.getInstance().downloadFileFromUrl(fixedUrl, out, rqModel, httpClient, listener, task, false, stormwallDetector);
+        } catch (HttpWrongResponseException e) {
+            handleWrongResponse(fixedUrl, e);
         }
-        String html = new String(output.toByteArray());
-        StormwallException e = StormwallException.withRecaptcha(url, html, getChanName());
-        if (e == null) e = StormwallException.antiDDOS(url, html, getChanName());
-        throw e;
+    }
+
+    @Override
+    protected JSONObject downloadJSONObject(String url, boolean checkIfModified, ProgressListener listener, CancellableTask task) throws Exception {
+        if (!canStormwall()) return super.downloadJSONObject(url, checkIfModified, listener, task);
+        HttpRequestModel rqModel = HttpRequestModel.builder().setGET().setCheckIfModified(checkIfModified).build();
+        try {
+            JSONObject object = HttpStreamer.getInstance().getJSONObjectFromUrl(url, rqModel, httpClient, listener, task, false, stormwallDetector);
+            if (task != null && task.isCancelled()) throw new Exception("interrupted");
+            if (listener != null) listener.setIndeterminate();
+            return object;
+        } catch (HttpWrongResponseException e) {
+            handleWrongResponse(url, e);
+            return null;
+        }
+    }
+
+    @Override
+    protected JSONArray downloadJSONArray(String url, boolean checkIfModified, ProgressListener listener, CancellableTask task) throws Exception {
+        if (!canStormwall()) return super.downloadJSONArray(url, checkIfModified, listener, task);
+        HttpRequestModel rqModel = HttpRequestModel.builder().setGET().setCheckIfModified(checkIfModified).build();
+        try {
+            JSONArray array = HttpStreamer.getInstance().getJSONArrayFromUrl(url, rqModel, httpClient, listener, task, false, stormwallDetector);
+            if (task != null && task.isCancelled()) throw new Exception("interrupted");
+            if (listener != null) listener.setIndeterminate();
+            return array;
+        } catch (HttpWrongResponseException e) {
+            handleWrongResponse(url, e);
+            return null;
+        }
     }
 }
