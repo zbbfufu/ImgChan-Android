@@ -22,6 +22,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Toast;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
@@ -44,6 +45,7 @@ public class GalleryInteractiveExceptionHandler extends Activity {
         if (e == null) {
             finish();
         } else {
+            setContentView(new View(this));
             String cfMessage = getString(R.string.error_interactive_dialog_format, ((InteractiveException) e).getServiceName());
             setTitle(cfMessage);
             final ProgressDialog cfProgressDialog = ProgressDialog.show(this, null, cfMessage, true, true, new DialogInterface.OnCancelListener() {
