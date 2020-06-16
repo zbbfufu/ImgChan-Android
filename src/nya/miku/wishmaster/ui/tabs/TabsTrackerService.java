@@ -400,13 +400,12 @@ public class TabsTrackerService extends Service {
                         doUpdate(this);
                         currentUpdatingTabId = -1;
                         immediately = false;
+                        sendBroadcastNotify(-1);
                     }
                     
                     if (isCancelled()) {
                         cancelForeground(TRACKER_NOTIFICATION_UPDATE_ID);
                         return;
-                    } else {
-                        sendBroadcastNotify(-1);
                     }
                     
                     if (!settings.isAutoupdateEnabled()) stopSelf();
