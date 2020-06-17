@@ -67,11 +67,12 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
     
     @Override
     public SimpleBoardModel[] getBoardsList(ProgressListener listener, CancellableTask task, SimpleBoardModel[] oldBoardsList) throws Exception {
+        List<SimpleBoardModel> boardsList = new ArrayList<>();
         String url = getUsingUrl() + "boards10.json";
+        JSONArray json;
         try {
-            JSONArray json = downloadJSONArray(url, oldBoardsList != null, listener, task);
+            json = downloadJSONArray(url, oldBoardsList != null, listener, task);
             if (json == null) return oldBoardsList;
-            List<SimpleBoardModel> list = new ArrayList<>();
             for (int i=0; i<json.length(); ++i) {
                 String currentCategory = json.getJSONObject(i).optString("name");
                 JSONArray boards = json.getJSONObject(i).getJSONArray("boards");
@@ -82,13 +83,24 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
                     model.boardDescription = StringEscapeUtils.unescapeHtml4(boards.getJSONObject(j).optString("desc", model.boardName));
                     model.boardCategory = currentCategory;
                     model.nsfw = model.boardName.equals("b") || currentCategory.equalsIgnoreCase("adult");
-                    list.add(model);
+                    boardsList.add(model);
                 }
             }
-            return list.toArray(new SimpleBoardModel[list.size()]);
-        } catch (Exception e) {
-            return new SimpleBoardModel[0];
-        }
+        } catch (Exception e) {}
+        url = getUsingUrl() + "boards20.json";
+        try {
+            json = downloadJSONArray(url, false, listener, task);
+            for (int i=0; i<json.length(); ++i) {
+                SimpleBoardModel model = new SimpleBoardModel();
+                model.chan = getChanName();
+                model.boardName = json.getJSONObject(i).getString("name");
+                model.boardDescription = StringEscapeUtils.unescapeHtml4(json.getJSONObject(i).optString("desc", model.boardName));
+                model.boardCategory = "2.0";
+                model.nsfw = true;
+                boardsList.add(model);
+            }
+        } catch (Exception e) {}
+        return boardsList.toArray(new SimpleBoardModel[0]);
     }
     
     @Override
