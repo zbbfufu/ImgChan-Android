@@ -236,7 +236,10 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
                 addString("message", model.comment).
                 addString("postpassword", model.password);
         setSendPostEntityAttachments(model, postEntityBuilder);
-        postEntityBuilder.addString("redirecttothread", "1");
+        postEntityBuilder.
+                addString("makepost", "1").
+                addString("legacy-posting", "1").
+                addString("redirecttothread", "1");
     }
     
     @Override
