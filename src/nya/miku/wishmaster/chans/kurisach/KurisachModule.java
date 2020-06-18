@@ -30,18 +30,25 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
+
+import cz.msebera.android.httpclient.NameValuePair;
+import cz.msebera.android.httpclient.message.BasicNameValuePair;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.AttachmentModel;
 import nya.miku.wishmaster.api.models.BoardModel;
+import nya.miku.wishmaster.api.models.DeletePostModel;
 import nya.miku.wishmaster.api.models.PostModel;
+import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
 import nya.miku.wishmaster.api.models.ThreadModel;
 import nya.miku.wishmaster.api.util.ChanModels;
 import nya.miku.wishmaster.api.util.RegexUtils;
 import nya.miku.wishmaster.chans.nullchan.AbstractInstant0chan;
+import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
 import nya.miku.wishmaster.http.streamer.HttpWrongStatusCodeException;
 import nya.miku.wishmaster.lib.org_json.JSONArray;
 import nya.miku.wishmaster.lib.org_json.JSONException;
@@ -90,6 +97,16 @@ public class KurisachModule extends AbstractInstant0chan {
         return true;
     }
     
+    private boolean loadOnlyNewPosts() {
+        return loadOnlyNewPosts(true);
+    }
+    
+    @Override
+    public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
+        addOnlyNewPostsPreference(preferenceGroup, true);
+        super.addPreferencesOnScreen(preferenceGroup);
+    }
+    
     @Override
     public SimpleBoardModel[] getBoardsList(ProgressListener listener, CancellableTask task, SimpleBoardModel[] oldBoardsList) throws Exception {
         return BOARDS;
@@ -98,8 +115,8 @@ public class KurisachModule extends AbstractInstant0chan {
     @Override
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel model = super.getBoard(shortName, listener, task);
-        model.allowCustomMark = true;
-        model.customMarkDescription = "Спойлер";
+        model.attachmentsMaxCount = 1;
+        model.allowReport = BoardModel.REPORT_WITH_COMMENT;
         return model;
     }
     
@@ -216,7 +233,8 @@ public class KurisachModule extends AbstractInstant0chan {
         model.timestamp = json.optLong("datetime") * 1000 - TIMEZONE_CORRECTION;
         model.parentThread = json.optString("thread", model.number);
         String ext = json.optString("filetype");
-        if (ext.length() > 0) {
+        String fileName = json.optString("filename");
+        if (ext.length() > 0 && fileName.length() > 0) {
             AttachmentModel attachment = new AttachmentModel();
             switch (ext.toLowerCase(Locale.US)) {
                 case "jpeg":
@@ -236,8 +254,17 @@ public class KurisachModule extends AbstractInstant0chan {
                     attachment.type = AttachmentModel.TYPE_VIDEO;
                     break;
                 case "you":
+                    attachment.type = AttachmentModel.TYPE_OTHER_NOTFILE;
+                    attachment.thumbnail = "https://img.youtube.com/vi/" + fileName + "/default.jpg";
+                    attachment.path = "https://youtube.com/watch?v=" + fileName;
+                    break;
                 case "cob":
                     attachment.type = AttachmentModel.TYPE_OTHER_NOTFILE;
+                    attachment.path = "https://coub.com/view/" + fileName;
+                    break;
+                case "vim":
+                    attachment.type = AttachmentModel.TYPE_OTHER_NOTFILE;
+                    attachment.path = "https://vimeo.com/" + fileName;
                     break;
                 default:
                     attachment.type = AttachmentModel.TYPE_OTHER_FILE;
@@ -248,25 +275,15 @@ public class KurisachModule extends AbstractInstant0chan {
             attachment.width = json.optInt("pic_w", -1);
             attachment.height = json.optInt("pic_h", -1);
             attachment.isSpoiler = json.optInt("spoiler") == 1;
-            String fileName = json.optString("filename", "");
-            if (fileName.length() > 0) {
-                if (ext.equals("you")) {
-                    attachment.thumbnail = (useHttps() ? "https" : "http")
-                            + "://img.youtube.com/vi/" + fileName + "/default.jpg";
-                    attachment.path = (useHttps() ? "https" : "http")
-                            + "://youtube.com/watch?v=" + fileName;
-                } else if (ext.equals("cob")) {
-                    attachment.thumbnail = null;
-                    attachment.path = (useHttps() ? "https" : "http")
-                            + "://coub.com/view/" + fileName;
-                } else {
-                    attachment.thumbnail = (attachment.isSpoiler || attachment.type == AttachmentModel.TYPE_AUDIO
-                            || attachment.type == AttachmentModel.TYPE_VIDEO) ? null :
-                                "/" + boardName + "/thumb/" + fileName  + "s." + ext;
-                    attachment.path = "/" + boardName + "/src/" + fileName + "." + ext;
+            if (attachment.type != AttachmentModel.TYPE_OTHER_NOTFILE) {
+                if (!attachment.isSpoiler
+                        && attachment.type != AttachmentModel.TYPE_AUDIO
+                        && attachment.type != AttachmentModel.TYPE_VIDEO) {
+                    attachment.thumbnail = "/" + boardName + "/thumb/" + fileName  + "s." + ext;
                 }
-                model.attachments = new AttachmentModel[] { attachment };
+                attachment.path = "/" + boardName + "/src/" + fileName + "." + ext;
             }
+            model.attachments = new AttachmentModel[] { attachment };
         }
         return model;
     }
@@ -296,6 +313,24 @@ public class KurisachModule extends AbstractInstant0chan {
         } else {
             return response.optString("error");
         }
+    }
+    
+    @Override
+    protected void setSendPostEntityAttachments(SendPostModel model, ExtendedMultipartBuilder postEntityBuilder) throws Exception {
+        if (model.attachments != null && model.attachments.length > 0) {
+            postEntityBuilder.addFile("imagefile", model.attachments[0], model.randomHash);
+            if (model.custommark) postEntityBuilder.addString("picspoiler", "1");
+        }
+    }
+    
+    @Override
+    protected List<? extends NameValuePair> getReportFormAllValues(DeletePostModel model) {
+        List<NameValuePair> pairs = new ArrayList<>();
+        pairs.add(new BasicNameValuePair("board", model.boardName));
+        pairs.add(new BasicNameValuePair("post[]", model.postNumber));
+        pairs.add(new BasicNameValuePair("reportreason", model.reportReason));
+        pairs.add(new BasicNameValuePair("reportpost", "Репорт"));
+        return pairs;
     }
     
 }

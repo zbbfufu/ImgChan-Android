@@ -19,11 +19,10 @@
 package nya.miku.wishmaster.chans.nullchan;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.io.SequenceInputStream;
 import java.text.DateFormat;
-import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +36,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.preference.PreferenceGroup;
+
 import cz.msebera.android.httpclient.NameValuePair;
 import cz.msebera.android.httpclient.message.BasicNameValuePair;
 import nya.miku.wishmaster.api.AbstractKusabaModule;
@@ -59,7 +58,6 @@ import nya.miku.wishmaster.api.util.WakabaReader;
 import nya.miku.wishmaster.api.util.WakabaUtils;
 import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
 import nya.miku.wishmaster.lib.org_json.JSONArray;
-import nya.miku.wishmaster.lib.org_json.JSONException;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
 public abstract class AbstractInstant0chan extends AbstractKusabaModule {
@@ -67,23 +65,14 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
         super(preferences, resources);
     }
     
-    protected boolean loadOnlyNewPosts() {
-        return loadOnlyNewPosts(true);
-    }
-    
-    @Override
-    public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
-        addOnlyNewPostsPreference(preferenceGroup, true);
-        super.addPreferencesOnScreen(preferenceGroup);
-    }
-    
     @Override
     public SimpleBoardModel[] getBoardsList(ProgressListener listener, CancellableTask task, SimpleBoardModel[] oldBoardsList) throws Exception {
+        List<SimpleBoardModel> boardsList = new ArrayList<>();
         String url = getUsingUrl() + "boards10.json";
+        JSONArray json;
         try {
-            JSONArray json = downloadJSONArray(url, oldBoardsList != null, listener, task);
+            json = downloadJSONArray(url, oldBoardsList != null, listener, task);
             if (json == null) return oldBoardsList;
-            List<SimpleBoardModel> list = new ArrayList<>();
             for (int i=0; i<json.length(); ++i) {
                 String currentCategory = json.getJSONObject(i).optString("name");
                 JSONArray boards = json.getJSONObject(i).getJSONArray("boards");
@@ -94,31 +83,39 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
                     model.boardDescription = StringEscapeUtils.unescapeHtml4(boards.getJSONObject(j).optString("desc", model.boardName));
                     model.boardCategory = currentCategory;
                     model.nsfw = model.boardName.equals("b") || currentCategory.equalsIgnoreCase("adult");
-                    list.add(model);
+                    boardsList.add(model);
                 }
             }
-            return list.toArray(new SimpleBoardModel[list.size()]);
-        } catch (JSONException e) {
-            return new SimpleBoardModel[0];
-        }
+        } catch (Exception e) {}
+        url = getUsingUrl() + "boards20.json";
+        try {
+            json = downloadJSONArray(url, false, listener, task);
+            for (int i=0; i<json.length(); ++i) {
+                SimpleBoardModel model = new SimpleBoardModel();
+                model.chan = getChanName();
+                model.boardName = json.getJSONObject(i).getString("name");
+                model.boardDescription = StringEscapeUtils.unescapeHtml4(json.getJSONObject(i).optString("desc", model.boardName));
+                model.boardCategory = "2.0";
+                model.nsfw = true;
+                boardsList.add(model);
+            }
+        } catch (Exception e) {}
+        return boardsList.toArray(new SimpleBoardModel[0]);
     }
     
     @Override
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel model = super.getBoard(shortName, listener, task);
         model.timeZoneId = "GMT+3";
-        model.defaultUserName = "Anonymous";
+        model.attachmentsMaxCount = 8;
+        model.allowCustomMark = true;
+        model.customMarkDescription = "Спойлер";
         model.requiredFileForNewThread = !shortName.equals("0");
         model.allowReport = BoardModel.REPORT_SIMPLE;
         model.allowNames = !shortName.equals("b");
         model.allowEmails = false;
         model.catalogAllowed = true;
         return model;
-    }
-    
-    @Override
-    protected final DateFormat getDateFormat() {
-        return null;
     }
     
     @Override
@@ -146,7 +143,7 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
         model.threadNumber = json.optString("id", null);
         if (model.threadNumber == null) throw new RuntimeException();
         model.postsCount = json.optInt("reply_count", -2) + 1;
-        model.attachmentsCount = json.optInt("images", -2) + 1;
+        model.attachmentsCount = json.optInt("images", -1);
         model.isClosed = json.optInt("locked", 0) != 0;
         model.isSticky = json.optInt("stickied", 0) != 0;
         
@@ -156,74 +153,68 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
         opPost.subject = StringEscapeUtils.unescapeHtml4(json.optString("subject"));
         opPost.comment = json.optString("message");
         opPost.trip = json.optString("tripcode");
-        opPost.timestamp = json.optLong("timestamp") * 1000;
+        opPost.timestamp = json.optLong("timestamp") * 1000L;
         opPost.parentThread = model.threadNumber;
         
-        String ext = json.optString("file_type", "");
-        if (!ext.equals("")) {
-            AttachmentModel attachment = new AttachmentModel();
-            switch (ext) {
-                case "jpg":
-                case "jpeg":
-                case "png":
-                    attachment.type = AttachmentModel.TYPE_IMAGE_STATIC;
-                    break;
-                case "gif":
-                    attachment.type = AttachmentModel.TYPE_IMAGE_GIF;
-                    break;
-                case "mp3":
-                case "ogg":
-                    attachment.type = AttachmentModel.TYPE_AUDIO;
-                    break;
-                case "webm":
-                case "mp4":
-                    attachment.type = AttachmentModel.TYPE_VIDEO;
-                    break;
-                case "you":
-                    attachment.type = AttachmentModel.TYPE_OTHER_NOTFILE;
-                    break;
-                default:
-                    attachment.type = AttachmentModel.TYPE_OTHER_FILE;
-            }
-            attachment.width = json.optInt("image_w", -1);
-            attachment.height = json.optInt("image_h", -1);
-            attachment.size = -1;
-            String fileName = json.optString("file", "");
-            if (!fileName.equals("")) {
-                if (ext.equals("you")) {
-                    attachment.thumbnail = (useHttps() ? "https" : "http")
-                            + "://img.youtube.com/vi/" + fileName + "/default.jpg";
-                    attachment.path = (useHttps() ? "https" : "http")
-                            + "://youtube.com/watch?v=" + fileName;
-                } else {
-                    attachment.thumbnail = "/" + boardName + "/thumb/" + fileName + "s." + ext;
-                    attachment.path = "/" + boardName + "/src/" + fileName + "." + ext;
+        JSONArray jsonEmbeds = json.optJSONArray("embeds");
+        if (jsonEmbeds != null && jsonEmbeds.length() > 0) {
+            List<AttachmentModel> attachments = new ArrayList<>();
+            for (int i = 0; i < jsonEmbeds.length(); i++) {
+                JSONObject embed = jsonEmbeds.getJSONObject(i);
+                String ext = embed.optString("file_type", "");
+                String fileName = embed.optString("file", "");
+                if (ext.length() == 0 || fileName.length() == 0) continue;
+                
+                AttachmentModel attachment = new AttachmentModel();
+                switch (ext) {
+                    case "jpg":
+                    case "jpeg":
+                    case "png":
+                        attachment.type = AttachmentModel.TYPE_IMAGE_STATIC;
+                        break;
+                    case "gif":
+                        attachment.type = AttachmentModel.TYPE_IMAGE_GIF;
+                        break;
+                    case "mp3":
+                    case "ogg":
+                        attachment.type = AttachmentModel.TYPE_AUDIO;
+                        break;
+                    case "webm":
+                    case "mp4":
+                        attachment.type = AttachmentModel.TYPE_VIDEO;
+                        break;
+                    case "you":
+                        attachment.type = AttachmentModel.TYPE_OTHER_NOTFILE;
+                        attachment.thumbnail = "https://img.youtube.com/vi/" + fileName + "/default.jpg";
+                        attachment.path = "https://youtube.com/watch?v=" + fileName;
+                        break;
+                    case "cob":
+                        attachment.type = AttachmentModel.TYPE_OTHER_NOTFILE;
+                        attachment.path = "https://coub.com/view/" + fileName;
+                        break;
+                    case "vim":
+                        attachment.type = AttachmentModel.TYPE_OTHER_NOTFILE;
+                        attachment.path = "https://vimeo.com/" + fileName;
+                        break;
+                    default:
+                        attachment.type = AttachmentModel.TYPE_OTHER_FILE;
                 }
-                opPost.attachments = new AttachmentModel[] { attachment };
+                if (attachment.type != AttachmentModel.TYPE_OTHER_NOTFILE) {
+                    if (attachment.type != AttachmentModel.TYPE_AUDIO) {
+                        attachment.thumbnail = "/" + boardName + "/thumb/" + fileName + "s."
+                                + (attachment.type == AttachmentModel.TYPE_VIDEO ? "jpg" : ext);
+                    }
+                    attachment.path = "/" + boardName + "/src/" + fileName + "." + ext;
+                    attachment.width = embed.optInt("image_w", -1);
+                    attachment.height = embed.optInt("image_h", -1);
+                }
+                attachment.size = -1;
+                attachments.add(attachment);
             }
+            opPost.attachments = attachments.toArray(new AttachmentModel[0]);
         }
         model.posts = new PostModel[] { opPost };
         return model;
-    }
-    
-    @Override
-    public PostModel[] getPostsList(String boardName, String threadNumber, ProgressListener listener, CancellableTask task, PostModel[] oldList)
-            throws Exception {
-        if (loadOnlyNewPosts() && oldList != null && oldList.length > 0) {
-            String url = getUsingUrl() + "expand.php?after=" + oldList[oldList.length-1].number + "&board=" + boardName + "&threadid=" + threadNumber;
-            UrlPageModel object = new UrlPageModel();
-            object.chanName = "expand";
-            ThreadModel[] page = readWakabaPage(url, listener, task, true, object);
-            if (page != null && page.length > 0) {
-                PostModel[] posts = new PostModel[oldList.length + page[0].posts.length];
-                for (int i=0; i<oldList.length; ++i) posts[i] = oldList[i];
-                for (int i=0; i<page[0].posts.length; ++i) posts[oldList.length + i] = page[0].posts[i];
-                return posts;
-            } else {
-                return oldList;
-            }
-        }
-        return super.getPostsList(boardName, threadNumber, listener, task, oldList);
     }
     
     @Override
@@ -232,6 +223,16 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
         CaptchaModel captchaModel = downloadCaptcha(captchaUrl, listener, task);
         captchaModel.type = CaptchaModel.TYPE_NORMAL;
         return captchaModel;
+    }
+    
+    @Override
+    protected void setSendPostEntityAttachments(SendPostModel model, ExtendedMultipartBuilder postEntityBuilder) throws Exception {
+        if (model.attachments != null && model.attachments.length > 0) {
+            for (int i = 0; i < model.attachments.length; i++) {
+                postEntityBuilder.addFile("imagefile[]", model.attachments[i], model.randomHash);
+                if (model.custommark) postEntityBuilder.addString("spoiler-" + i, "1");
+            }
+        }
     }
     
     @Override
@@ -247,9 +248,10 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
                 addString("message", model.comment).
                 addString("postpassword", model.password);
         setSendPostEntityAttachments(model, postEntityBuilder);
-        postEntityBuilder.addString("embed", "");
-        
-        postEntityBuilder.addString("redirecttothread", "1");
+        postEntityBuilder.
+                addString("makepost", "1").
+                addString("legacy-posting", "1").
+                addString("redirecttothread", "1");
     }
     
     @Override
@@ -300,60 +302,89 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
     
     @SuppressLint("SimpleDateFormat")
     protected static class Instant0chanReader extends KusabaReader {
-        private static final Pattern PATTERN_EMBEDDED = Pattern.compile("<div (?:[^>]*)data-id=\"([^\"]*)\"(?:[^>]*)>", Pattern.DOTALL);
-        private static final Pattern PATTERN_TABULATION = Pattern.compile("^\\t{2,}", Pattern.MULTILINE);
+        private static final char[] FILTER_POST_NUMBER = "data-id=\"".toCharArray();
+        private static final char[] FILTER_ATTACHMENT_OPEN = "<figcaption class=\"filesize\">".toCharArray();
+        private static final char[] FILTER_ATTACHMENT_CLOSE = "</figcaption>".toCharArray();
+        private static final char[] FILTER_EMBEDDED_OPEN = "<figure class=\"multiembed video-embed\"".toCharArray();
+        private static final char[] FILTER_EMBEDDED_CLOSE = "</figure>".toCharArray();
+        
+        private static final Pattern PATTERN_EMBEDDED_URL =
+                Pattern.compile("<a.+?href=\"(.+?)\".*?>(.+?)?</a>", Pattern.DOTALL);
+        private static final Pattern PATTERN_EMBEDDED_THUMBNAIL =
+                Pattern.compile("<img class=\"embed-thumbnail\".+?src=\"(.+?)\"", Pattern.DOTALL);
         private static final DateFormat DATE_FORMAT;
         static {
-            DateFormatSymbols symbols = new DateFormatSymbols();
-            symbols.setShortMonths(new String[] { "Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"});
-            DATE_FORMAT = new SimpleDateFormat("yyyy MMM dd HH:mm:ss", symbols);
+            DATE_FORMAT = new SimpleDateFormat("yy/MM/dd(EEE)HH:mm", Locale.US);
             DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT+3"));
         }
         
-        public Instant0chanReader(InputStream in, boolean canCloudflare) {
-            super(in, DATE_FORMAT, canCloudflare, ~FLAG_HANDLE_EMBEDDED_POST_POSTPROCESS);
+        private int curNumberPos = 0;
+        private int curAttachmentPos = 0;
+        private int curEmbedPos = 0;
+        
+        public Instant0chanReader(InputStream in, DateFormat dateFormat, boolean canCloudflare) {
+            super(in, dateFormat, canCloudflare, ~FLAG_HANDLE_EMBEDDED_POST_POSTPROCESS);
         }
         
-        public Instant0chanReader(Reader reader, boolean canCloudflare) {
-            super(reader, DATE_FORMAT, canCloudflare, ~FLAG_HANDLE_EMBEDDED_POST_POSTPROCESS);
+        public Instant0chanReader(InputStream in, boolean canCloudflare) {
+            this(in, DATE_FORMAT, canCloudflare);
+        }
+        
+        @Override
+        protected void customFilters(int ch) throws IOException {
+            super.customFilters(ch);
+            
+            if (ch == FILTER_POST_NUMBER[curNumberPos]) {
+                ++curNumberPos;
+                if (curNumberPos == FILTER_POST_NUMBER.length) {
+                    currentPost.number = readUntilSequence("\"".toCharArray());
+                    curNumberPos = 0;
+                }
+            } else {
+                if (curNumberPos != 0) curNumberPos = ch == FILTER_POST_NUMBER[0] ? 1 : 0;
+            }
+            
+            if (ch == FILTER_ATTACHMENT_OPEN[curAttachmentPos]) {
+                ++curAttachmentPos;
+                if (curAttachmentPos == FILTER_ATTACHMENT_OPEN.length) {
+                    parseAttachment(readUntilSequence(FILTER_ATTACHMENT_CLOSE));
+                    curAttachmentPos = 0;
+                }
+            } else {
+                if (curAttachmentPos != 0) curAttachmentPos = ch == FILTER_ATTACHMENT_OPEN[0] ? 1 : 0;
+            }
+            
+            if (ch == FILTER_EMBEDDED_OPEN[curEmbedPos]) {
+                ++curEmbedPos;
+                if (curEmbedPos == FILTER_EMBEDDED_OPEN.length) {
+                    parseEmbedded(readUntilSequence(FILTER_EMBEDDED_CLOSE));
+                    curEmbedPos = 0;
+                }
+            } else {
+                if (curEmbedPos != 0) curEmbedPos = ch == FILTER_EMBEDDED_OPEN[0] ? 1 : 0;
+            }
         }
         
         @Override
         protected void parseDate(String date) {
             date = date.replace("&#35;", "");
-            date = date.replaceAll("\\D*(\\d(?:.*))", "$1");
             super.parseDate(date);
         }
         
-        @Override
-        protected void postprocessPost(PostModel post) {
-            super.postprocessPost(post);
-            post.comment = RegexUtils.replaceAll(post.comment, PATTERN_TABULATION , "");
-            
-            Matcher matcher = PATTERN_EMBEDDED.matcher(post.comment);
-            while (matcher.find()) {
-                String id = matcher.group(1);
-                String div = matcher.group(0).toLowerCase(Locale.US);
-                String url = null;
-                if (div.contains("youtube")) {
-                    url = "http://www.youtube.com/watch?v=" + id;
-                } else if (div.contains("vimeo")) {
-                    url = "http://vimeo.com/" + id;
-                } else if (div.contains("coub")) {
-                    url = "http://coub.com/view/" + id;
+        protected void parseEmbedded(String data) {
+            Matcher matcher = PATTERN_EMBEDDED_URL.matcher(data);
+            if (matcher.find()) {
+                AttachmentModel attachment = new AttachmentModel();
+                attachment.type = AttachmentModel.TYPE_OTHER_NOTFILE;
+                attachment.size = -1;
+                attachment.path = matcher.group(1);
+                attachment.originalName = matcher.group(2);
+                Matcher thumbMatcher = PATTERN_EMBEDDED_THUMBNAIL.matcher(data);
+                if (thumbMatcher.find()) {
+                    attachment.thumbnail = thumbMatcher.group(1);
                 }
-                if (url != null) {
-                    AttachmentModel attachment = new AttachmentModel();
-                    attachment.type = AttachmentModel.TYPE_OTHER_NOTFILE;
-                    attachment.size = -1;
-                    attachment.path = url;
-                    attachment.thumbnail = div.contains("youtube") ? ("http://img.youtube.com/vi/" + id + "/default.jpg") : null;
-                    int oldCount = post.attachments != null ? post.attachments.length : 0;
-                    AttachmentModel[] attachments = new AttachmentModel[oldCount + 1];
-                    for (int i=0; i<oldCount; ++i) attachments[i] = post.attachments[i];
-                    attachments[oldCount] = attachment;
-                    post.attachments = attachments;
-                }
+                ++currentThread.attachmentsCount;
+                currentAttachments.add(attachment);
             }
         }
         
