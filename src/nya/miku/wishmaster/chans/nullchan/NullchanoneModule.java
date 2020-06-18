@@ -27,13 +27,23 @@ import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
 import android.text.InputType;
 import android.text.TextUtils;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import nya.miku.wishmaster.R;
+import nya.miku.wishmaster.api.interfaces.CancellableTask;
+import nya.miku.wishmaster.api.interfaces.ProgressListener;
+import nya.miku.wishmaster.api.models.CaptchaModel;
+import nya.miku.wishmaster.http.streamer.HttpRequestModel;
+import nya.miku.wishmaster.http.streamer.HttpStreamer;
 
 public class NullchanoneModule extends AbstractInstant0chan {
     private static final String CHAN_NAME = "metator.onion";
     private static final String DEFAULT_DOMAIN = "metatorrkdagnx2njwvnzqeclsk3qbwabr6hori4vmivj25qy6s6gsad.onion";
     private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, "metatorjq65tshfy.onion" };
     private static final String PREF_KEY_DOMAIN = "PREF_KEY_DOMAIN";
+    private static final Pattern IMAGE_URL_PATTERN = Pattern.compile("<img[^>]+src=\"(.+?)\"");
     
     public NullchanoneModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -105,4 +115,16 @@ public class NullchanoneModule extends AbstractInstant0chan {
         super.addPreferencesOnScreen(preferenceGroup);
     }
     
+    @Override
+    public CaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
+        String url = getUsingUrl() + "nojscaptcha.php?show=1";  //?show=ru,en,num
+        String html = HttpStreamer.getInstance().getStringFromUrl(url, HttpRequestModel.DEFAULT_GET, httpClient, listener, task, false);
+        Matcher matcher = IMAGE_URL_PATTERN.matcher(html);
+        if (matcher.find()) {
+            String captchaUrl = fixRelativeUrl(matcher.group(1));
+            return downloadCaptcha(captchaUrl, listener, task);
+        } else {
+            throw new Exception();
+        }
+    }
 }
