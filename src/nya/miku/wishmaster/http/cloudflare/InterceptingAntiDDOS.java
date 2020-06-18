@@ -25,7 +25,7 @@ import java.io.InputStream;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.common.IOUtils;
 import nya.miku.wishmaster.common.Logger;
-import nya.miku.wishmaster.http.HttpConstants;
+import nya.miku.wishmaster.common.MainApplication;
 import nya.miku.wishmaster.http.client.ExtendedHttpClient;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
@@ -123,7 +123,7 @@ import android.webkit.WebViewClient;
                 webView.setVisibility(View.GONE);
                 layout.addView(webView);
                 webView.setWebViewClient(client);
-                webView.getSettings().setUserAgentString(HttpConstants.USER_AGENT_STRING);
+                webView.getSettings().setUserAgentString(MainApplication.getInstance().settings.getUserAgentString());
                 webView.getSettings().setJavaScriptEnabled(true);
                 webView.loadUrl(exception.getCheckUrl());
             }
