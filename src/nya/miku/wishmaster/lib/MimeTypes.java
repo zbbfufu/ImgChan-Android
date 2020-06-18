@@ -17,7 +17,6 @@ public class MimeTypes {
     private static final HashMap<String, String> EXTENSION_MAP = new HashMap<>();
     static {
         addMime("epub", "application/epub+zip");
-        addMime("ogg", "application/ogg");
         addMime("pdf", "application/pdf");
         addMime("apk", "application/vnd.android.package-archive");
         addMime("xhtml", "application/xhtml+xml");
@@ -30,8 +29,9 @@ public class MimeTypes {
         addMime("midi", "audio/midi");
         addMime("mid", "audio/midi");
         addMime("mp3", "audio/mpeg");
+        addMime("ogg", "audio/ogg");
         addMime("opus", "audio/opus");
-        addMime("wav", "audio/x-wav");
+        addMime("wav", "audio/wav");
         addMime("gif", "image/gif");
         addMime("jpe", "image/jpeg");
         addMime("jpeg", "image/jpeg");
@@ -42,12 +42,13 @@ public class MimeTypes {
         addMime("svg", "image/svg+xml");
         addMime("webp", "image/webp");
         addMime("ico", "image/x-icon");
-        addMime("bmp", "image/x-ms-bmp");
+        addMime("bmp", "image/bmp");
         addMime("css", "text/css");
         addMime("html", "text/html");
         addMime("htm", "text/html");
         addMime("txt", "text/plain");
         addMime("xml", "text/xml");
+        addMime("ogv", "video/ogg");
         addMime("mp4", "video/mp4");
         addMime("webm", "video/webm");
     }

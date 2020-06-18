@@ -18,6 +18,7 @@
 
 package nya.miku.wishmaster.api;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -78,6 +79,7 @@ import nya.miku.wishmaster.lib.MimeTypes;
 import nya.miku.wishmaster.lib.org_json.JSONArray;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
+@SuppressLint("SimpleDateFormat")
 public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
     private static final String TAG = "AbstractLynxChanModule";
     private static final DateFormat CHAN_DATEFORMAT;
@@ -245,7 +247,6 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
             captchaModesMap = new HashMap<>();
         }
         switch (json.optInt("captchaMode", -1)) {
-            case 0: captchaModesMap.put(model.boardName, MODE_NO_CAPTCHA); break;
             case 1: captchaModesMap.put(model.boardName, MODE_THREAD_CAPTCHA); break;
             case 2: captchaModesMap.put(model.boardName, MODE_POST_CAPTCHA); break;
             default: captchaModesMap.put(model.boardName, MODE_NO_CAPTCHA);
@@ -357,16 +358,19 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         if (thumb.length() > 0) {
             AttachmentModel attachment = new AttachmentModel();
             attachment.thumbnail = thumb;
-            Matcher mimeMatcher = MIME_TYPE_PATTERN.matcher(thumb);
-            if (mimeMatcher.find()) {
-                String mime = mimeMatcher.group(1) + "/" + mimeMatcher.group(2);
-                attachment.type = getAttachmentType(mime);
-                String ext = MimeTypes.toExtension(mime);
-                attachment.path = thumb.replace("t_", "")
-                        + (ext != null ? "." + ext : "");
-            } else { //Internal image (e.g. spoiler)
+            if (thumb.contains("-")) {
+                Matcher mimeMatcher = MIME_TYPE_PATTERN.matcher(thumb);
+                if (mimeMatcher.find()) {
+                    String mime = mimeMatcher.group(1) + "/" + mimeMatcher.group(2);
+                    attachment.type = getAttachmentType(mime);
+                    String ext = MimeTypes.toExtension(mime);
+                    if (ext != null) attachment.path = thumb.replace("t_", "") + "." + ext;
+                }
+            } else if (thumb.length() < 32) { //Internal static image (e.g. spoiler)
                 attachment.thumbnail = fixRelativeUrl(thumb); //fix equal hashes in cache
                 attachment.path = attachment.thumbnail;
+            } else {
+                attachment.path = thumb;
             }
             attachment.height = -1;
             attachment.width = -1;
@@ -472,8 +476,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
             return getUsingUrl() + model.boardName + "/catalog.html";
         if (model.type == UrlPageModel.TYPE_BOARDPAGE && model.boardPage == 1)
             return (getUsingUrl() + model.boardName + "/");
-        String url = WakabaUtils.buildUrl(model, getUsingUrl());
-        return url;
+        return WakabaUtils.buildUrl(model, getUsingUrl());
     }
 
     @Override
