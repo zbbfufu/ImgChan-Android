@@ -36,6 +36,7 @@ import nya.miku.wishmaster.common.Async;
 import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.common.MainApplication;
 import nya.miku.wishmaster.http.interactive.InteractiveException;
+import nya.miku.wishmaster.http.interactive.MultipurposeException;
 import nya.miku.wishmaster.ui.MainActivity;
 import nya.miku.wishmaster.ui.downloading.BackgroundThumbDownloader;
 import nya.miku.wishmaster.ui.presentation.BoardFragment;
@@ -176,6 +177,7 @@ public class TabsTrackerService extends Service {
     private boolean backgroundTabs;
     
     private boolean immediately = false;
+    private boolean retry = false;
     
     private CancellableTask task = null;
     
@@ -322,7 +324,8 @@ public class TabsTrackerService extends Service {
                             }
                         }
                         final int oldCount = serializablePage.posts != null ? serializablePage.posts.length : 0;
-                        new PageLoaderFromChan(serializablePage, new PageLoaderFromChan.PageLoaderCallback() {
+                        retry = false;
+                        PageLoaderFromChan pageLoader = new PageLoaderFromChan(serializablePage, new PageLoaderFromChan.PageLoaderCallback() {
                             @Override
                             public void onSuccess() {
                                 BackgroundThumbDownloader.download(serializablePage, task);
@@ -347,13 +350,21 @@ public class TabsTrackerService extends Service {
                             }
                             @Override
                             public void onInteractiveException(InteractiveException e) {
-                                tab.autoupdateError = true;
+                                if (!retry && e instanceof MultipurposeException &&
+                                    ((MultipurposeException)e).handle(task) == null) {
+                                    retry = true;
+                                } else {
+                                    tab.autoupdateError = true;
+                                    retry = false;
+                                }
                             }
                             @Override
                             public void onError(String message) {
                                 tab.autoupdateError = true;
                             }
-                        }, chan, task).run();
+                        }, chan, task);
+                        pageLoader.run();
+                        if (retry) pageLoader.run();
                     }
                 }
                 tab.autoupdateComplete = true;

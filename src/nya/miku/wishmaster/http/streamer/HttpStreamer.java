@@ -149,6 +149,9 @@ public class HttpStreamer {
                 case HttpRequestModel.METHOD_POST:
                     requestBuilder = RequestBuilder.post().setUri(uri).setEntity(requestModel.postEntity);
                     break;
+                case HttpRequestModel.METHOD_OPTIONS:
+                    requestBuilder = RequestBuilder.options().setUri(uri);
+                    break;
                 default:
                     throw new IllegalArgumentException("Incorrect type of HTTP Request");
             }
@@ -253,32 +256,30 @@ public class HttpStreamer {
      * @throws HttpWrongStatusCodeException если сервер вернул код не 200. При anycode==true будет содержать также HTML содержимое ответа.
      */
     public byte[] getBytesFromUrl(String url, HttpRequestModel requestModel, HttpClient httpClient, ProgressListener listener,
-            CancellableTask task, boolean anyCode) throws IOException, HttpRequestException, HttpWrongStatusCodeException {
+            CancellableTask task, boolean anyCode) throws IOException, HttpRequestException, HttpWrongResponseException {
+        return getBytesFromUrl(url, requestModel, httpClient, listener, task, anyCode, null);
+    }
+
+    public byte[] getBytesFromUrl(String url, HttpRequestModel requestModel, HttpClient httpClient, ProgressListener listener,
+            CancellableTask task, boolean anyCode, HttpWrongResponseDetector detector) throws IOException, HttpRequestException, HttpWrongResponseException {
         HttpResponseModel responseModel = null;
         try {
             responseModel = getFromUrl(url, requestModel, httpClient, listener, task);
-            if (responseModel.statusCode == 200) {
-                if (responseModel.stream == null) throw new HttpRequestException(new NullPointerException()); 
-                ByteArrayOutputStream output = new ByteArrayOutputStream(1024);
-                IOUtils.copyStream(responseModel.stream, output);
-                return output.toByteArray();
-            } else {
-                if (responseModel.notModified()) return null;
-                if (anyCode) {
-                    byte[] html = null;
-                    try {
-                        ByteArrayOutputStream output = new ByteArrayOutputStream(1024);
-                        IOUtils.copyStream(responseModel.stream, output);
-                        html = output.toByteArray();
-                    } catch (Exception e) {
-                        Logger.e(TAG, e);
-                    }
-                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusCode+" - "+responseModel.statusReason, html);
-                } else {
-                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusCode+" - "+responseModel.statusReason);
-                }
-                
-            }
+            if (responseModel.statusCode != 200)
+                if (responseModel.notModified())
+                    return null;
+                else
+                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusReason);
+            if (detector != null)
+                detector.check(responseModel);
+            if (responseModel.stream == null) throw new HttpRequestException(new NullPointerException());
+            ByteArrayOutputStream output = new ByteArrayOutputStream(1024);
+            IOUtils.copyStream(responseModel.stream, output);
+            return output.toByteArray();
+        } catch (HttpWrongResponseException e) {
+            if (anyCode && e.getHtmlBytes() == null)
+                e.setHtmlBytes(tryGetBytes(responseModel.stream));
+            throw e;
         } catch (Exception e) {
             if (responseModel != null) removeFromModifiedMap(url);
             // (responseModel != null) <=> исключение именно во время чтения, а не во время самого запроса (т.е. запись уже устарела в любом случае)
@@ -303,12 +304,18 @@ public class HttpStreamer {
      * @throws HttpWrongStatusCodeException если сервер вернул код не 200. При anycode==true будет содержать также HTML содержимое ответа. 
      */
     public String getStringFromUrl(String url, HttpRequestModel requestModel, HttpClient httpClient, ProgressListener listener,
-            CancellableTask task, boolean anyCode) throws IOException, HttpRequestException, HttpWrongStatusCodeException {
-        byte[] bytes = getBytesFromUrl(url, requestModel, httpClient, listener, task, anyCode);
+            CancellableTask task, boolean anyCode) throws IOException, HttpRequestException, HttpWrongResponseException {
+        byte[] bytes = getBytesFromUrl(url, requestModel, httpClient, listener, task, anyCode, null);
         if (bytes == null) return null;
         return new String(bytes);
     }
-    
+
+    public String getStringFromUrl(String url, HttpRequestModel requestModel, HttpClient httpClient, ProgressListener listener,
+            CancellableTask task, boolean anyCode, HttpWrongResponseDetector detector) throws IOException, HttpRequestException, HttpWrongResponseException {
+        byte[] bytes = getBytesFromUrl(url, requestModel, httpClient, listener, task, anyCode, detector);
+        if (bytes == null) return null;
+        return new String(bytes);
+    }
     /**
      * HTTP запрос по адресу, получить объект JSON ({@link nya.miku.wishmaster.lib.org_json.JSONObject} актуальная версия org.json)
      * @param url адрес страницы
@@ -325,10 +332,14 @@ public class HttpStreamer {
      * @throws JSONException в случае ошибки при парсинге JSON
      */
     public JSONObject getJSONObjectFromUrl(String url, HttpRequestModel requestModel, HttpClient httpClient, ProgressListener listener,
-            CancellableTask task, boolean anyCode) throws IOException, HttpRequestException, HttpWrongStatusCodeException, JSONException {
-        return (JSONObject) getJSONFromUrl(url, requestModel, httpClient, listener, task, anyCode, false);
+            CancellableTask task, boolean anyCode) throws IOException, HttpRequestException, HttpWrongResponseException, JSONException {
+        return (JSONObject) getJSONFromUrl(url, requestModel, httpClient, listener, task, anyCode, false, null);
     }
-    
+
+    public JSONObject getJSONObjectFromUrl(String url, HttpRequestModel requestModel, HttpClient httpClient, ProgressListener listener,
+            CancellableTask task, boolean anyCode, HttpWrongResponseDetector detector) throws IOException, HttpRequestException, HttpWrongResponseException, JSONException {
+        return (JSONObject) getJSONFromUrl(url, requestModel, httpClient, listener, task, anyCode, false, detector);
+    }
     /**
      * HTTP запрос по адресу, получить массив JSON ({@link nya.miku.wishmaster.lib.org_json.JSONArray} актуальная версия org.json.JSONArray)
      * @param url адрес страницы
@@ -345,37 +356,35 @@ public class HttpStreamer {
      * @throws JSONException в случае ошибки при парсинге JSON
      */
     public JSONArray getJSONArrayFromUrl(String url, HttpRequestModel requestModel, HttpClient httpClient, ProgressListener listener,
-            CancellableTask task, boolean anyCode) throws IOException, HttpRequestException, HttpWrongStatusCodeException, JSONException {
-        return (JSONArray) getJSONFromUrl(url, requestModel, httpClient, listener, task, anyCode, true);
+            CancellableTask task, boolean anyCode) throws IOException, HttpRequestException, HttpWrongResponseException, JSONException {
+        return (JSONArray) getJSONFromUrl(url, requestModel, httpClient, listener, task, anyCode, true, null);
     }
-    
+
+    public JSONArray getJSONArrayFromUrl(String url, HttpRequestModel requestModel, HttpClient httpClient, ProgressListener listener,
+            CancellableTask task, boolean anyCode, HttpWrongResponseDetector detector) throws IOException, HttpRequestException, HttpWrongResponseException, JSONException {
+        return (JSONArray) getJSONFromUrl(url, requestModel, httpClient, listener, task, anyCode, true, detector);
+    }
+
     private Object getJSONFromUrl(String url, HttpRequestModel requestModel, HttpClient httpClient, ProgressListener listener, CancellableTask task,
-            boolean anyCode, boolean isArray) throws IOException, HttpRequestException, HttpWrongStatusCodeException, JSONException {
+            boolean anyCode, boolean isArray, HttpWrongResponseDetector detector) throws IOException, HttpRequestException, HttpWrongResponseException, JSONException {
         HttpResponseModel responseModel = null;
         BufferedReader in = null;
         try {
             responseModel = getFromUrl(url, requestModel, httpClient, listener, task);
-            if (responseModel.statusCode == 200) {
-                if (responseModel.stream == null) throw new HttpRequestException(new NullPointerException()); 
-                in = new BufferedReader(new InputStreamReader(responseModel.stream));
-                return isArray ? new JSONArray(new JSONTokener(in)) : new JSONObject(new JSONTokener(in));
-            } else {
-                if (responseModel.notModified()) return null;
-                if (anyCode) {
-                    byte[] html = null;
-                    try {
-                        ByteArrayOutputStream output = new ByteArrayOutputStream(1024);
-                        IOUtils.copyStream(responseModel.stream, output);
-                        html = output.toByteArray();
-                    } catch (Exception e) {
-                        Logger.e(TAG, e);
-                    }
-                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusCode+" - "+responseModel.statusReason, html);
-                } else {
-                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusCode+" - "+responseModel.statusReason);
-                }
-                
-            }
+            if (responseModel.statusCode != 200)
+                if (responseModel.notModified())
+                    return null;
+                else
+                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusReason);
+            if (detector != null)
+                detector.check(responseModel);
+            if (responseModel.stream == null) throw new HttpRequestException(new NullPointerException());
+            in = new BufferedReader(new InputStreamReader(responseModel.stream));
+            return isArray ? new JSONArray(new JSONTokener(in)) : new JSONObject(new JSONTokener(in));
+        } catch (HttpWrongResponseException e) {
+            if (anyCode && e.getHtmlBytes() == null)
+                e.setHtmlBytes(tryGetBytes(responseModel.stream));
+            throw e;
         } catch (Exception e) {
             if (responseModel != null) removeFromModifiedMap(url);
             throw e;
@@ -400,7 +409,14 @@ public class HttpStreamer {
      * @throws HttpWrongStatusCodeException если сервер вернул код не 200. При anycode==true будет содержать также HTML содержимое ответа.
      */
     public void downloadFileFromUrl(String url, OutputStream out, HttpRequestModel requestModel, HttpClient httpClient, ProgressListener listener,
-            CancellableTask task, boolean anyCode) throws IOException, HttpRequestException, HttpWrongStatusCodeException {
+            CancellableTask task, boolean anyCode) throws
+            IOException, HttpRequestException, HttpWrongResponseException {
+        downloadFileFromUrl(url, out, requestModel, httpClient, listener, task, anyCode, null);
+    }
+
+    public void downloadFileFromUrl(String url, OutputStream out, HttpRequestModel requestModel, HttpClient httpClient, ProgressListener listener,
+            CancellableTask task, boolean anyCode, HttpWrongResponseDetector detector) throws
+            IOException, HttpRequestException, HttpWrongResponseException {
         HttpResponseModel responseModel = null;
         IOUtils.CountingOutputStream content_stream = new IOUtils.CountingOutputStream(out);
         long downloaded_size = 0; // сколько загружено в предыдущем запросе
@@ -409,48 +425,51 @@ public class HttpStreamer {
             for (int i = 0; i < 5; i++) {
                 downloaded_size = content_stream.getSize();
                 responseModel = getFromUrl(url, requestModel, httpClient, listener, task, downloaded_size);
+                if (responseModel.statusCode != 200 && responseModel.statusCode != 206)
+                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusReason);
+                if (detector != null)
+                    detector.check(responseModel);
                 content_length = responseModel.contentLength;
-                if ((responseModel.statusCode == 200) || (responseModel.statusCode == 206)) {
-                    try {
-                        IOUtils.copyStream(responseModel.stream, content_stream);
-                        break;
-                    } catch (IOException e) {
-                        if (((content_length + downloaded_size) != content_stream.getSize()) && (content_length != -1)) {
-                            Header accept_ranges_header = null;
-                            for (Header header : responseModel.headers) {
-                                if ("Accept-Ranges".equalsIgnoreCase(header.getName())) {
-                                    accept_ranges_header = header;
-                                    break;
-                                }
+                try {
+                    IOUtils.copyStream(responseModel.stream, content_stream);
+                    break;
+                } catch (IOException e) {
+                    if (((content_length + downloaded_size) != content_stream.getSize()) && (content_length != -1)) {
+                        Header accept_ranges_header = null;
+                        for (Header header : responseModel.headers) {
+                            if ("Accept-Ranges".equalsIgnoreCase(header.getName())) {
+                                accept_ranges_header = header;
+                                break;
                             }
-                            if (((accept_ranges_header == null) || (!accept_ranges_header.getValue().toLowerCase().contains("bytes"))) && (responseModel.statusCode != 206)) {
-                                throw e;
-                            }
-                        } else throw e;
-                    }
-                } else {
-                    if (anyCode) {
-                        byte[] html = null;
-                        try {
-                            ByteArrayOutputStream byteStream = new ByteArrayOutputStream(1024);
-                            IOUtils.copyStream(responseModel.stream, byteStream);
-                            html = byteStream.toByteArray();
-                        } catch (Exception e) {
-                            Logger.e(TAG, e);
                         }
-                        throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusCode + " - " + responseModel.statusReason, html);
-                    } else {
-                        throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusCode + " - " + responseModel.statusReason);
-                    }
+                        if (((accept_ranges_header == null) || (!accept_ranges_header.getValue().toLowerCase().contains("bytes"))) && (responseModel.statusCode != 206)) {
+                            throw e;
+                        }
+                    } else throw e;
                 }
             }
             if (((content_length + downloaded_size) != content_stream.getSize()) && (content_length != -1))
                 throw new IOException("Content-length mismatch");
+        } catch (HttpWrongResponseException e) {
+            if (anyCode && e.getHtmlBytes() == null)
+                e.setHtmlBytes(tryGetBytes(responseModel.stream));
+            throw e;
         } catch (Exception e) {
             if (responseModel != null) removeFromModifiedMap(url);
             throw e;
         } finally {
             if (responseModel != null) responseModel.release();
+        }
+    }
+
+    public static byte[] tryGetBytes(InputStream stream) {
+        try {
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream(1024);
+            IOUtils.copyStream(stream, byteStream);
+            return byteStream.toByteArray();
+        } catch (Exception e) {
+            Logger.e(TAG, e);
+            return null;
         }
     }
 }
