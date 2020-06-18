@@ -67,6 +67,7 @@ public class TabsTrackerService extends Service {
     
     public static final String EXTRA_UPDATE_IMMEDIATELY = "UpdateImmediately";
     public static final String EXTRA_CLEAR_SUBSCRIPTIONS = "ClearSubscriptions";
+    public static final String EXTRA_TAB_ID = "TabId";
     public static final String BROADCAST_ACTION_NOTIFY = "nya.miku.wishmaster.BROADCAST_ACTION_TRACKER_NOTIFY";
     public static final String BROADCAST_ACTION_CLEAR_SUBSCRIPTIONS = "nya.miku.wishmaster.BROADCAST_ACTION_CLEAR_SUBSCRIPTIONS";
     public static final int TRACKER_NOTIFICATION_UPDATE_ID = 40;
@@ -268,6 +269,12 @@ public class TabsTrackerService extends Service {
         running = true;
     }
     
+    private void sendBroadcastNotify(long tabId) {
+        Intent intent = new Intent(BROADCAST_ACTION_NOTIFY);
+        intent.putExtra(EXTRA_TAB_ID, tabId);
+        sendBroadcast(intent);
+    }
+
     private void doUpdate(final CancellableTask task) {
         if (backgroundTabs || immediately) {
             int tabsArrayLength = tabsState.tabsArray.size();
@@ -276,11 +283,13 @@ public class TabsTrackerService extends Service {
             for (final TabModel tab : tabsArray) {
                 tab.autoupdateComplete = false;
             }
+            if (tabsArrayLength > 0)
+                currentUpdatingTabId = tabsArray[0].id;
+            sendBroadcastNotify(-1);
             for (final TabModel tab : tabsArray) {
                 if (task.isCancelled()) return;
                 if (settings.isAutoupdateWifiOnly() && !Wifi.isConnected() && !immediately) return;
                 currentUpdatingTabId = tab.id;
-                sendBroadcast(new Intent(BROADCAST_ACTION_NOTIFY));
                 if ((tab.type == TabModel.TYPE_NORMAL) &&
                     (tab.pageModel.type == UrlPageModel.TYPE_THREADPAGE) &&
                     (tab.autoupdateBackground == true)) {
@@ -348,8 +357,8 @@ public class TabsTrackerService extends Service {
                     }
                 }
                 tab.autoupdateComplete = true;
+                sendBroadcastNotify(tab.id);
             }
-            sendBroadcast(new Intent(BROADCAST_ACTION_NOTIFY));
         } else if (tabsSwitcher.currentFragment instanceof BoardFragment) {
             TabModel tab = tabsState.findTabById(tabsSwitcher.currentId);
             if (tab != null && tab.pageModel != null && tab.type == TabModel.TYPE_NORMAL && tab.pageModel.type == UrlPageModel.TYPE_THREADPAGE) {
@@ -369,7 +378,7 @@ public class TabsTrackerService extends Service {
     }
     
     private class TrackerLoop extends BaseCancellableTask implements Runnable {
-        private int timerCounter = 0;
+        private int timerCounter = Integer.MAX_VALUE - 1;
         
         @Override
         public void run() {
@@ -391,13 +400,12 @@ public class TabsTrackerService extends Service {
                         doUpdate(this);
                         currentUpdatingTabId = -1;
                         immediately = false;
+                        sendBroadcastNotify(-1);
                     }
                     
                     if (isCancelled()) {
                         cancelForeground(TRACKER_NOTIFICATION_UPDATE_ID);
                         return;
-                    } else {
-                        sendBroadcast(new Intent(BROADCAST_ACTION_NOTIFY));
                     }
                     
                     if (!settings.isAutoupdateEnabled()) stopSelf();

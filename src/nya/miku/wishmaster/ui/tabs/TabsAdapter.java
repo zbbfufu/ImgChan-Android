@@ -20,12 +20,16 @@ package nya.miku.wishmaster.ui.tabs;
 
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.ChanModule;
+import nya.miku.wishmaster.api.models.UrlPageModel;
 import nya.miku.wishmaster.common.MainApplication;
 import nya.miku.wishmaster.ui.CompatibilityUtils;
 import nya.miku.wishmaster.ui.HistoryFragment;
 import nya.miku.wishmaster.ui.theme.ThemeUtils;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
@@ -49,6 +53,18 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
     private int selectedItem;
     private int draggingItem = -1;
     
+    static final ColorFilter disabledIconColorFilter = new ColorMatrixColorFilter(new ColorMatrix(new float[]{
+        0.7f,0.0f,0.0f,0.0f,0.0f,
+        0.0f,0.7f,0.0f,0.0f,0.0f,
+        0.0f,0.0f,0.7f,0.0f,0.0f,
+        0.0f,0.0f,0.0f,1.0f,0.0f
+    }));
+
+    static final View.OnClickListener nullOnClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {}
+    };
+
     private final View.OnClickListener onCloseClick = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -56,6 +72,21 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         }
     };
     
+    private final View.OnClickListener onIconClick = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            TabModel model = getItem((Integer) v.getTag());
+            if (model != null) {
+                model.autoupdateBackground = !model.autoupdateBackground;
+                notifyDataSetChanged();
+            }
+        }
+    };
+
+    private final Drawable updateStateDrawableHidden;
+    private final Drawable updateStateDrawablePlanned;
+    private final Drawable updateStateDrawableUpdated;
+
     /**
      * Конструктор адаптера.
      * После создания и привязки к объекту списка необходимо дополнительно установить позицию текущей вкладки ({@link #setSelectedItem(int)})
@@ -70,6 +101,9 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         this.tabsState = tabsState;
         this.tabsIdStack = tabsState.tabsIdStack;
         this.selectListener = selectListener;
+        this.updateStateDrawableHidden = getUpdateStateDrawable(android.R.color.transparent);
+        this.updateStateDrawablePlanned = getUpdateStateDrawable(R.attr.urlLinkForeground);
+        this.updateStateDrawableUpdated = getUpdateStateDrawable(R.attr.postQuoteForeground);
     }
     
     /**
@@ -210,16 +244,8 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         return false;
     }
 
-    private Drawable getUpdateStateDrawable(TabModel model) {
-        TypedValue typedValue;
-        if ((TabsTrackerService.getCurrentUpdatingTabId() == -1) ||
-            (!MainApplication.getInstance().settings.isAutoupdateProgress())) {
-            typedValue = ThemeUtils.resolveAttribute(context.getTheme(), android.R.color.transparent, true);
-        } else if (model.autoupdateComplete) {
-            typedValue = ThemeUtils.resolveAttribute(context.getTheme(), R.attr.postQuoteForeground, true);
-        } else {
-            typedValue = ThemeUtils.resolveAttribute(context.getTheme(), R.attr.urlLinkForeground, true);
-        }
+    private Drawable getUpdateStateDrawable(int colorId) {
+        TypedValue typedValue = ThemeUtils.resolveAttribute(context.getTheme(), colorId, true);
         int color;
         if (typedValue.type >= TypedValue.TYPE_FIRST_COLOR_INT && typedValue.type <= TypedValue.TYPE_LAST_COLOR_INT) {
             color = typedValue.data;
@@ -234,6 +260,17 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         shape.setShape(GradientDrawable.RECTANGLE);
         shape.setColor(color);
         return shape;
+    }
+
+    private Drawable getUpdateStateDrawable(TabModel model) {
+        if ((TabsTrackerService.getCurrentUpdatingTabId() == -1) ||
+            (!MainApplication.getInstance().settings.isAutoupdateProgress())) {
+            return updateStateDrawableHidden;
+        } else if (model.autoupdateComplete) {
+            return updateStateDrawableUpdated;
+        } else {
+            return updateStateDrawablePlanned;
+        }
     }
 
     @Override
@@ -277,27 +314,20 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
                 ChanModule chan = MainApplication.getInstance().getChanModule(model.pageModel.chanName);
                 Drawable icon = chan != null ? chan.getChanFavicon() :
                     ResourcesCompat.getDrawable(context.getResources(), android.R.drawable.ic_delete, null);
+                ColorFilter filter = null;
+                View.OnClickListener onIconClick = nullOnClickListener;
                 if (icon != null) {
                     if (model.type == TabModel.TYPE_LOCAL) {
                         Drawable[] layers = new Drawable[] {
                                 icon, ResourcesCompat.getDrawable(context.getResources(), R.drawable.favicon_overlay_local, null) };
                         icon = new LayerDrawable(layers);
+                    } else if (model.type == TabModel.TYPE_NORMAL && model.pageModel != null && model.pageModel.type == UrlPageModel.TYPE_THREADPAGE) {
+                        filter = model.autoupdateBackground ? null : disabledIconColorFilter;
+                        onIconClick = this.onIconClick;
                     }
-                    /* XXX
-                    Была идея помечать вкладки на автообновлении дополнительным значком (небольшой overlay поверх favicon в левом верхнем углу),
-                    чтобы сразу видеть в списке вкладок, какие будут обновлены, а где автообновление отключено (по умолчанию включено везде).
-                    Но в таком виде это выглядит плохо, возможно, стоит запилить-поискать какую-нибудь лёгкую иконку, чтобы не загромождать интерфейс.
-                    Или придумать другой способ отображать это, или вообще это всё не нужно.
-                    
-                    else if (model.type == TabModel.TYPE_NORMAL && model.pageModel != null &&
-                            model.pageModel.type == UrlPageModel.TYPE_THREADPAGE && model.autoupdateBackground &&
-                            MainApplication.getInstance().settings.isAutoupdateEnabled() &&
-                            MainApplication.getInstance().settings.isAutoupdateBackground()) {
-                        Drawable[] layers = new Drawable[] {
-                                icon, ResourcesCompat.getDrawable(context.getResources(), R.drawable.favicon_overlay_autoupdate, null) };
-                        icon = new LayerDrawable(layers);
-                    }
-                    */
+                    favIcon.setTag(position);
+                    favIcon.setOnClickListener(onIconClick);
+                    favIcon.setColorFilter(filter);
                     favIcon.setImageDrawable(icon);
                     favIcon.setVisibility(View.VISIBLE);
                 } else {
