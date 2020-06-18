@@ -225,6 +225,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
     private List<Integer> cachedSearchResults = null;
     private SparseArray<Spanned> cachedSearchHighlightedSpanables = null;
     private boolean searchHighlightActive = false;
+    private boolean searchUsingChan = false;
     
     private FloatingModel[] floatingModels;
     private ImageGetter imageGetter;
@@ -455,9 +456,9 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        MenuItem itemAddPost = menu.add(Menu.NONE, R.id.menu_add_post, 101,
+        MenuItem itemAddPost = menu.add(Menu.NONE, R.id.menu_add_post, 100,
                 resources.getString(pageType == TYPE_POSTSLIST ? R.string.menu_add_post : R.string.menu_add_thread));
-        MenuItem itemUpdate = menu.add(Menu.NONE, R.id.menu_update, 102, 
+        MenuItem itemUpdate = menu.add(Menu.NONE, R.id.menu_update, 101,
                 resources.getString(tabModel.type != TabModel.TYPE_LOCAL ? R.string.menu_update : R.string.menu_from_internet));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             itemAddPost.setIcon(ThemeUtils.getActionbarIcon(activity.getTheme(), resources, R.attr.actionAddPost));
@@ -468,8 +469,9 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             itemAddPost.setIcon(R.drawable.ic_menu_edit);
             itemUpdate.setIcon(R.drawable.ic_menu_refresh);
         }
-        menu.add(Menu.NONE, R.id.menu_catalog, 103, resources.getString(R.string.menu_catalog)).setIcon(R.drawable.ic_menu_list);
-        menu.add(Menu.NONE, R.id.menu_search, 104, resources.getString(R.string.menu_search)).setIcon(android.R.drawable.ic_menu_search);
+        menu.add(Menu.NONE, R.id.menu_catalog, 102, resources.getString(R.string.menu_catalog)).setIcon(R.drawable.ic_menu_list);
+        menu.add(Menu.NONE, R.id.menu_search, 103, resources.getString(R.string.menu_search)).setIcon(android.R.drawable.ic_menu_search);
+        menu.add(Menu.NONE, R.id.menu_search_threads, 104, resources.getString(R.string.menu_search_threads)).setIcon(android.R.drawable.ic_menu_search);
         menu.add(Menu.NONE, R.id.menu_save_page, 105, resources.getString(R.string.menu_save_page)).setIcon(android.R.drawable.ic_menu_save);
         menu.add(Menu.NONE, R.id.menu_board_gallery, 106, resources.getString(R.string.menu_board_gallery)).setIcon(android.R.drawable.
                 ic_menu_slideshow);
@@ -487,6 +489,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             boolean updateMenuVisible = false;
             boolean catalogMenuVisible = false;
             boolean searchMenuVisible = false;
+            boolean searchThreadsMenuVisible = false;
             boolean savePageMenuVisible = false;
             boolean boardGallryMenuVisible = false;
             boolean quickaccessAddMenuVisible = false;
@@ -502,8 +505,9 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 if (presentationModel.source.boardModel.catalogAllowed) {
                     catalogMenuVisible = true;
                 }
-                if (presentationModel.source.boardModel.searchAllowed || tabModel.pageModel.type == UrlPageModel.TYPE_CATALOGPAGE) {
-                    searchMenuVisible = true;
+                searchMenuVisible = true;
+                if (presentationModel.source.boardModel.searchAllowed) {
+                    searchThreadsMenuVisible = true;
                 }
                 if (enableQuickAccessMenu == null) {
                     quickaccessAddMenuVisible = true;
@@ -533,6 +537,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             menu.findItem(R.id.menu_update).setVisible(updateMenuVisible);
             menu.findItem(R.id.menu_catalog).setVisible(catalogMenuVisible);
             menu.findItem(R.id.menu_search).setVisible(searchMenuVisible);
+            menu.findItem(R.id.menu_search_threads).setVisible(searchThreadsMenuVisible);
             menu.findItem(R.id.menu_save_page).setVisible(savePageMenuVisible);
             menu.findItem(R.id.menu_board_gallery).setVisible(boardGallryMenuVisible);
             menu.findItem(R.id.menu_quickaccess_add).setVisible(quickaccessAddMenuVisible);
@@ -564,6 +569,13 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 UrlHandler.open(model, activity);
                 return true;
             case R.id.menu_search:
+                searchUsingChan = false;
+                initSearchBar();
+                searchBarView.setVisibility(View.VISIBLE);
+                ((EditText) searchBarView.findViewById(R.id.board_search_field)).requestFocus();
+                return true;
+            case R.id.menu_search_threads:
+                searchUsingChan = true;
                 initSearchBar();
                 searchBarView.setVisibility(View.VISIBLE);
                 ((EditText) searchBarView.findViewById(R.id.board_search_field)).requestFocus();
@@ -3013,18 +3025,10 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             searchBarView.findViewById(id).setOnClickListener(searchOnClickListener);
         }
         field.setOnKeyListener(new View.OnKeyListener() {
-            private boolean searchUsingChan() {
-                if (pageType != TYPE_THREADSLIST) return false;
-                if (presentationModel != null)
-                    if (presentationModel.source != null) 
-                        if (presentationModel.source.boardModel != null)
-                            if (!presentationModel.source.boardModel.searchAllowed) return false;
-                return true;
-            }
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                    if (searchUsingChan()) {
+                    if (searchUsingChan) {
                         UrlPageModel model = new UrlPageModel();
                         model.chanName = chan.getChanName();
                         model.type = UrlPageModel.TYPE_SEARCHPAGE;

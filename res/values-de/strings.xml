@@ -84,6 +84,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="tabs_newtab">Neuer Tab</string>
     <string name="tabs_favorites">Favoriten</string>
     <string name="tabs_history">Browserverlauf</string>
+    <string name="tabs_autoupdate">Auto-update</string>
     
     <string name="tabs_tracker_title">Auto Update</string>
     <string name="tabs_tracker_title_unread">Neue Posts</string>
@@ -148,6 +149,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_from_internet">Von Internet</string>
     <string name="menu_catalog">Katalog</string>
     <string name="menu_search">Suche</string>
+    <string name="menu_search_threads">Suche in Threads</string>
     <string name="menu_open_browser">Browser öffnen</string>
     <string name="menu_add_favorites">Zu den Favoriten hinzufügen</string>
     <string name="menu_remove_favorites">Aus den Favoriten entfernen</string>

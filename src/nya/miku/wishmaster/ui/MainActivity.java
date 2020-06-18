@@ -72,9 +72,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.webkit.URLUtil;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -107,6 +109,7 @@ public class MainActivity extends FragmentActivity {
     private ActionBarDrawerToogleCompat drawerToggle;
     
     private HiddenTabsSection hiddenTabsSection = null;
+    private ImageView btnRefresh = null;
     
     private void initDrawer() {
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer);
@@ -266,7 +269,12 @@ public class MainActivity extends FragmentActivity {
             case R.id.menu_sub_settings_autoupdate:
                 MainApplication.getInstance().settings.setAutoupdateEnabled(!MainApplication.getInstance().settings.isAutoupdateEnabled());
                 if (TabsTrackerService.isRunning()) stopService(new Intent(this, TabsTrackerService.class));
-                if (MainApplication.getInstance().settings.isAutoupdateEnabled()) startService(new Intent(this, TabsTrackerService.class));
+                if (MainApplication.getInstance().settings.isAutoupdateEnabled()) {
+                    btnRefresh.setImageResource(ThemeUtils.getThemeResId(getTheme(), R.attr.sidebarBtnRefreshOn));
+                    startService(new Intent(this, TabsTrackerService.class));
+                } else {
+                    btnRefresh.setImageResource(ThemeUtils.getThemeResId(getTheme(), R.attr.sidebarBtnRefreshOff));
+                }
                 return true;
             case R.id.menu_sub_settings_maskpictures:
                 MainApplication.getInstance().settings.setMaskPictures(!MainApplication.getInstance().settings.maskPictures());
@@ -365,6 +373,9 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Logger.d(TAG, "main activity creating");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            getWindow().requestFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
+        }
         settings = MainApplication.getInstance().settings.getStaticSettings();
         autohideRulesHash = MainApplication.getInstance().settings.getAutohideRulesJson().hashCode();
         rootViewWeight = MainApplication.getInstance().settings.getRootViewWeight();
@@ -392,6 +403,31 @@ public class MainActivity extends FragmentActivity {
         View[] sidebarButtons =
             new View[] { findViewById(R.id.sidebar_btn_newtab), findViewById(R.id.sidebar_btn_history), findViewById(R.id.sidebar_btn_favorites) };
         hiddenTabsSection = new HiddenTabsSection(sidebarButtons);
+
+        btnRefresh = (ImageView)findViewById(R.id.sidebar_btn_refresh);
+        btnRefresh.setVisibility(View.VISIBLE);
+        btnRefresh.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startService(new Intent(MainActivity.this, TabsTrackerService.class).putExtra(TabsTrackerService.EXTRA_UPDATE_IMMEDIATELY, true));
+            }
+        });
+        btnRefresh.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                MainApplication.getInstance().settings.setAutoupdateEnabled(!MainApplication.getInstance().settings.isAutoupdateEnabled());
+                if (MainApplication.getInstance().settings.isAutoupdateEnabled()) {
+                    btnRefresh.setImageResource(ThemeUtils.getThemeResId(getTheme(), R.attr.sidebarBtnRefreshOn));
+                    if (!TabsTrackerService.isRunning())
+                        startService(new Intent(MainActivity.this, TabsTrackerService.class));
+                } else {
+                    btnRefresh.setImageResource(ThemeUtils.getThemeResId(getTheme(), R.attr.sidebarBtnRefreshOff));
+                    if (TabsTrackerService.isRunning())
+                        stopService(new Intent(MainActivity.this, TabsTrackerService.class));
+                }
+                return true;
+            }
+        });
         
         final DragSortListView list = (DragSortListView)findViewById(R.id.sidebar_tabs_list);
         TabsState state = MainApplication.getInstance().tabsState;
@@ -574,6 +610,10 @@ public class MainActivity extends FragmentActivity {
             }
             MainApplication.getInstance().pagesToOpen = null;
         }
+
+        btnRefresh.setImageResource(ThemeUtils.getThemeResId(getTheme(), MainApplication.getInstance().settings.isAutoupdateEnabled()
+                    ? R.attr.sidebarBtnRefreshOn
+                    : R.attr.sidebarBtnRefreshOff));
     }
     
     private void clearCache() {

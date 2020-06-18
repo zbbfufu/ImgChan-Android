@@ -42,6 +42,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="sidebarBtnNewTab">@drawable/sidebar_newtab_light</item>
         <item name="sidebarBtnHistory">@drawable/sidebar_history_light</item>
         <item name="sidebarBtnFavorites">@drawable/sidebar_favorites_light</item>
+        <item name="sidebarBtnRefreshOn">@drawable/sidebar_refresh_on_light</item>
+        <item name="sidebarBtnRefreshOff">@drawable/sidebar_refresh_off_light</item>
         <item name="iconBtnClose">@drawable/ic_action_remove_light</item>
         <item name="actionRefresh">@drawable/ic_action_refresh_light</item>
         <item name="actionAddPost">@drawable/ic_action_edit_light</item>
@@ -58,6 +60,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="sidebarBtnNewTab">@drawable/sidebar_newtab_dark</item>
         <item name="sidebarBtnHistory">@drawable/sidebar_history_dark</item>
         <item name="sidebarBtnFavorites">@drawable/sidebar_favorites_dark</item>
+        <item name="sidebarBtnRefreshOn">@drawable/sidebar_refresh_on_dark</item>
+        <item name="sidebarBtnRefreshOff">@drawable/sidebar_refresh_off_dark</item>
         <item name="iconBtnClose">@drawable/ic_action_remove_dark</item>
         <item name="actionRefresh">@drawable/ic_action_refresh_dark</item>
         <item name="actionAddPost">@drawable/ic_action_edit_dark</item>

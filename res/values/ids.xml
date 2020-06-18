@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <item name="menu_update" type="id"/>
     <item name="menu_catalog" type="id"/>
     <item name="menu_search" type="id"/>
+    <item name="menu_search_threads" type="id"/>
     <item name="menu_attach_file" type="id"/>
     <item name="menu_attach_gallery" type="id"/>
     <item name="menu_save_page" type="id"/>
