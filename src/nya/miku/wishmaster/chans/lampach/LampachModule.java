@@ -91,6 +91,11 @@ public class LampachModule extends AbstractWakabaModule {
     }
     
     @Override
+    protected boolean canHttps() {
+        return true;
+    }
+    
+    @Override
     public SimpleBoardModel[] getBoardsList() {
         return BOARDS;
     }

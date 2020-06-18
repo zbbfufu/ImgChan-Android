@@ -24,7 +24,9 @@ import android.graphics.Color;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
@@ -45,7 +47,12 @@ public class LampachReader extends WakabaReader {
     
     private static final DateFormat DATE_FORMAT;
     static {
-        DATE_FORMAT = new SimpleDateFormat("dd MMM yy(EEE)HH:mm:ss", Locale.US);
+        DATE_FORMAT = new SimpleDateFormat("dd MMM yy(EEE)HH:mm:ss", Locale.US) {
+            @Override
+            public Date parse(String string) throws ParseException {
+                return super.parse(string.replaceFirst("\\D*\\(.*?([A-Za-z]+).*?\\)\\D*", "($1)"));
+            }
+        };
         DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
     
@@ -137,7 +144,7 @@ public class LampachReader extends WakabaReader {
         }
         
         try {
-            currentPost.timestamp = DATE_FORMAT.parse(date.replace("|", "")).getTime();
+            currentPost.timestamp = DATE_FORMAT.parse(date).getTime();
         } catch (Exception e) {
             super.parseDate(date);
         }
