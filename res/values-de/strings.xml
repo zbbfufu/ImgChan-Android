@@ -344,8 +344,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="autohide_error_incorrect_regex">Falscher regulärer Ausdruck</string>
     
     <string name="app_update_checking">Suche nach Updates</string>
-    <string name="app_update_update_available">Update verfügbar</string>
-    <string name="app_update_update_dialog_text">Neue Version ist verfügbar:\n%s\n\n%s\n\nMöchten Sie es installieren?</string>
+    <string name="app_update_update_available">Neue Version ist verfügbar</string>
+    <string name="app_update_update_dialog_text">%s ➞ %s\n\n%s\n\nMöchten Sie es installieren?</string>
     <string name="app_update_update_not_required">Kein Update erforderlich</string>
     <string name="app_update_update_error">Kann nicht nach Updates suchen</string>
     <string name="app_update_download_error">Update kann nicht heruntergeladen werden</string>

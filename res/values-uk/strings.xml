@@ -354,8 +354,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="autohide_error_incorrect_regex">Хибний регулярний вираз</string>
     
     <string name="app_update_checking">Перевірка оновлень</string>
-    <string name="app_update_update_available">Є оновлення</string>
-    <string name="app_update_update_dialog_text">Є нова версія:\n%s\n\n%s\n\nВстановити оновлення?</string>
+    <string name="app_update_update_available">Є нова версія</string>
+    <string name="app_update_update_dialog_text">%s ➞ %s\n\n%s\n\nВстановити оновлення?</string>
     <string name="app_update_update_not_required">Ця версія найновіша</string>
     <string name="app_update_update_error">Помилка перевірки оновлень</string>
     <string name="app_update_download_error">Не вдалося завантажити оновлення</string>

@@ -344,8 +344,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="autohide_error_incorrect_regex">Incorrect regular expression</string>
     
     <string name="app_update_checking">Checking for updates</string>
-    <string name="app_update_update_available">Update available</string>
-    <string name="app_update_update_dialog_text">New version is available:\n%s\n\n%s\n\nDo you want to install it?</string>
+    <string name="app_update_update_available">New version is available</string>
+    <string name="app_update_update_dialog_text">%s ➞ %s\n\n%s\n\nDo you want to install it?</string>
     <string name="app_update_update_not_required">No update required</string>
     <string name="app_update_update_error">Cannot check for updates</string>
     <string name="app_update_download_error">Cannot download update</string>

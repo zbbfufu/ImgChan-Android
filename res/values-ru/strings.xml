@@ -351,8 +351,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="autohide_error_incorrect_regex">Некорректное регулярное выражение</string>
     
     <string name="app_update_checking">Проверка обновлений</string>
-    <string name="app_update_update_available">Доступно обновление</string>
-    <string name="app_update_update_dialog_text">Доступна новая версия:\n%s\n\n%s\n\nУстановить обновление?</string>
+    <string name="app_update_update_available">Доступна новая версия</string>
+    <string name="app_update_update_dialog_text">%s ➞ %s\n\n%s\n\nУстановить обновление?</string>
     <string name="app_update_update_not_required">Обновление не требуется</string>
     <string name="app_update_update_error">Не удалось проверить обновления</string>
     <string name="app_update_download_error">Не удалось загрузить обновление</string>
