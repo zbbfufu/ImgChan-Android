@@ -65,6 +65,7 @@ public class Chan410Module extends AbstractChanModule {
     static final String CHAN410_URL = "http://" + CHAN410_DOMAIN + "/";
     
     private static final String PREF_KEY_FAPTCHA_COOKIES = "PREF_KEY_FAPTCHA_COOKIES";
+    private static final long FAPTCHA_LIFETIME = 24 * 60 * 60 * 1000;
     
     public Chan410Module(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -104,24 +105,26 @@ public class Chan410Module extends AbstractChanModule {
                     BasicClientCookie c = new BasicClientCookie(board, value);
                     c.setDomain(CHAN410_DOMAIN);
                     c.setPath("/");
-                    long expiry = cookie.optLong("expires");
-                    c.setExpiryDate(expiry > 0 ? new Date(expiry) : null);
+                    c.setExpiryDate(new Date(cookie.optLong("expires", 0)));
                     httpClient.getCookieStore().addCookie(c);
                 }
             }
         }
+        httpClient.getCookieStore().clearExpired(new Date());
     }
     
     private void saveFaptchaCookies() {
         JSONObject savedCookies = new JSONObject();
         List<Cookie> cookies = httpClient.getCookieStore().getCookies();
         for (Cookie cookie : cookies) {
-            if (cookie.getName().length() <= 3 && Chan410Boards.ALL_BOARDS_SET.contains(cookie.getName())) {
+            if (cookie.getDomain().contains(CHAN410_DOMAIN)
+                    && cookie.getName().length() <= 3
+                    && Chan410Boards.ALL_BOARDS_SET.contains(cookie.getName())) {
                 JSONObject cookieAttributes = new JSONObject();
                 cookieAttributes.put("value", cookie.getValue());
-                if (cookie.getExpiryDate() != null) {
-                    cookieAttributes.put("expires", cookie.getExpiryDate().getTime());
-                }
+                cookieAttributes.put("expires", (cookie.getExpiryDate() == null) ?
+                        (System.currentTimeMillis() + FAPTCHA_LIFETIME)
+                                : cookie.getExpiryDate().getTime());
                 savedCookies.put(cookie.getName(), cookieAttributes);
             }
         }
@@ -266,14 +269,10 @@ public class Chan410Module extends AbstractChanModule {
         try {
             response = HttpStreamer.getInstance().getFromUrl(url, request, httpClient, null, task);
             if (response.statusCode == 302) {
-                for (Header header : response.headers) {
-                    if (header != null && HttpHeaders.LOCATION.equalsIgnoreCase(header.getName())) {
-                        String redirectUrl = header.getValue().trim();
-                        if (redirectUrl.length() == 0) throw new Exception();
-                        if (redirectUrl.contains("banned.php")) throw new Exception("Вы забанены");
-                        return fixRelativeUrl(redirectUrl);
-                    }
-                }
+                String redirectUrl = response.locationHeader;
+                if (redirectUrl.length() == 0) throw new Exception();
+                if (redirectUrl.contains("banned.php")) throw new Exception("Вы забанены");
+                return fixRelativeUrl(redirectUrl);
             } else if (response.statusCode == 200) {
                 ByteArrayOutputStream output = new ByteArrayOutputStream(1024);
                 IOUtils.copyStream(response.stream, output);

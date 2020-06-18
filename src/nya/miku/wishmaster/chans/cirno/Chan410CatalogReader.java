@@ -50,7 +50,7 @@ public class Chan410CatalogReader implements Closeable {
     
     public static final char[][] FILTERS_OPEN = {
         "<a href=\"".toCharArray(),
-        "<img class=\"catalogpic\" src=\"".toCharArray(),
+        "class=\"catalogpic\"".toCharArray(),
         "<span class=\"catalogsubject\">".toCharArray(),
         "<span class=\"catalogmsg\">".toCharArray(),
         "<span class=\"catalogposts\">".toCharArray(),
@@ -146,14 +146,18 @@ public class Chan410CatalogReader implements Closeable {
                 }
                 break;
             case FILTER_THUMBNAIL:
-                AttachmentModel attachment = new AttachmentModel();
-                attachment.type = AttachmentModel.TYPE_IMAGE_STATIC;
-                attachment.size = -1;
-                attachment.width = -1;
-                attachment.height = -1;
-                attachment.thumbnail = readUntilSequence(FILTERS_CLOSE[filterIndex]);
-                attachment.path = attachment.thumbnail.replace("/thumb/", "/src/").replaceAll("(\\d+)c\\.", "$1.");
-                currentThread.posts[0].attachments = new AttachmentModel[] { attachment };
+                skipUntilSequence("src=\"".toCharArray());
+                String thumbnail = readUntilSequence(FILTERS_CLOSE[filterIndex]);
+                if (thumbnail.length() > 0) {
+                    AttachmentModel attachment = new AttachmentModel();
+                    attachment.type = AttachmentModel.TYPE_IMAGE_STATIC;
+                    attachment.size = -1;
+                    attachment.width = -1;
+                    attachment.height = -1;
+                    attachment.thumbnail = thumbnail;
+                    attachment.path = thumbnail.replace("/thumb/", "/src/").replaceAll("(\\d+)c\\.", "$1.");
+                    currentThread.posts[0].attachments = new AttachmentModel[] { attachment };
+                }
                 break;
             case FILTER_SUBJECT:
                 currentThread.posts[0].subject = StringEscapeUtils.unescapeHtml4(readUntilSequence(FILTERS_CLOSE[filterIndex])).trim();
