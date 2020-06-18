@@ -19,7 +19,6 @@
 package nya.miku.wishmaster.chans.infinity;
 
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,7 +42,6 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.preference.CheckBoxPreference;
 import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
@@ -65,6 +63,7 @@ import nya.miku.wishmaster.api.util.LazyPreferences;
 import nya.miku.wishmaster.common.IOUtils;
 import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
+import nya.miku.wishmaster.http.cloudflare.CloudflareException;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
@@ -80,25 +79,20 @@ public class InfinityModule extends AbstractVichanModule {
     private static final String DEFAULT_DOMAIN = "8kun.top";
     private static final String SYSTEM_DOMAIN = "sys.8kun.top";
     private static final String MEDIA_DOMAIN = "media.8kun.top";
-    private static final String MEDIA2_DOMAIN = "media2.8kun.top";
+    //private static final String MEDIA2_DOMAIN = "media2.8kun.top";
     private static final String ONION_DOMAIN = "jthnx5wyvjvzsxtu.onion";
+    private static final String ONION_SYSTEM_DOMAIN = "sys.jthnx5wyvjvzsxtu.onion";
+    private static final String ONION_MEDIA_DOMAIN = "media.jthnx5wyvjvzsxtu.onion";
     private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN, "8ch.net", "8kun.net", "8chan.co" };
     
     private static final String[] ATTACHMENT_FORMATS = new String[] { "jpg", "jpeg", "gif", "png", "webm", "mp4", "swf", "pdf" };
-    private static final FastHtmlTagParser.TagReplaceHandler QUOTE_REPLACER = new FastHtmlTagParser.TagReplaceHandler() {
-        @Override
-        public FastHtmlTagParser.TagsPair replace(FastHtmlTagParser.TagsPair source) {
-            if (source.openTag.equalsIgnoreCase("<p class=\"body-line ltr quote\">"))
-                return new FastHtmlTagParser.TagsPair("<span class=\"quote\">", "</span><br />");
-            return null;
-        }
-    };
     private static final FastHtmlTagParser.TagReplaceHandler PARAGRAPH_REPLACER = new FastHtmlTagParser.TagReplaceHandler() {
         @Override
         public FastHtmlTagParser.TagsPair replace(FastHtmlTagParser.TagsPair source) {
-            if (source.openTag.equalsIgnoreCase("<p class=\"body-line ltr \">"))
-                return new FastHtmlTagParser.TagsPair("", "<br />");
-            return null;
+            if (source.openTag.equals("<p class=\"body-line ltr quote\">")) {
+                return new FastHtmlTagParser.TagsPair("<span class=\"quote\">", "</span><br />");
+            }
+            return new FastHtmlTagParser.TagsPair("", "<br />");
         }
     };
     
@@ -170,6 +164,22 @@ public class InfinityModule extends AbstractVichanModule {
     protected String getUsingDomain() {
         return preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) ? ONION_DOMAIN : DEFAULT_DOMAIN;
     }
+
+    private String getSystemUrl() {
+        String domain = getUsingDomain();
+        if (DEFAULT_DOMAIN.equals(domain) || ONION_DOMAIN.equals(domain)) {
+            domain = preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) ?
+                    ONION_SYSTEM_DOMAIN : SYSTEM_DOMAIN;
+        }
+        return (useHttps() ? "https://" : "http://") + domain + "/";
+    }
+
+    private String getMediaUrl(String urlPath) {
+        if (urlPath == null) return null;
+        String mediaDomain = preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) ?
+                ONION_MEDIA_DOMAIN : MEDIA_DOMAIN;
+        return fixRelativeUrl(urlPath).replaceFirst(getUsingDomain(), mediaDomain);
+    }
     
     @Override
     protected String[] getAllDomains() {
@@ -220,10 +230,12 @@ public class InfinityModule extends AbstractVichanModule {
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel fromMap = boardsMap.get(shortName);
         if (fromMap != null) return fromMap;
-        String url = getUsingUrl() + "settings.php?board=" + shortName;
+        String url = getSystemUrl() + "settings.php?board=" + shortName;
         JSONObject json;
         try {
             json = downloadJSONObject(url, false, listener, task);
+        } catch (CloudflareException cf) {
+            throw cf;
         } catch (Exception e) {
             json = new JSONObject();
         }
@@ -237,7 +249,7 @@ public class InfinityModule extends AbstractVichanModule {
         model.bumpLimit = json.optInt("reply_limit", 500);
         model.readonlyBoard = false;
         model.requiredFileForNewThread = json.optBoolean("force_image_op", false);
-        model.allowDeletePosts = json.optBoolean("allow_delete", false);
+        model.allowDeletePosts = json.optBoolean("allow_delete", true);
         model.allowDeleteFiles = model.allowDeletePosts;
         model.allowNames = !json.optBoolean("field_disable_name", false);
         model.allowSubjects = true;
@@ -255,7 +267,6 @@ public class InfinityModule extends AbstractVichanModule {
         model.lastPage = json.optInt("max_pages", BoardModel.LAST_PAGE_UNDEFINED);
         model.searchAllowed = false;
         model.catalogAllowed = true;
-        boardsMap.put(shortName, model);
         JSONObject captcha = json.optJSONObject("captcha");
         if ((captcha != null) && captcha.optBoolean("enabled")) {
             boardsPostCaptcha.add(shortName);
@@ -263,6 +274,7 @@ public class InfinityModule extends AbstractVichanModule {
         } else if (json.optBoolean("new_thread_capt")) {
             boardsThreadCaptcha.add(shortName);
         }
+        if (json.length() != 0) boardsMap.put(shortName, model);
         return model;
     }
     
@@ -270,7 +282,6 @@ public class InfinityModule extends AbstractVichanModule {
     protected PostModel mapPostModel(JSONObject object, String boardName) {
         PostModel model = super.mapPostModel(object, boardName);
         try {
-            model.comment = FastHtmlTagParser.getPTagParser().replace(model.comment, QUOTE_REPLACER);
             model.comment = FastHtmlTagParser.getPTagParser().replace(model.comment, PARAGRAPH_REPLACER);
             model.comment = model.comment.replaceAll("<br />$", "");
         } catch (Exception e) {}
@@ -280,31 +291,28 @@ public class InfinityModule extends AbstractVichanModule {
     @Override
     protected AttachmentModel mapAttachment(JSONObject object, String boardName, boolean isSpoiler) {
         AttachmentModel attachment = super.mapAttachment(object, boardName, isSpoiler);
+        String tim = object.optString("tim", "");
         String ext = object.optString("ext", "");
-        String thumbnail_ext = ext;
-        if (attachment != null) {
-            String tim = object.optString("tim", "");
+        if (attachment != null && tim.length() > 0 && ext.length() > 0) {
             String thumbLocation = tim.length() == 64 ? "/file_store/thumb/" : "/" + boardName + "/thumb/";
             String fileLocation = tim.length() == 64 ? "/file_store/" : "/" + boardName + "/src/";
-            if (tim.length() > 0) {
-                if(tim.length()!=64 || (tim.length() == 64 && attachment.type == AttachmentModel.TYPE_VIDEO)){
-                    thumbnail_ext = ".jpg";
-                }
-                attachment.thumbnail = isSpoiler || attachment.type == AttachmentModel.TYPE_AUDIO ? null :
-                        (thumbLocation + tim + thumbnail_ext);
-                attachment.path = fileLocation + tim + ext;
-                if (getUsingDomain().equals(DEFAULT_DOMAIN)){
-                    if (attachment.thumbnail != null) {
-                        attachment.thumbnail = fixRelativeUrl(attachment.thumbnail).replaceFirst(DEFAULT_DOMAIN, MEDIA_DOMAIN);
-                    }
-                    attachment.path = fixRelativeUrl(attachment.path).replaceFirst(DEFAULT_DOMAIN, MEDIA_DOMAIN);
-                }
-                return attachment;
+            String thumbnailExt = ext;
+            if (tim.length() != 64 || attachment.type == AttachmentModel.TYPE_VIDEO) {
+                thumbnailExt = ".jpg";
             }
+            attachment.thumbnail = isSpoiler || attachment.type == AttachmentModel.TYPE_AUDIO
+                    || attachment.type == AttachmentModel.TYPE_OTHER_FILE ? null
+                    : thumbLocation + tim + thumbnailExt;
+            attachment.path = fileLocation + tim + ext;
+            if (getUsingDomain().equals(DEFAULT_DOMAIN) || getUsingDomain().equals(ONION_DOMAIN)) {
+                attachment.thumbnail = getMediaUrl(attachment.thumbnail);
+                attachment.path = getMediaUrl(attachment.path);
+            }
+            return attachment;
         }
-        return attachment;
+        return null;
     }
-
+/*
     @Override
     public void downloadFile(String url, OutputStream out, ProgressListener listener, CancellableTask task) throws Exception {
         String fixedUrl = fixRelativeUrl(url);
@@ -327,6 +335,7 @@ public class InfinityModule extends AbstractVichanModule {
             }
         }
     }
+*/
     
     @Override
     public ThreadModel[] getThreadsList(String boardName, int page, ProgressListener listener, CancellableTask task, ThreadModel[] oldList)
@@ -345,7 +354,7 @@ public class InfinityModule extends AbstractVichanModule {
                 boardsThreadCaptcha.contains(boardName) :
                     boardsPostCaptcha.contains(boardName);
         if (needTorCaptcha) {
-            String url = getUsingUrl() + "dnsbls_bypass.php";
+            String url = getSystemUrl() + "dnsbls_bypass.php";
             String response =
                     HttpStreamer.getInstance().getStringFromUrl(url, HttpRequestModel.DEFAULT_GET, httpClient, listener, task, false);
             Matcher base64Matcher = CAPTCHA_BASE64.matcher(response);
@@ -360,7 +369,7 @@ public class InfinityModule extends AbstractVichanModule {
             }
         }
         if (needNewThreadCaptcha) {
-            String url = getUsingUrl() + "8chan-captcha/entrypoint.php?mode=get&extra=abcdefghijklmnopqrstuvwxyz&nojs=true";
+            String url = getSystemUrl() + "8kun-captcha/entrypoint.php?mode=get&extra=abcdefghijklmnopqrstuvwxyz&nojs=true";
             HttpRequestModel request = HttpRequestModel.builder().setGET()
                     .setCustomHeaders(new Header[] { new BasicHeader(HttpHeaders.CACHE_CONTROL, "max-age=0") }).build();
             String response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, listener, task, false);
@@ -381,7 +390,7 @@ public class InfinityModule extends AbstractVichanModule {
     private void checkCaptcha(String answer, CancellableTask task) throws Exception {
         try {
             if (torCaptchaCookie == null) throw new Exception("Invalid captcha");
-            String url = getUsingUrl() + "dnsbls_bypass.php";
+            String url = getSystemUrl() + "dnsbls_bypass.php";
             List<NameValuePair> pairs = new ArrayList<NameValuePair>();
             pairs.add(new BasicNameValuePair("captcha_text", answer));
             pairs.add(new BasicNameValuePair("captcha_cookie", torCaptchaCookie));
@@ -413,12 +422,7 @@ public class InfinityModule extends AbstractVichanModule {
             }
         }
         if (task != null && task.isCancelled()) throw new InterruptedException("interrupted");
-        String url;
-        if (DEFAULT_DOMAIN.equals(getUsingDomain())) {
-            url = (useHttps() ? "https://" : "http://") + SYSTEM_DOMAIN + "/post.php";
-        } else {
-            url = getUsingUrl() + "post.php";
-        }
+        String url = getSystemUrl() + "post.php";
         ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
                 addString("name", model.name).
                 addString("email", model.sage ? "sage" : model.email).
@@ -513,7 +517,7 @@ public class InfinityModule extends AbstractVichanModule {
     
     @Override
     public String deletePost(DeletePostModel model, ProgressListener listener, CancellableTask task) throws Exception {
-        String url = getUsingUrl() + "post.php";
+        String url = getSystemUrl() + "delete_post.php";
         List<NameValuePair> pairs = new ArrayList<NameValuePair>();
         pairs.add(new BasicNameValuePair("board", model.boardName));
         pairs.add(new BasicNameValuePair("delete_" + model.postNumber, "on"));

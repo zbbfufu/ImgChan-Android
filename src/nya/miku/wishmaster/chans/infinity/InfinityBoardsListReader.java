@@ -56,7 +56,7 @@ public class InfinityBoardsListReader implements Closeable {
         for (int i=0; i<filtersCount; ++i) len[i] = FILTERS[i].length;
         int curChar;
         while ((curChar = _in.read()) != -1) {
-            if (curChar == '}') {
+            if (curChar == '}' && current.boardName != null) {
                 list.add(current);
                 if (list.size() == MAX_BOARDS_COUNT) break;
                 current = new SimpleBoardModel();
