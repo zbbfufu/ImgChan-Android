@@ -35,7 +35,7 @@ import cz.msebera.android.httpclient.message.BasicHeader;
 import cz.msebera.android.httpclient.message.BasicNameValuePair;
 
 import nya.miku.wishmaster.R;
-import nya.miku.wishmaster.api.AbstractChanModule;
+import nya.miku.wishmaster.api.StormwallChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.AttachmentModel;
@@ -74,12 +74,10 @@ import org.apache.commons.lang3.StringEscapeUtils;
  * @author miku-nyan
  *
  */
-public class CirnoModule extends AbstractChanModule {
+public class CirnoModule extends StormwallChanModule {
     
     static final String IICHAN_NAME = "iichan.hk";
     static final String IICHAN_DOMAIN = "iichan.hk";
-    private static final String HARUHIISM_DOMAIN = "boards.haruhiism.net";
-    private static final String HARUHIISM_URL = "http://" + HARUHIISM_DOMAIN + "/";
     
     private static final String PREF_KEY_REPORT_THREAD = "PREF_KEY_REPORT_THREAD";
     private String lastReportCaptcha;
@@ -146,8 +144,8 @@ public class CirnoModule extends AbstractChanModule {
         try {
             responseModel = HttpStreamer.getInstance().getFromUrl(url, rqModel, httpClient, listener, task);
             if (responseModel.statusCode == 200) {
-                in = new CirnoReader(responseModel.stream,
-                        url.startsWith(HARUHIISM_URL) ? DateFormats.HARUHIISM_DATE_FORMAT : DateFormats.IICHAN_DATE_FORMAT);
+                checkForStormwall(url, responseModel);
+                in = new CirnoReader(responseModel.stream, DateFormats.IICHAN_DATE_FORMAT);
                 if (task != null && task.isCancelled()) throw new Exception("interrupted");
                 return in.readWakabaPage();
             } else {
@@ -196,6 +194,7 @@ public class CirnoModule extends AbstractChanModule {
         try {
             responseModel = HttpStreamer.getInstance().getFromUrl(url, rqModel, httpClient, listener, task);
             if (responseModel.statusCode == 200) {
+                checkForStormwall(url, responseModel);
                 in = new CirnoCatalogReader(responseModel.stream);
                 if (task != null && task.isCancelled()) throw new Exception("interrupted");
                 return in.readPage();
@@ -402,14 +401,14 @@ public class CirnoModule extends AbstractChanModule {
                 return WakabaUtils.buildUrl(model, Chan410Module.CHAN410_URL);
             }
         }
-        boolean haruhiism = "abe".equals(model.boardName) || (model.otherPath != null && model.otherPath.startsWith("/abe"));
-        if (!haruhiism && model.type == UrlPageModel.TYPE_CATALOGPAGE) return getUsingUrl() + model.boardName + "/catalogue.html";
-        return WakabaUtils.buildUrl(model, haruhiism ? HARUHIISM_URL : getUsingUrl());
+        if ("abe".equals(model.boardName)) model.boardName = "aa";
+        if (model.type == UrlPageModel.TYPE_CATALOGPAGE) return getUsingUrl() + model.boardName + "/catalogue.html";
+        return WakabaUtils.buildUrl(model, getUsingUrl());
     }
     
     @Override
     public UrlPageModel parseUrl(String url) throws IllegalArgumentException {
-        UrlPageModel model = WakabaUtils.parseUrl(url, IICHAN_NAME, IICHAN_DOMAIN, HARUHIISM_DOMAIN);
+        UrlPageModel model = WakabaUtils.parseUrl(url, IICHAN_NAME, IICHAN_DOMAIN);
         if (model.type == UrlPageModel.TYPE_OTHERPAGE && model.otherPath != null && model.otherPath.endsWith("/catalogue.html")) {
             model.type = UrlPageModel.TYPE_CATALOGPAGE;
             model.boardName = model.otherPath.substring(0, model.otherPath.length() - 15);

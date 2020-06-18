@@ -34,7 +34,8 @@ public class CirnoBoards {
     
     private static final List<String> IICHAN_SPOILER_MARK_BOARDS = Arrays.asList("bro", "med", "tv", "a", "fi", "to", "vn", "vg");
     
-    private static final List<String> IICHAN_READONLY_BOARDS = Arrays.asList("o", "w", "abe", "ma", "azu", "me", "hau", "sos", "mo", "sp", "bg", "ls", "maid");
+    private static final List<String> IICHAN_READONLY_BOARDS = Arrays.asList(
+            "o", "w", "ma", "azu", "me", "hau", "sos", "mo", "sp", "bg", "ls", "maid", "ne", "fr", "an", "gf", "med");
     
     private static final List<BoardModel> LIST_IICHAN = new ArrayList<BoardModel>();
     private static final Map<String, BoardModel> MAP_IICHAN = new HashMap<String, BoardModel>();
@@ -44,28 +45,22 @@ public class CirnoBoards {
         addBoard("d", "Работа сайта", "Обсуждения", "Мод-тян", false);
         addBoard("b", "Бред", "Общее", "Сырно", true);
         addBoard("hr", "Высокое разрешение", "Общее", "Аноним", false);
-        addBoard("gf", "gif- и flash-анимация", "Общее", "Аноним", true); //???
         addBoard("ci", "Городская жизнь", "Общее", "Аноним", false);
-        addBoard("an", "Живопись", "Общее", "Кот Синкая", false);
-        addBoard("ne", "Животные", "Общее", "Пушок", false);
         addBoard("tran", "Иностранные языки", "Общее", "Е. Д. Поливанов", false);
         addBoard("tv", "Кино, ТВ и мультфильмы", "Общее", "К. С. Станиславский", false);
         addBoard("cu", "Кулинария", "Общее", "Аноним", false);
         addBoard("l", "Литература", "Общее", "Ф. М. Достоевский", false);
         addBoard("bro", "My Little Pony", "Общее", "Эпплджек", false);
-        addBoard("m", "Картинки-макросы и копипаста", "Общее", "Копипаста-гей", false);
-        addBoard("med", "Медицина", "Общее", "Антон Буслов", false);
+        addBoard("m", "Макросы/копипаста", "Общее", "Копипаста-гей", false);
         addBoard("mu", "Музыка", "Общее", "Виктор Цой", false);
         addBoard("sci", "Наука", "Общее", "Гриша Перельман", false);
         addBoard("mi", "Оружие", "Общее", "Й. Швейк", false);
-        addBoard("o", "Оэкаки", "Общее", "Аноним", false);
         addBoard("x", "Паранормальные явления", "Общее", "Эмма Ай", false);
         addBoard("r", "Просьбы", "Общее", "Аноним", false);
         addBoard("dev", "Разработка", "Общее", "Стив Балмер", false);
-        //addBoard("maid", "Служанки", "Общее", "Госюдзин-сама", false);
+        addBoard("o", "Рисование", "Общее", "Аноним", false);
         addBoard("tu", "Туризм", "Общее", "Аноним", false);
         addBoard("ph", "Фото", "Общее", "Аноним", false);
-        addBoard("fr", "Фурри", "Общее", "Аноним", false);
         addBoard("s", "Электроника и ПО", "Общее", "Чии", false);
         addBoard("es", "Бесконечное лето", "Игры", "Пионер", false);
         addBoard("vg", "Видеоигры", "Игры", "Марио", false);
@@ -75,9 +70,7 @@ public class CirnoBoards {
         addBoard("aa", "Аниме-арт", "Японская культура", "Ракка", false);
         addBoard("vn", "Визуальные новеллы", "Японская культура", "Сэйбер", false);
         addBoard("vo", "Vocaloid", "Японская культура", "", false); //hatsune
-        addBoard("abe", "ёситоси абэ", "Японская культура", "Chada", false);
         addBoard("c", "Косплей", "Японская культура", "Аноним", false);
-        //addBoard("ls", "Lucky☆Star", "Японская культура", "Цукаса", false);
         addBoard("rm", "Rozen Maiden", "Японская культура", "Суйгинто", false);
         addBoard("tan", "Сетевые персонажи", "Японская культура", "Уныл-тян", false);
         addBoard("to", "Touhou", "Японская культура", "Нитори", false);
