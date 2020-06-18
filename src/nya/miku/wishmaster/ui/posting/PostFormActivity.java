@@ -46,6 +46,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
+import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -304,7 +305,13 @@ public class PostFormActivity extends Activity implements View.OnClickListener, 
                 }
                 if (!CompatibilityUtils.hasAccessStorage(this)) return true;
                 Intent i = new Intent(Intent.ACTION_GET_CONTENT);
-                i.setType("image/*");
+                i.setType("*/*");
+                i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                i.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {
+                    "image/*",
+                    "video/*",
+                    "audio/*"
+                });
                 startActivityForResult(i, REQUEST_CODE_ATTACH_GALLERY);
                 return true;
         }
@@ -325,22 +332,31 @@ public class PostFormActivity extends Activity implements View.OnClickListener, 
                     handleFile(file);
                     break;
                 case REQUEST_CODE_ATTACH_GALLERY:
-                    Uri imageUri = data.getData();
-                    file = UriFileUtils.getFile(this, imageUri);
-                    if (file == null && "content".equalsIgnoreCase(imageUri.getScheme())) {
-                        String name = UriFileUtils.getContentName(this, imageUri);
-                        if (name != null && !name.equals("")) {
-                            FileCache fileCache = MainApplication.getInstance().fileCache;
-                            file = fileCache.create(fileCache.PREFIX_ATTACHMENTS + name);
-                            if (UriFileUtils.saveContent(this, imageUri, file)) {
-                                fileCache.put(file);
-                            } else {
-                                fileCache.abort(file);
-                                file = null;
+                    ArrayList<Uri> fileUris = new ArrayList<Uri>();
+                    Uri dataUri = data.getData();
+                    ClipData clipData = data.getClipData();
+                    if (dataUri != null)
+                        fileUris.add(dataUri);
+                    if (clipData != null)
+                        for (int i = 0; i < clipData.getItemCount(); ++i)
+                            fileUris.add(clipData.getItemAt(i).getUri());
+                    for (Uri imageUri: fileUris) {
+                        file = UriFileUtils.getFile(this, imageUri);
+                        if (file == null && "content".equalsIgnoreCase(imageUri.getScheme())) {
+                            String name = UriFileUtils.getContentName(this, imageUri);
+                            if (name != null && !name.equals("")) {
+                                FileCache fileCache = MainApplication.getInstance().fileCache;
+                                file = fileCache.create(fileCache.PREFIX_ATTACHMENTS + name);
+                                if (UriFileUtils.saveContent(this, imageUri, file)) {
+                                    fileCache.put(file);
+                                } else {
+                                    fileCache.abort(file);
+                                    file = null;
+                                }
                             }
                         }
+                        handleFile(file);
                     }
-                    handleFile(file);
                     break;
             }
             saveSendPostModel();
