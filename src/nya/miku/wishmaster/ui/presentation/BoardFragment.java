@@ -744,7 +744,9 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             menu.add(Menu.NONE, R.id.context_menu_open_in_new_tab, 1, R.string.context_menu_open_in_new_tab);
             menu.add(Menu.NONE, R.id.context_menu_thread_preview, 2, R.string.context_menu_thread_preview);
             menu.add(Menu.NONE, R.id.context_menu_reply_no_reading, 3, R.string.context_menu_reply_no_reading);
-            menu.add(Menu.NONE, R.id.context_menu_hide, 4, R.string.context_menu_hide_thread);
+            menu.add(Menu.NONE, R.id.context_menu_copy_thread_url, 4, R.string.context_menu_copy_url);
+            menu.add(Menu.NONE, R.id.context_menu_share_thread_link, 5, R.string.context_menu_share_link);
+            menu.add(Menu.NONE, R.id.context_menu_hide, 6, R.string.context_menu_hide_thread);
             if (presentationModel.source.boardModel.readonlyBoard || tabModel.type == TabModel.TYPE_LOCAL) {
                 menu.findItem(R.id.context_menu_reply_no_reading).setVisible(false);
             }
@@ -836,6 +838,31 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 model.boardName = tabModel.pageModel.boardName;
                 model.threadNumber = adapter.getItem(position).sourceModel.parentThread;
                 openPostForm(ChanModels.hashUrlPageModel(model), presentationModel.source.boardModel, getSendPostModel(model));
+                return true;
+            case R.id.context_menu_copy_thread_url:
+                UrlPageModel copyThreadLinkUrlPageModel = new UrlPageModel();
+                copyThreadLinkUrlPageModel.chanName = chan.getChanName();
+                copyThreadLinkUrlPageModel.type = UrlPageModel.TYPE_THREADPAGE;
+                copyThreadLinkUrlPageModel.boardName = tabModel.pageModel.boardName;
+                copyThreadLinkUrlPageModel.threadNumber = adapter.getItem(position).sourceModel.number;
+
+                String copyThreadLinkUrl = chan.buildUrl(copyThreadLinkUrlPageModel);
+                Clipboard.copyText(activity, copyThreadLinkUrl);
+                Toast.makeText(activity, resources.getString(R.string.notification_url_copied, copyThreadLinkUrl), Toast.LENGTH_LONG).show();
+                return true;
+            case R.id.context_menu_share_thread_link:
+                UrlPageModel shareThreadLinkUrlPageModel = new UrlPageModel();
+                shareThreadLinkUrlPageModel.chanName = chan.getChanName();
+                shareThreadLinkUrlPageModel.type = UrlPageModel.TYPE_THREADPAGE;
+                shareThreadLinkUrlPageModel.boardName = tabModel.pageModel.boardName;
+                shareThreadLinkUrlPageModel.threadNumber = adapter.getItem(position).sourceModel.number;
+
+                String shareThreadLinkUrl = chan.buildUrl(shareThreadLinkUrlPageModel);
+                Intent shareThreadLinkIntent = new Intent(Intent.ACTION_SEND);
+                shareThreadLinkIntent.setType("text/plain");
+                shareThreadLinkIntent.putExtra(Intent.EXTRA_SUBJECT, shareThreadLinkUrl);
+                shareThreadLinkIntent.putExtra(Intent.EXTRA_TEXT, shareThreadLinkUrl);
+                startActivity(Intent.createChooser(shareThreadLinkIntent, resources.getString(R.string.share_via)));
                 return true;
             case R.id.context_menu_hide:
                 adapter.getItem(position).hidden = true;
