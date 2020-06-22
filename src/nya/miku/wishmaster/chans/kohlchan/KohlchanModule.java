@@ -206,6 +206,15 @@ public class KohlchanModule extends AbstractLynxChanModule {
         }
     }
 
+    @Override
+    public void clearCookies() {
+        super.clearCookies();
+        preferences.edit().
+            remove(getSharedKey(PREF_KEY_BYPASS_COOKIE)).
+            remove(getSharedKey(PREF_KEY_EXTRA_COOKIE)).
+            commit();
+    }
+
     private void loadBypassCookie() {
         String bypassCookie = preferences.getString(getSharedKey(PREF_KEY_BYPASS_COOKIE), null);
         if (bypassCookie != null) {

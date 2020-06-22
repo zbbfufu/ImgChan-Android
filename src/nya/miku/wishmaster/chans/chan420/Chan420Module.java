@@ -96,6 +96,7 @@ public class Chan420Module extends CloudflareChanModule {
         addHttpsPreference(preferenceGroup, true);
         addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
+        addClearCookiesPreference(preferenceGroup);
     }
     
     @Override

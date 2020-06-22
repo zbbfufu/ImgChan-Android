@@ -128,6 +128,15 @@ public abstract class StormwallChanModule extends AbstractChanModule {
     }
 
     @Override
+    public void clearCookies() {
+        super.clearCookies();
+        preferences.edit().
+            remove(getSharedKey(PREF_KEY_STORMWALL_COOKIE_VALUE)).
+            remove(getSharedKey(PREF_KEY_STORMWALL_COOKIE_DOMAIN)).
+            commit();
+    }
+
+    @Override
     protected CaptchaModel downloadCaptcha(String url, ProgressListener listener, CancellableTask task) throws Exception {
         Bitmap captchaBitmap = null;
         HttpRequestModel requestModel = HttpRequestModel.DEFAULT_GET;

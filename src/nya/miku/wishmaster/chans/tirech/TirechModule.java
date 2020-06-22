@@ -143,6 +143,7 @@ public class TirechModule extends AbstractWakabaModule {
         addPasswordPreference(preferenceGroup);
         addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
+        addClearCookiesPreference(preferenceGroup);
     }
     
     @Override

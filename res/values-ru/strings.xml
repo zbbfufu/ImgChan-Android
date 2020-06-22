@@ -583,6 +583,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_clear_cache_title">Очистить кэш</string>
     <string name="pref_clear_cache_summary">%.1f MБ</string>
     <string name="pref_clear_cache_confirmation">Вы действительно хотите очистить кэш?</string>
+    <string name="pref_clear_cookies_title">Очистить cookies</string>
+    <string name="pref_clear_cookies_summary">Очистить данные cookies для этой имиджборды</string>
+    <string name="pref_clear_cookies_confirmation">Вы действительно хотите очистить все cookies, относящиеся к %s?</string>
     <string name="pref_update_on_startup_title">Проверять при запуске</string>
     <string name="pref_update_on_startup_summary">Но не чаще одного раза в день</string>
     <string name="pref_update_allow_beta_title">Разрешить тестовые версии</string>

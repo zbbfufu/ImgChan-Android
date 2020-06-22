@@ -86,6 +86,7 @@ public class Null_chanModule extends InfinityModule {
     @Override
     public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
         addProxyPreferences(preferenceGroup);
+        addClearCookiesPreference(preferenceGroup);
     }
     
     @Override

@@ -95,6 +95,7 @@ public class NowereModule extends AbstractChanModule {
         addPasswordPreference(preferenceGroup);
         addHttpsPreference(preferenceGroup, false);
         addProxyPreferences(preferenceGroup);
+        addClearCookiesPreference(preferenceGroup);
     }
     
     private String getUsingUrl() {

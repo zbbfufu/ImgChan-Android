@@ -160,6 +160,12 @@ public class DobroModule extends AbstractChanModule {
         }
     }
     
+    @Override
+    public void clearCookies() {
+        super.clearCookies();
+        preferences.edit().remove(getSharedKey(PREF_KEY_HANABIRA_COOKIE)).commit();
+    }
+
     private void saveHanabiraCookie() {
         for (Cookie cookie : httpClient.getCookieStore().getCookies())
             if (cookie.getName().equals(HANABIRA_COOKIE_NAME))

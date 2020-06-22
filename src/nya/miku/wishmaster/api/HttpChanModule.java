@@ -38,4 +38,5 @@ public interface HttpChanModule extends ChanModule {
      * Добавить Cookie к HTTP клиенту и сохранить его в параметрах, если это предусмотрено конкретной имиджбордой (напр. в случае Cloudflare)
      */
     void saveCookie(Cookie cookie);
+    void clearCookies();
 }

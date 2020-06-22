@@ -132,6 +132,12 @@ public class Chan410Module extends AbstractChanModule {
     }
     
     @Override
+    public void clearCookies() {
+        super.clearCookies();
+        preferences.edit().remove(getSharedKey(PREF_KEY_FAPTCHA_COOKIES)).commit();
+    }
+
+    @Override
     public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
         addHttpsPreference(preferenceGroup, false);
         super.addPreferencesOnScreen(preferenceGroup);

@@ -170,6 +170,7 @@ public class NewNullchanModule extends CloudflareChanModule {
         addHttpsPreference(preferenceGroup, true);
         addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
+        addClearCookiesPreference(preferenceGroup);
     }
 
     private boolean useHttps() {

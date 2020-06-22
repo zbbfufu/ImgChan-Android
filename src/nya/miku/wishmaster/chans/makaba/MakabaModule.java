@@ -174,6 +174,17 @@ public class MakabaModule extends CloudflareChanModule {
         }
     }
     
+    @Override
+    public void clearCookies() {
+        super.clearCookies();
+        preferences.edit().
+            remove(getSharedKey(PREF_KEY_USERCODE_COOKIE_DOMAIN)).
+            remove(getSharedKey(PREF_KEY_USERCODE_COOKIE_VALUE)).
+            remove(getSharedKey(PREF_KEY_NOCAPTCHA_COOKIE_DOMAIN)).
+            remove(getSharedKey(PREF_KEY_NOCAPTCHA_COOKIE_VALUE)).
+            commit();
+    }
+
     private void saveUsercodeCookie() {
         for (Cookie cookie : httpClient.getCookieStore().getCookies()) {
             if (cookie.getName().equals(USERCODE_COOKIE_NAME) && cookie.getDomain().contains(domain)) saveCookie(cookie);
@@ -269,6 +280,7 @@ public class MakabaModule extends CloudflareChanModule {
         addCaptchaAutoUpdatePreference(preferenceScreen);
         addDomainPreferences(preferenceScreen);
         addProxyPreferences(preferenceScreen);
+        addClearCookiesPreference(preferenceScreen);
     }
 
    private boolean checkPasscode(String boardName, ProgressListener listener, CancellableTask task) {

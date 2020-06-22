@@ -133,6 +133,7 @@ public class EndChanModule extends AbstractLynxChanModule {
         addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addDomainPreferences(preferenceGroup);
         addProxyPreferences(preferenceGroup);
+        addClearCookiesPreference(preferenceGroup);
     }
 
     @Override
@@ -197,6 +198,12 @@ public class EndChanModule extends AbstractLynxChanModule {
             c.setPath("/");
             httpClient.getCookieStore().addCookie(c);
         }
+    }
+
+    @Override
+    public void clearCookies() {
+        super.clearCookies();
+        preferences.edit().remove(getSharedKey(PREF_KEY_BYPASS_COOKIE)).commit();
     }
 
     @Override

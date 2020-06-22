@@ -143,6 +143,7 @@ public class HorochanModule extends CloudflareChanModule {
         addHttpsPreference(preferenceGroup, true); //https
         addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
+        addClearCookiesPreference(preferenceGroup);
     }
     
     private boolean loadOnlyNewPosts() {

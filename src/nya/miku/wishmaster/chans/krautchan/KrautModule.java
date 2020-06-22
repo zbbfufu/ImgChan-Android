@@ -150,6 +150,7 @@ public class KrautModule extends CloudflareChanModule {
         addHttpsPreference(preferenceGroup, true);
         addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
+        addClearCookiesPreference(preferenceGroup);
     }
     
     private boolean useHttps() {
