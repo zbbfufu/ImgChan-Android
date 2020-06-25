@@ -78,6 +78,7 @@ public class CirnoModule extends StormwallChanModule {
     
     static final String IICHAN_NAME = "iichan.hk";
     static final String IICHAN_DOMAIN = "iichan.hk";
+    private static final String HARUHIISM_DOMAIN = "boards.haruhiism.net";  //previous host of /abe/
     
     private static final String PREF_KEY_REPORT_THREAD = "PREF_KEY_REPORT_THREAD";
     private String lastReportCaptcha;
@@ -397,18 +398,19 @@ public class CirnoModule extends StormwallChanModule {
                 return WakabaUtils.buildUrl(model, NowereModule.NOWERE_URL_HTTP);
             } else if (model.boardName.equals("es")) {
                 return "http://owlchan.ru/es/";
+            } else if (model.boardName.equals("abe")) {
+                return WakabaUtils.buildUrl(model, CirnoArchiveModule.IIYAKUJI_URL);
             } else if (CirnoBoards.is410Board(model.boardName)) {
                 return WakabaUtils.buildUrl(model, Chan410Module.CHAN410_URL);
             }
         }
-        if ("abe".equals(model.boardName)) model.boardName = "aa";
         if (model.type == UrlPageModel.TYPE_CATALOGPAGE) return getUsingUrl() + model.boardName + "/catalogue.html";
         return WakabaUtils.buildUrl(model, getUsingUrl());
     }
     
     @Override
     public UrlPageModel parseUrl(String url) throws IllegalArgumentException {
-        UrlPageModel model = WakabaUtils.parseUrl(url, IICHAN_NAME, IICHAN_DOMAIN);
+        UrlPageModel model = WakabaUtils.parseUrl(url, IICHAN_NAME, IICHAN_DOMAIN, HARUHIISM_DOMAIN);
         if (model.type == UrlPageModel.TYPE_OTHERPAGE && model.otherPath != null && model.otherPath.endsWith("/catalogue.html")) {
             model.type = UrlPageModel.TYPE_CATALOGPAGE;
             model.boardName = model.otherPath.substring(0, model.otherPath.length() - 15);

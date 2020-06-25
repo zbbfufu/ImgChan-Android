@@ -70,6 +70,7 @@ public class CirnoBoards {
         addBoard("aa", "Аниме-арт", "Японская культура", "Ракка", false);
         addBoard("vn", "Визуальные новеллы", "Японская культура", "Сэйбер", false);
         addBoard("vo", "Vocaloid", "Японская культура", "", false); //hatsune
+        addBoard("abe", "Ёситоси Абэ", "Японская культура", "Chada", false);
         addBoard("c", "Косплей", "Японская культура", "Аноним", false);
         addBoard("rm", "Rozen Maiden", "Японская культура", "Суйгинто", false);
         addBoard("tan", "Сетевые персонажи", "Японская культура", "Уныл-тян", false);
@@ -116,8 +117,8 @@ public class CirnoBoards {
         
         model.readonlyBoard = IICHAN_READONLY_BOARDS.indexOf(name) != -1;
         model.requiredFileForNewThread = !name.equals("d");
-        model.allowDeletePosts = true;
-        model.allowDeleteFiles = true;
+        model.allowDeletePosts = model.readonlyBoard;
+        model.allowDeleteFiles = model.readonlyBoard;
         model.allowReport = BoardModel.REPORT_WITH_COMMENT;
         model.allowNames = !name.equals("b") && !name.equals("bro");
         model.allowSubjects = true;
