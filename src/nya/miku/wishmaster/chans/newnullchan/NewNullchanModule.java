@@ -190,6 +190,12 @@ public class NewNullchanModule extends CloudflareChanModule {
         httpClient.getCookieStore().addCookie(c);
     }
 
+    @Override
+    public void clearCookies() {
+        super.clearCookies();
+        setDisclaimerCookie();
+    }
+
     private String getUsingDomain() {
         String domain = preferences.getString(getSharedKey(PREF_KEY_DOMAIN), DEFAULT_DOMAIN);
         return TextUtils.isEmpty(domain) ? DEFAULT_DOMAIN : domain;
