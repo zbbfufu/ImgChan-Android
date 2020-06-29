@@ -269,7 +269,7 @@ public class HttpStreamer {
                 if (responseModel.notModified())
                     return null;
                 else
-                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusReason);
+                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusCode+" - "+responseModel.statusReason);
             if (detector != null)
                 detector.check(responseModel);
             if (responseModel.stream == null) throw new HttpRequestException(new NullPointerException());
@@ -375,7 +375,7 @@ public class HttpStreamer {
                 if (responseModel.notModified())
                     return null;
                 else
-                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusReason);
+                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusCode+" - "+responseModel.statusReason);
             if (detector != null)
                 detector.check(responseModel);
             if (responseModel.stream == null) throw new HttpRequestException(new NullPointerException());
@@ -426,7 +426,7 @@ public class HttpStreamer {
                 downloaded_size = content_stream.getSize();
                 responseModel = getFromUrl(url, requestModel, httpClient, listener, task, downloaded_size);
                 if (responseModel.statusCode != 200 && responseModel.statusCode != 206)
-                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusReason);
+                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusCode+" - "+responseModel.statusReason);
                 if (detector != null)
                     detector.check(responseModel);
                 content_length = responseModel.contentLength;
