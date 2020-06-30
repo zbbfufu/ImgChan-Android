@@ -23,58 +23,38 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.res.ResourcesCompat;
 
-import org.apache.commons.lang3.StringEscapeUtils;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Locale;
-import java.util.TimeZone;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.OutputStream;
 
 import nya.miku.wishmaster.R;
-import nya.miku.wishmaster.api.AbstractKusabaModule;
+import nya.miku.wishmaster.api.AbstractVichanModule;
+import nya.miku.wishmaster.api.interfaces.CancellableTask;
+import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.AttachmentModel;
-import nya.miku.wishmaster.api.models.BadgeIconModel;
+import nya.miku.wishmaster.api.models.BoardModel;
 import nya.miku.wishmaster.api.models.PostModel;
+import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
-import nya.miku.wishmaster.api.models.UrlPageModel;
 import nya.miku.wishmaster.api.util.ChanModels;
-import nya.miku.wishmaster.api.util.RegexUtils;
-import nya.miku.wishmaster.api.util.WakabaReader;
-import nya.miku.wishmaster.common.Logger;
+import nya.miku.wishmaster.http.streamer.HttpWrongStatusCodeException;
+import nya.miku.wishmaster.lib.org_json.JSONObject;
 
-public class DiochanModule extends AbstractKusabaModule {
+public class DiochanModule extends AbstractVichanModule {
     public static final String[] DOMAINS = {"www.diochan.com", "diochan.com"};
-    private static final String TAG = "DiochanModule";
-    private static final DateFormat DATE_FORMAT;
     private static final String CHAN_NAME = "www.diochan.com";
     private static final String DISPLAYING_NAME = "Diochan";
-    private static final SimpleBoardModel[] BOARDS = new SimpleBoardModel[]{
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "b", "Random", "", true),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "int", "International", "", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "s", "Sexy Beautiful Women", "", true),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "hd", "Help Desk", "", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "h", "Hentai", "", true),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "a", "Anime", "", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "v", "Video Games", "", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "co", "Fumetti e Cartoni", "", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "film", "Film", "", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "litness", "La palestra della mente", "", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "ck", "Cucina", "", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "mu", "Musica", "", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "sci", "Scienza & Tecnologia", "", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "pol", "Politica", "", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "scr", "Scrittura", "", false),
+    private static final SimpleBoardModel[] BOARDS = new SimpleBoardModel[] {
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "b", "Random", "NSFW", true),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "s", "( ͡° ͜ʖ ͡°)", "NSFW", true),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "hd", "Help Desk", "NSFW", true),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "420", "Quattro Venti", "NSFW", true),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "v", "Videogiochi", "SFW", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "aff", "Affari", "SFW", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "cul", "Cultura", "SFW", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "pol", "Politica", "SFW", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "ck", "Cucina", "SFW", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "sug", "Suggerimenti & Lamentele", "Altro", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "p", "Prova", "Altro", false),
     };
-
-    static {
-        DATE_FORMAT = new SimpleDateFormat("dd/MM/yy HH:mm");
-        DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT+2"));
-    }
 
     public DiochanModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -116,194 +96,98 @@ public class DiochanModule extends AbstractKusabaModule {
     }
 
     @Override
-    protected WakabaReader getKusabaReader(InputStream stream, UrlPageModel urlModel) {
-        return new DiochanReader(stream, DATE_FORMAT, canCloudflare(), getKusabaFlags());
+    public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
+        BoardModel model = super.getBoard(shortName, listener, task);
+        model.defaultUserName = "Anonimo";
+        model.allowCustomMark = true;
+        model.customMarkDescription = "Spoiler";
+        model.attachmentsMaxCount = 3;
+        return model;
     }
 
-    private class DiochanReader extends KusabaReader {
-        private final Pattern PATTERN_IFRAME =
-                Pattern.compile("<iframe([^>]*)>", Pattern.DOTALL);
-
-        private final Pattern PATTERN_SRC =
-                Pattern.compile("src=\"([^\"]+)\"");
-
-        private final Pattern PATTERN_SCRIPT =
-                Pattern.compile("<script type=\"text/javascript\">[^<]+</script>", Pattern.DOTALL);
-        private final Pattern ATTACHMENT_SIZE_PATTERN =
-                Pattern.compile("([,\\.\\d]+) ?([km])[b]", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
-        private final Pattern ATTACHMENT_PX_SIZE_PATTERN = Pattern.compile("(\\d+)x(\\d+)");
-        private final Pattern ATTACHMENT_ORIGINAL_NAME_PATTERN = Pattern.compile("title=\"([^\"]*)\"");
-        private final Pattern ATTACHMENT_THUMBNAIL_PATTERN = Pattern.compile("<img src=\"([^\"]*)\"");
-        private final char[] COUNTRY_ICON_FILTER = "<span class=\"flags\">".toCharArray();
-        private final char[] ATTACHMENT_START_FILTER = "<div class=\"file_reply\">".toCharArray();
-        private final char[] ATTACHMENT_END = "</div>".toCharArray();
-        private final String FILE_INFO_START = "<span class=\"fileinfo\">";
-        private final String FILE_INFO_END = "</span>";
-        private int iconCurPos = 0;
-        private int attachmentCurPos = 0;
-
-        public DiochanReader(InputStream in, DateFormat dateFormat, boolean canCloudflare, int flags) {
-            super(in, dateFormat, canCloudflare, flags);
+    @Override
+    protected PostModel mapPostModel(JSONObject object, String boardName) {
+        PostModel post = super.mapPostModel(object, boardName);
+        post.sage = post.sage || post.email.equalsIgnoreCase("Salvia");
+        if (object.has("embed")) {
+            String embed = object.optString("embed");
+            if (embed.length() > 0) {
+                AttachmentModel attachment = parseEmbed(embed);
+                if (attachment != null) {
+                    int oldCount = post.attachments != null ? post.attachments.length : 0;
+                    AttachmentModel[] attachments = new AttachmentModel[oldCount + 1];
+                    if (post.attachments != null)
+                        System.arraycopy(post.attachments, 0, attachments, 0, oldCount);
+                    attachments[oldCount] = attachment;
+                    post.attachments = attachments;
+                }
+            }
         }
-
-        public DiochanReader(Reader reader, DateFormat dateFormat, boolean canCloudflare, int flags) {
-            super(reader, dateFormat, canCloudflare, flags);
+        return post;
+    }
+    
+    private AttachmentModel parseEmbed(String html) {
+        int start, end;
+        if (html.contains("<iframe") && html.contains("src=\"")) {
+            start = html.indexOf("src=\"") + 5;
+            end = html.indexOf("\"", start);
+            html = html.substring(start, end);
         }
-
-        private void parseDiochanAttachment(String html) throws IOException {
+        String url = null, thumb = null;
+        if (html.contains("youtube")) {
+            html = html.replace("embed/", "watch?v=");
+            start = html.indexOf("v=");
+            if (start != -1) {
+                String id = html.substring(start + 2);
+                if (id.contains("&")) id = id.substring(0, id.indexOf("&"));
+                url = "https://www.youtube.com/watch?v=" + id;
+                thumb = "https://img.youtube.com/vi/" + id + "/default.jpg";
+            }
+        } else if (html.contains("vimeo.com")) {
+            html = html.replace("video/", "");
+            start = html.indexOf("vimeo.com/");
+            if (start != -1) {
+                url = "https://vimeo.com/" + html.substring(start + 10);
+            }
+        } else if (html.contains("soundcloud.com")) {
+            html = html.replace("soundcloud.com/oembed", "oembed");
+            start = html.indexOf("soundcloud.com/");
+            if (start != -1) {
+                end = html.indexOf("\"", start + 15);
+                if (end != -1) {
+                    url = "https://soundcloud.com/" + html.substring(start + 15, end);
+                }
+            }
+        }
+        if (url != null) {
             AttachmentModel attachment = new AttachmentModel();
+            attachment.type = AttachmentModel.TYPE_OTHER_NOTFILE;
             attachment.size = -1;
-
-            int startHref, endHref;
-            if ((startHref = html.indexOf("href=\"")) != -1 && (endHref = html.indexOf('\"', startHref + 6)) != -1) {
-                attachment.path = html.substring(startHref + 6, endHref);
-                String pathLower = attachment.path.toLowerCase(Locale.US);
-                if (pathLower.endsWith(".jpg") || pathLower.endsWith(".jpeg") || pathLower.endsWith(".png"))
-                    attachment.type = AttachmentModel.TYPE_IMAGE_STATIC;
-                else if (pathLower.endsWith(".gif"))
-                    attachment.type = AttachmentModel.TYPE_IMAGE_GIF;
-                else if (pathLower.endsWith(".svg") || pathLower.endsWith(".svgz"))
-                    attachment.type = AttachmentModel.TYPE_IMAGE_SVG;
-                else if (pathLower.endsWith(".webm") || pathLower.endsWith(".mp4") || pathLower.endsWith(".ogv"))
-                    attachment.type = AttachmentModel.TYPE_VIDEO;
-                else if (pathLower.endsWith(".mp3") || pathLower.endsWith(".ogg"))
-                    attachment.type = AttachmentModel.TYPE_AUDIO;
-                else if (pathLower.startsWith("http") && (pathLower.contains("youtube.")))
-                    attachment.type = AttachmentModel.TYPE_OTHER_NOTFILE;
-                else
-                    attachment.type = AttachmentModel.TYPE_OTHER_FILE;
-            } else {
-                return;
-            }
-            int fileInfoStart = html.indexOf(FILE_INFO_START);
-            int fileInfoEnd = html.indexOf(FILE_INFO_END, fileInfoStart + FILE_INFO_START.length());
-            if (fileInfoStart >=0 && fileInfoEnd > 0) {
-                String fileInfo = html.substring(fileInfoStart + FILE_INFO_START.length(), fileInfoEnd);
-                Matcher byteSizeMatcher = ATTACHMENT_SIZE_PATTERN.matcher(fileInfo);
-                if (byteSizeMatcher.find()) {
-                    try {
-                        String digits = byteSizeMatcher.group(1).replace(',', '.');
-                        int multiplier = 1;
-                        String prefix = byteSizeMatcher.group(2);
-                        if (prefix != null) {
-                            if (prefix.equalsIgnoreCase("к") || prefix.equalsIgnoreCase("k")) multiplier = 1024;
-                            else if (prefix.equalsIgnoreCase("м") || prefix.equalsIgnoreCase("m")) multiplier = 1024 * 1024;
-                        }
-                        int value = Math.round(Float.parseFloat(digits) / 1024 * multiplier);
-                        attachment.size = value;
-                    } catch (NumberFormatException e) {}
-                }
-
-                Matcher pxSizeMatcher = ATTACHMENT_PX_SIZE_PATTERN.matcher(fileInfo);
-                if (pxSizeMatcher.find()) {
-                    try {
-                        int width = Integer.parseInt(pxSizeMatcher.group(1));
-                        int height = Integer.parseInt(pxSizeMatcher.group(2));
-                        attachment.width = width;
-                        attachment.height = height;
-                    } catch (NumberFormatException e) {}
-                }
-            }
-            
-            Matcher originalNameMatcher = ATTACHMENT_ORIGINAL_NAME_PATTERN.matcher(html);
-            if (originalNameMatcher.find()) {
-                String originalName = originalNameMatcher.group(1).trim();
-                if (originalName.length() > 0) {
-                    attachment.originalName = StringEscapeUtils.unescapeHtml4(originalName);
-                    try {
-                        attachment.originalName += attachment.path.substring(attachment.path.lastIndexOf("."));
-                    } catch (IndexOutOfBoundsException e) {}
-                    
-                }
-            }
-
-            Matcher thumbnailMatcher = ATTACHMENT_THUMBNAIL_PATTERN.matcher(html);
-            if (thumbnailMatcher.find()) {
-                String thumbnail = thumbnailMatcher.group(1);
-                if (thumbnail.length() > 0) {
-                    attachment.thumbnail = StringEscapeUtils.unescapeHtml4(thumbnail);
-                }
-            }
-            
-            ++currentThread.attachmentsCount;
-            currentAttachments.add(attachment);
+            attachment.path = url;
+            attachment.thumbnail = thumb;
+            return attachment;
         }
-        
-        @Override
-        protected void customFilters(int ch) throws IOException {
-            super.customFilters(ch);
-            if (ch == COUNTRY_ICON_FILTER[iconCurPos]) {
-                ++iconCurPos;
-                if (iconCurPos == COUNTRY_ICON_FILTER.length) {
-                    BadgeIconModel iconModel = new BadgeIconModel();
-                    String htmlIcon = readUntilSequence("</span>".toCharArray());
-                    int start, end;
-                    if ((start = htmlIcon.indexOf("src=\"")) != -1 && (end = htmlIcon.indexOf('\"', start + 5)) != -1) {
-                        iconModel.source = htmlIcon.substring(start + 5, end);
-                    }
-                    iconModel.description = "";
-                    int currentIconsCount = currentPost.icons == null ? 0 : currentPost.icons.length;
-                    BadgeIconModel[] newIconsArray = new BadgeIconModel[currentIconsCount + 1];
-                    for (int i = 0; i < currentIconsCount; ++i)
-                        newIconsArray[i] = currentPost.icons[i];
-                    newIconsArray[currentIconsCount] = iconModel;
-                    currentPost.icons = newIconsArray;
-                    iconCurPos = 0;
-                }
-            } else {
-                if (iconCurPos != 0) iconCurPos = ch == COUNTRY_ICON_FILTER[0] ? 1 : 0;
-            }
-            if (ch == ATTACHMENT_START_FILTER[attachmentCurPos]) {
-                ++attachmentCurPos;
-                if (attachmentCurPos == ATTACHMENT_START_FILTER.length) {
-                    String html = readUntilSequence(ATTACHMENT_END);
-                    parseDiochanAttachment(html);
-                    attachmentCurPos = 0;
-                }
-            } else {
-                if (attachmentCurPos != 0) attachmentCurPos = ch == ATTACHMENT_START_FILTER[0] ? 1 : 0;
-            }
-        }
+        return null;
+    }
 
-        @Override
-        protected void parseDate(String date) {
-            date = RegexUtils.removeHtmlTags(date).trim();
-            date = RegexUtils.replaceAll(date, Pattern.compile("\\([A-Za-z]+\\)\\s?"), " ");
-            if (date.length() > 0) {
-                try {
-                    currentPost.timestamp = dateFormat.parse(date).getTime();
-                } catch (Exception e) {
-                    Logger.e(TAG, "cannot parse date; make sure you choose the right DateFormat for this chan", e);
+    @Override
+    public void downloadFile(String url, OutputStream out, ProgressListener listener, CancellableTask task) throws Exception {
+        try {
+            super.downloadFile(url, out, listener, task);
+        } catch (HttpWrongStatusCodeException e) {
+            if (e.getStatusCode() == 404 && url.contains("/thumb/")) {
+                String ext = url.substring(url.lastIndexOf(".")+1).toLowerCase();
+                if (!ext.equals(".webp")) {
+                    String filePath = url.substring(0, url.lastIndexOf("."));
+                    downloadFile(filePath + ".webp", out, listener, task);
                 }
             }
         }
-        
-        @Override
-        protected void postprocessPost(PostModel post) {
-            super.postprocessPost(post);
-            post.comment = RegexUtils.replaceAll(post.comment, PATTERN_SCRIPT, "");
-            Matcher matcher = PATTERN_IFRAME.matcher(post.comment);
-            while (matcher.find()) {
-                Matcher srcMatcher = PATTERN_SRC.matcher(matcher.group(1));
-                if (!srcMatcher.find()) continue;
-                String url = srcMatcher.group(1).replace("youtube.com/embed/", "youtube.com/watch?v=");
-                String id = null;
-                if (url.contains("youtube") && url.contains("v=")) {
-                    id = url.substring(url.indexOf("v=") + 2);
-                    if (id.contains("&")) id = id.substring(0, id.indexOf("&"));
-                }
-                AttachmentModel attachment = new AttachmentModel();
-                attachment.type = AttachmentModel.TYPE_OTHER_NOTFILE;
-                attachment.size = -1;
-                attachment.path = url;
-                attachment.thumbnail = id != null ? ("http://img.youtube.com/vi/" + id + "/default.jpg") : null;
+    }
 
-                int oldCount = post.attachments != null ? post.attachments.length : 0;
-                AttachmentModel[] attachments = new AttachmentModel[oldCount + 1];
-                for (int i = 0; i < oldCount; ++i) attachments[i] = post.attachments[i];
-                attachments[oldCount] = attachment;
-                post.attachments = attachments;
-            }
-        }
+    @Override
+    public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
+        super.sendPost(model, listener, task);
+        return null;
     }
 }
