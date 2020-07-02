@@ -258,19 +258,21 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
         navigationInfo = (TextView) findViewById(R.id.gallery_navigation_info);
         for (int id : new int[] { R.id.gallery_navigation_previous, R.id.gallery_navigation_next }) findViewById(id).setOnClickListener(this);
 
-        ActionBar actionBar = getActionBar();
-        actionBar.setDisplayShowTitleEnabled(false);
-        actionBar.setDisplayShowCustomEnabled(true);
-        View customView = getLayoutInflater().inflate(R.layout.action_bar_title, null);
-        titleView = (TextView)customView.findViewById(R.id.action_bar_title);
-        titleView.setText(initialTitleText);
-        titleView.setOnClickListener(this);
-        titleView.setOnLongClickListener(this);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            titleView.setPadding(10, 0, 0, 0);
-            titleView.setLines(1);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            ActionBar actionBar = getActionBar();
+            actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setDisplayShowCustomEnabled(true);
+            View customView = getLayoutInflater().inflate(R.layout.action_bar_title, null);
+            titleView = (TextView)customView.findViewById(R.id.action_bar_title);
+            titleView.setText(initialTitleText);
+            titleView.setOnClickListener(this);
+            titleView.setOnLongClickListener(this);
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                titleView.setPadding(10, 0, 0, 0);
+                titleView.setLines(1);
+            }
+            actionBar.setCustomView(customView);
         }
-        actionBar.setCustomView(customView);
         
         bindService(new Intent(this, GalleryBackend.class), new ServiceConnection() {
             { serviceConnection = this; }
@@ -743,13 +745,17 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
     }
     
     private void setTitle(String title) {
-        final String text = title.replaceAll(".(?!$)", "$0\u200b");
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                titleView.setText(text);
-            }
-        });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            final String text = title.replaceAll(".(?!$)", "$0\u200b");
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    titleView.setText(text);
+                }
+            });
+        } else {
+            super.setTitle(title);
+        }
     }
 
     private void updateItem() {
