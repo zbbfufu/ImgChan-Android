@@ -117,8 +117,8 @@ public class CirnoBoards {
         
         model.readonlyBoard = IICHAN_READONLY_BOARDS.indexOf(name) != -1;
         model.requiredFileForNewThread = !name.equals("d");
-        model.allowDeletePosts = model.readonlyBoard;
-        model.allowDeleteFiles = model.readonlyBoard;
+        model.allowDeletePosts = !model.readonlyBoard;
+        model.allowDeleteFiles = model.allowDeletePosts;
         model.allowReport = BoardModel.REPORT_WITH_COMMENT;
         model.allowNames = !name.equals("b") && !name.equals("bro");
         model.allowSubjects = true;
