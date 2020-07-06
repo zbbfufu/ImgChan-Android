@@ -43,12 +43,14 @@ import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.AttachmentModel;
 import nya.miku.wishmaster.api.models.BoardModel;
 import nya.miku.wishmaster.api.models.DeletePostModel;
+import nya.miku.wishmaster.api.models.PostModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.CaptchaModel;
 import nya.miku.wishmaster.api.models.UrlPageModel;
 import nya.miku.wishmaster.api.util.ChanModels;
 import nya.miku.wishmaster.api.util.LazyPreferences;
+import nya.miku.wishmaster.api.util.RegexUtils;
 import nya.miku.wishmaster.common.IOUtils;
 import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
@@ -88,6 +90,8 @@ public class SynchModule extends AbstractVichanModule {
     private static final String[] ATTACHMENT_KEYS = new String[] { "file", "file2", "file3", "file4", "file5" };
     private static final String RECAPTCHA_PUBLIC_KEY = "6LfDqP4SAAAAAH8k-y82VXfSMfFF8pfU9sasuR5I";
     private static final Pattern ERROR_PATTERN = Pattern.compile("<h2 [^>]*>(.*?)</h2>");
+    private static final Pattern LINE_THROUGH_PATTERN = Pattern.compile("<span[^>]*style=\"text-decoration: line-through\">(.*?)</span>");
+    private static final Pattern UNDERLINE_PATTERN = Pattern.compile("<span[^>]*style=\"text-decoration: underline\">(.*?)</span>");
     
     public SynchModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -164,6 +168,13 @@ public class SynchModule extends AbstractVichanModule {
         return model;
     }
     
+    protected PostModel mapPostModel(JSONObject object, String boardName) {
+        PostModel model = super.mapPostModel(object, boardName);
+        model.comment = RegexUtils.replaceAll(model.comment, LINE_THROUGH_PATTERN, "<span class=\"s\">$1</span>");
+        model.comment = RegexUtils.replaceAll(model.comment, UNDERLINE_PATTERN, "<span class=\"u\">$1</span>");
+        return model;
+    }
+
     @Override
     protected AttachmentModel mapAttachment(JSONObject object, String boardName, boolean isSpoiler) {
         AttachmentModel model = super.mapAttachment(object, boardName, isSpoiler);
