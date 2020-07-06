@@ -1937,76 +1937,79 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 tag.repliesView = (JellyBeanSpanFixTextView) view.findViewById(R.id.post_replies);
                 tag.postsCountView = (TextView) view.findViewById(R.id.post_posts_count);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB && fragment().pageType == TYPE_POSTSLIST) {
-                    CompatibilityImpl.setCustomSelectionActionModeMenuCallback(tag.commentView, new CompatibilityImpl.CustomSelectionActionModeCallback[] {
-                            new CompatibilityImpl.CustomSelectionActionModeCallback(R.string.context_menu_reply_with_quote,
-                                ThemeUtils.getActionbarIcon(fragment().activity.getTheme(), fragment().resources, R.attr.actionAddPost)) {
-                        @Override
-                        public void onClick() {
-                            try {
-                                String quote = getSelectedText(tag);
-                                fragment().openReply(tag.position, true, quote);
-                            } catch (Exception e) {
-                                Logger.e(TAG, e);
-                            }
-                        }
-                        @Override
-                        public void onCreate() {
-                            try {
-                                if (tag.isPopupDialog || tag.position != getCount() - 1) return;
-                                final int margin = (int) (50 * fragment().resources.getDisplayMetrics().density + 0.5f);
-                                ViewGroup.LayoutParams params = tag.commentView.getLayoutParams();
-                                if (params.height != ViewGroup.LayoutParams.WRAP_CONTENT) return;
-                                params.height = tag.commentView.getHeight() + margin;
-                                tag.commentView.setLayoutParams(params);
-                                fragment().scrollDown();
-                                
-                                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-                                    final int selectionStart = tag.commentView.getSelectionStart();
-                                    final int selectionEnd = tag.commentView.getSelectionEnd();
-                                    AppearanceUtils.callWhenLoaded(tag.commentView, new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            try {
-                                                ViewGroup.LayoutParams params = tag.commentView.getLayoutParams();
-                                                if (params.height != ViewGroup.LayoutParams.WRAP_CONTENT) return;
-                                                params.height = tag.commentView.getHeight() + margin;
-                                                tag.commentView.setLayoutParams(params);
-                                                fragment().scrollDown();
-                                                
-                                                AppearanceUtils.callWhenLoaded(tag.commentView, new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        try {
-                                                            tag.commentView.startSelection();
-                                                            Selection.setSelection(
-                                                                    (Spannable) tag.commentView.getText(), selectionStart, selectionEnd);
-                                                        } catch (Exception e) {
-                                                            Logger.e(TAG, e);
-                                                        }
-                                                    }
-                                                });
-                                            } catch (Exception e) {
-                                                Logger.e(TAG, e);
-                                            }
-                                        }
-                                    });
+                    ArrayList<CompatibilityImpl.CustomSelectionActionModeCallback> callbacks = new ArrayList<CompatibilityImpl.CustomSelectionActionModeCallback>();
+                    if (!fragment().presentationModel.source.boardModel.readonlyBoard && fragment().tabModel.type != TabModel.TYPE_LOCAL) {
+                        callbacks.add(new CompatibilityImpl.CustomSelectionActionModeCallback(R.string.context_menu_reply_with_quote,
+                                    ThemeUtils.getActionbarIcon(fragment().activity.getTheme(), fragment().resources, R.attr.actionAddPost)) {
+                            @Override
+                            public void onClick() {
+                                try {
+                                    String quote = getSelectedText(tag);
+                                    fragment().openReply(tag.position, true, quote);
+                                } catch (Exception e) {
+                                    Logger.e(TAG, e);
                                 }
-                            } catch (Exception e) {
-                                Logger.e(TAG, e);
                             }
-                        }
-                        @Override
-                        public void onDestroy() {
-                            try {
-                                ViewGroup.LayoutParams params = tag.commentView.getLayoutParams();
-                                if (params.height == ViewGroup.LayoutParams.WRAP_CONTENT) return;
-                                params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                                tag.commentView.setLayoutParams(params);
-                            } catch (Exception e) {
-                                Logger.e(TAG, e);
+                            @Override
+                            public void onCreate() {
+                                try {
+                                    if (tag.isPopupDialog || tag.position != getCount() - 1) return;
+                                    final int margin = (int) (50 * fragment().resources.getDisplayMetrics().density + 0.5f);
+                                    ViewGroup.LayoutParams params = tag.commentView.getLayoutParams();
+                                    if (params.height != ViewGroup.LayoutParams.WRAP_CONTENT) return;
+                                    params.height = tag.commentView.getHeight() + margin;
+                                    tag.commentView.setLayoutParams(params);
+                                    fragment().scrollDown();
+                                    
+                                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+                                        final int selectionStart = tag.commentView.getSelectionStart();
+                                        final int selectionEnd = tag.commentView.getSelectionEnd();
+                                        AppearanceUtils.callWhenLoaded(tag.commentView, new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                try {
+                                                    ViewGroup.LayoutParams params = tag.commentView.getLayoutParams();
+                                                    if (params.height != ViewGroup.LayoutParams.WRAP_CONTENT) return;
+                                                    params.height = tag.commentView.getHeight() + margin;
+                                                    tag.commentView.setLayoutParams(params);
+                                                    fragment().scrollDown();
+                                                    
+                                                    AppearanceUtils.callWhenLoaded(tag.commentView, new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            try {
+                                                                tag.commentView.startSelection();
+                                                                Selection.setSelection(
+                                                                        (Spannable) tag.commentView.getText(), selectionStart, selectionEnd);
+                                                            } catch (Exception e) {
+                                                                Logger.e(TAG, e);
+                                                            }
+                                                        }
+                                                    });
+                                                } catch (Exception e) {
+                                                    Logger.e(TAG, e);
+                                                }
+                                            }
+                                        });
+                                    }
+                                } catch (Exception e) {
+                                    Logger.e(TAG, e);
+                                }
                             }
-                        }
-                    }, new CompatibilityImpl.CustomSelectionActionModeCallback(R.string.context_menu_web_search, null) {
+                            @Override
+                            public void onDestroy() {
+                                try {
+                                    ViewGroup.LayoutParams params = tag.commentView.getLayoutParams();
+                                    if (params.height == ViewGroup.LayoutParams.WRAP_CONTENT) return;
+                                    params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                                    tag.commentView.setLayoutParams(params);
+                                } catch (Exception e) {
+                                    Logger.e(TAG, e);
+                                }
+                            }
+                        });
+                    }
+                    callbacks.add(new CompatibilityImpl.CustomSelectionActionModeCallback(R.string.context_menu_web_search, null) {
                         @Override
                         public void onClick() {
                             try {
@@ -2024,7 +2027,9 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                                 Logger.e(TAG, e);
                             }
                         }
-                    }});
+                    });
+                    CompatibilityImpl.setCustomSelectionActionModeMenuCallback(tag.commentView,
+                            callbacks.toArray(new CompatibilityImpl.CustomSelectionActionModeCallback[0]));
                 }
                 view.setTag(tag);
             }
