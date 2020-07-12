@@ -84,6 +84,7 @@ public class KohlchanModule extends AbstractLynxChanModule {
             "7z", "zip", "pdf", "epub", "txt" };
     private static final Pattern INVALID_LESSER_THAN_PATTERN = Pattern.compile("&lt([^;])");
     private static final Pattern LINE_BREAK_PATTERN = Pattern.compile("\\n");
+    private static final Pattern TRIP_CODE_PATTERN = Pattern.compile("<span style=.*?font-weight: normal;.*?>(.*?)</span>");
     private static final Pattern COOKIES_LINK_PATTERN = Pattern.compile("^addon.js/hashcash\\?action=save&b=([0-9a-f]{24})&h=([0-9a-f]{24})");
     private static final String PREF_KEY_EXTRA_COOKIE = "PREF_KEY_EXTRA_COOKIE";
     private static final String EXTRA_COOKIE_NAME = "extraCookie";
@@ -280,6 +281,14 @@ public class KohlchanModule extends AbstractLynxChanModule {
     @Override
     protected PostModel mapPostModel(JSONObject object) {
         PostModel model = super.mapPostModel(object);
+        if (model.name.contains("<span")) {
+            Matcher tripMatcher = TRIP_CODE_PATTERN.matcher(model.name);
+            if (tripMatcher.find()) {
+                model.name = tripMatcher.replaceFirst("");
+                model.trip = model.trip == null ? tripMatcher.group(1) :
+                        (tripMatcher.group(1) + " " + model.trip);
+            }
+        }
         model.comment = RegexUtils.replaceAll(model.comment, INVALID_LESSER_THAN_PATTERN, "&lt;$1");
         model.comment = RegexUtils.replaceAll(model.comment, LINE_BREAK_PATTERN, "<br/>");
         return model;
