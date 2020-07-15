@@ -1821,6 +1821,8 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
     }
     
     public Intent setIntentExtras(Intent sendIntent) {
+        if (adapter == null)
+            return sendIntent;
         return adapter.setIntentExtras(sendIntent);
     }
     
