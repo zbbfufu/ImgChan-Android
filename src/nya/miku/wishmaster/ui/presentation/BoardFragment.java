@@ -760,6 +760,27 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         startActivity(Intent.createChooser(shareIntent, getString(R.string.share_via)));
     }
 
+    private void openInNewTab(int position) {
+        UrlPageModel modelNewTab = new UrlPageModel();
+        modelNewTab.chanName = chan.getChanName();
+        modelNewTab.type = UrlPageModel.TYPE_THREADPAGE;
+        modelNewTab.boardName = tabModel.pageModel.boardName;
+        modelNewTab.threadNumber = adapter.getItem(position).sourceModel.parentThread;
+        String tabTitle = null;
+        String subject = adapter.getItem(position).sourceModel.subject;
+        if (subject != null && subject.length() != 0) {
+            tabTitle = subject;
+        } else {
+            Spanned spannedComment = adapter.getItem(position).spannedComment;
+            if (spannedComment != null) {
+                tabTitle = spannedComment.toString().replace('\n', ' ');
+                if (tabTitle.length() > MAX_TITLE_LENGHT) tabTitle = tabTitle.substring(0, MAX_TITLE_LENGHT);
+            }
+        }
+        if (tabTitle != null) tabTitle = resources.getString(R.string.tabs_title_threadpage_loaded, modelNewTab.boardName, tabTitle);
+        UrlHandler.open(modelNewTab, activity, false, tabTitle);
+    }
+
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         //контекстное меню для превью-аттачментов
@@ -807,24 +828,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         if (nullAdapterIsSet || position == -1 || adapter.getCount() <= position) return false;
         switch (item.getItemId()) {
             case R.id.context_menu_open_in_new_tab:
-                UrlPageModel modelNewTab = new UrlPageModel();
-                modelNewTab.chanName = chan.getChanName();
-                modelNewTab.type = UrlPageModel.TYPE_THREADPAGE;
-                modelNewTab.boardName = tabModel.pageModel.boardName;
-                modelNewTab.threadNumber = adapter.getItem(position).sourceModel.parentThread;
-                String tabTitle = null;
-                String subject = adapter.getItem(position).sourceModel.subject;
-                if (subject != null && subject.length() != 0) {
-                    tabTitle = subject;
-                } else {
-                    Spanned spannedComment = adapter.getItem(position).spannedComment;
-                    if (spannedComment != null) {
-                        tabTitle = spannedComment.toString().replace('\n', ' ');
-                        if (tabTitle.length() > MAX_TITLE_LENGHT) tabTitle = tabTitle.substring(0, MAX_TITLE_LENGHT);
-                    }
-                }
-                if (tabTitle != null) tabTitle = resources.getString(R.string.tabs_title_threadpage_loaded, modelNewTab.boardName, tabTitle);
-                UrlHandler.open(modelNewTab, activity, false, tabTitle);
+                openInNewTab(position);
                 return true;
             case R.id.context_menu_thread_preview:
                 showThreadPreviewDialog(position);
@@ -2492,6 +2496,14 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                     @Override
                     public void onClick(View v) {
                         fragment().showThreadPreviewDialog(tag.position);
+                    }
+                });
+                tag.postsCountView.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        fragment().openInNewTab(tag.position);
+                        v.setPressed(false);
+                        return true;
                     }
                 });
                 if (!tag.postsCountIsVisible) {
