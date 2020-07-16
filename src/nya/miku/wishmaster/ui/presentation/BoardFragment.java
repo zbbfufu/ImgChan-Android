@@ -2487,17 +2487,16 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             }
             //информация о треде (для списка тредов), количество постов, надпись о закрытом/прикрепленном треде
             if (popupWidth == null && fragment().pageType == TYPE_THREADSLIST) {
-                if (model.postsCountString != null) {
-                    tag.postsCountView.setText(model.postsCountString);
-                    if (!tag.postsCountIsVisible) {
-                        tag.postsCountView.setVisibility(View.VISIBLE);
-                        tag.postsCountIsVisible = true;
+                tag.postsCountView.setText(model.postsCountString);
+                tag.postsCountView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        fragment().showThreadPreviewDialog(tag.position);
                     }
-                } else {
-                    if (tag.postsCountIsVisible) {
-                        tag.postsCountView.setVisibility(View.GONE);
-                        tag.postsCountIsVisible = false;
-                    }
+                });
+                if (!tag.postsCountIsVisible) {
+                    tag.postsCountView.setVisibility(View.VISIBLE);
+                    tag.postsCountIsVisible = true;
                 }
                 if (model.threadConditionString != null) {
                     tag.threadConditionView.setText(model.threadConditionString);
