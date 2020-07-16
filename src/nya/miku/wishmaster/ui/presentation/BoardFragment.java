@@ -571,14 +571,12 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             case R.id.menu_search:
                 searchUsingChan = false;
                 initSearchBar();
-                searchBarView.setVisibility(View.VISIBLE);
-                ((EditText) searchBarView.findViewById(R.id.board_search_field)).requestFocus();
+                showSearchBar();
                 return true;
             case R.id.menu_search_threads:
                 searchUsingChan = true;
                 initSearchBar();
-                searchBarView.setVisibility(View.VISIBLE);
-                ((EditText) searchBarView.findViewById(R.id.board_search_field)).requestFocus();
+                showSearchBar();
                 return true;
             case R.id.menu_save_page:
                 saveThisPage();
@@ -2999,6 +2997,15 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         public void onNothingSelected(AdapterView<?> parent) { }
     }
     
+    private void showSearchBar() {
+        searchBarView.setVisibility(View.VISIBLE);
+        final EditText searchFieldView = (EditText)searchBarView.findViewById(R.id.board_search_field);
+        final InputMethodManager imm = (InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        searchFieldView.requestFocus();
+        if (imm == null) return;
+        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+    }
+
     private void initSearchBar() {
         if (searchBarInitialized) return;
         final EditText field = (EditText) searchBarView.findViewById(R.id.board_search_field);
