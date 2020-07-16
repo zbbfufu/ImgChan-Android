@@ -32,6 +32,7 @@ interface GalleryBinder {
     String getAttachment(int contextId, in GalleryAttachmentInfo attachment, boolean localOnly, GalleryGetterCallback callback);
     String getAbsoluteUrl(int contextId, String url);
     String getAttachmentInfoString(int contextId, in GalleryAttachmentInfo attachment);
+    String getUserAgentString(int contextId);
     void tryScrollParent(int contextId, String postNumber, boolean closeDialogs);
     boolean isPageLoaded(String pagehash);
 }

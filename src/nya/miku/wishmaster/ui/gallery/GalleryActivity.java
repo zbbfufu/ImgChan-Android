@@ -1251,6 +1251,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
                 }
                 settings.setUseWideViewPort(true);
                 settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+                settings.setUserAgentString(remote.getUserAgentString());
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
                     CompatibilityImpl.setBlockNetworkLoads(settings, false);
                 }

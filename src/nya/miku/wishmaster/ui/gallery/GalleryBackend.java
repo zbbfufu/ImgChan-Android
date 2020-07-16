@@ -188,6 +188,14 @@ public class GalleryBackend extends Service {
         }
 
         @Override
+        public String getUserAgentString(int contextId) {
+            GalleryBackend service = this.service.get();
+            if (service == null) return null;
+
+            return service.contexts.get(contextId).getUserAgentString();
+        }
+
+        @Override
         public void tryScrollParent(int contextId, String postNumber, boolean closeDialogs) {
             GalleryBackend service = this.service.get();
             if (service == null) return;
@@ -404,6 +412,10 @@ public class GalleryBackend extends Service {
         
         public String getAttachmentInfoString(AttachmentModel attachment) {
             return Attachments.getAttachmentInfoString(chan, attachment, resources);
+        }
+
+        public String getUserAgentString() {
+            return MainApplication.getInstance().settings.getUserAgentString();
         }
 
         public void tryScrollParent(final String postNumber, final boolean closeDialogs) {
