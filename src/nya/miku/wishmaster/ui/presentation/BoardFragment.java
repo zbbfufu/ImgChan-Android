@@ -3555,9 +3555,26 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 ListView dlgList = new ListView(activity);
                 dlgList.setAdapter(new ArrayAdapter<PresentationItemModel>(activity, 0, items) {
                     @Override
-                    public View getView(int position, View convertView, ViewGroup parent) {
+                    public View getView(final int position, View convertView, ViewGroup parent) {
                         View view = adapter.getView(position, convertView, parent, dlgWidth, getItem(position));
                         view.setBackgroundColor(bgColor);
+                        TextView comment = (TextView)view.findViewById(R.id.post_comment);
+                        if (comment != null) comment.setTextIsSelectable(false);
+                        view.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                UrlPageModel urlModel = new UrlPageModel();
+                                urlModel.chanName = chan.getChanName();
+                                urlModel.type = UrlPageModel.TYPE_THREADPAGE;
+                                urlModel.boardName = tabModel.pageModel.boardName;
+                                urlModel.threadNumber = items.get(position).sourceModel.parentThread;
+                                if (!urlModel.threadNumber.equals(items.get(position).sourceModel.number))
+                                    urlModel.postNumber = items.get(position).sourceModel.number;
+                                String url = chan.buildUrl(urlModel);
+                                UrlHandler.open(url, activity);
+                                dialog.dismiss();
+                            }
+                        });
                         return view;
                     }
                 });
