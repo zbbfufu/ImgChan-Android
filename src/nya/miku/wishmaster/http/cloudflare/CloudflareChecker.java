@@ -146,10 +146,14 @@ public class CloudflareChecker {
                 Logger.d(TAG, "Got Page: "+url);
                 String value = null;
                 try {
+                    Logger.d(TAG, "Cookies:");
                     String[] cookies = CookieManager.getInstance().getCookie(url).split("[;]");
                     for (String cookie : cookies) {
-                        if ((cookie != null) && (!cookie.trim().equals("")) && (cookie.startsWith(" " + exception.getRequiredCookieName() + "="))) {
-                            value = cookie.substring(exception.getRequiredCookieName().length() + 2);
+                        if (cookie != null) {
+                            Logger.d(TAG, cookie);
+                            if ((!cookie.trim().equals("")) && (cookie.startsWith(" " + exception.getRequiredCookieName() + "="))) {
+                                value = cookie.substring(exception.getRequiredCookieName().length() + 2);
+                            }
                         }
                     }
                 } catch (NullPointerException e) {
