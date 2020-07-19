@@ -18,12 +18,9 @@
 
 package nya.miku.wishmaster.chans.ponyach;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
@@ -34,8 +31,6 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.HttpHeaders;
 import cz.msebera.android.httpclient.client.entity.UrlEncodedFormEntity;
 import cz.msebera.android.httpclient.cookie.Cookie;
 import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
@@ -68,7 +63,7 @@ import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
 import nya.miku.wishmaster.api.models.UrlPageModel;
 import nya.miku.wishmaster.api.util.ChanModels;
-import nya.miku.wishmaster.api.util.ReplacingReader;
+import nya.miku.wishmaster.api.util.RegexUtils;
 import nya.miku.wishmaster.api.util.WakabaReader;
 import nya.miku.wishmaster.common.Async;
 import nya.miku.wishmaster.common.IOUtils;
@@ -83,8 +78,7 @@ import nya.miku.wishmaster.http.streamer.HttpStreamer;
 public class PonyachModule extends AbstractWakabaModule {
     private static final String CHAN_NAME = "ponyach";
     private static final String DEFAULT_DOMAIN = "ponyach.ru";
-    private static final String DOMAINS_HINT = "ponyach.ru, ponyach.ga, ponyach.gq, ponyach.tk";
-    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, "ponyach.ga","ponyach.gq", "ponyach.tk" };
+    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN };
     
     private static final DateFormat DATE_FORMAT;
     static {
@@ -152,9 +146,7 @@ public class PonyachModule extends AbstractWakabaModule {
             if (domain.equals(d)) return DOMAINS;
         }
         String[] domains = new String[DOMAINS.length + 1];
-        for (int i=0; i<DOMAINS.length; ++i) {
-            domains[i] = DOMAINS[i];
-        }
+        System.arraycopy(DOMAINS, 0, domains, 0, DOMAINS.length);
         domains[DOMAINS.length] = domain;
         return domains;
     }
@@ -240,7 +232,6 @@ public class PonyachModule extends AbstractWakabaModule {
         
         EditTextPreference domainPref = new EditTextPreference(context);
         domainPref.setTitle(R.string.pref_domain);
-        domainPref.setSummary(resources.getString(R.string.pref_domain_summary, DOMAINS_HINT));
         domainPref.setDialogTitle(R.string.pref_domain);
         domainPref.setKey(getSharedKey(PREF_KEY_DOMAIN));
         domainPref.getEditText().setHint(DEFAULT_DOMAIN);
@@ -262,11 +253,11 @@ public class PonyachModule extends AbstractWakabaModule {
     
     @Override
     protected WakabaReader getWakabaReader(InputStream stream, UrlPageModel urlModel) {
-        Reader reader = new ReplacingReader(new BufferedReader(new InputStreamReader(stream)),
-                "<span class=\"unkfunc0\"", "<span class=\"unkfunc\"");
-        return new WakabaReader(reader, DATE_FORMAT, canCloudflare()) {
-            private final Pattern aHrefPattern = Pattern.compile("<a\\s+href=\"(.*?)\"(?:.+?download=\"(.+?)\")?", Pattern.DOTALL);
-            private final Pattern attachmentSizePattern = Pattern.compile("([\\d\\.]+)[KM]B");
+        return new WakabaReader(stream, DATE_FORMAT, canCloudflare()) {
+            private final Pattern jsLinkPattern = Pattern.compile("<a[^>]*href=\"javascript:.*?</a>");
+            private final Pattern quotePattern = Pattern.compile("<div class=\"unkfunc[^\"]*\"[^>]*>(.*?)</div>");
+            private final Pattern aHrefPattern = Pattern.compile("<a href=\"(.+?)\"(?:[^>]*download=\"(.+?)\")?");
+            private final Pattern attachmentSizePattern = Pattern.compile("([\\d.]+)[KM]B");
             private final Pattern attachmentPxSizePattern = Pattern.compile("(\\d+)x(\\d+)");
             private final char[] dateFilter = "class=\"mobile_date dast-date\"".toCharArray();
             private final char[] attachmentFilter = "class=\"filesize fs_".toCharArray();
@@ -301,8 +292,7 @@ public class PonyachModule extends AbstractWakabaModule {
             protected void parseDate(String date) {} //Turn off false triggering
             
             private void parsePonyachDate(String date) {
-                date = date.substring(date.indexOf(' ') + 1);
-                super.parseDate(date);
+                super.parseDate(date.substring(date.indexOf(' ') + 1));
             }
             
             private void myParseAttachment(String html) {
@@ -310,12 +300,6 @@ public class PonyachModule extends AbstractWakabaModule {
                 if (aHrefMatcher.find()) {
                     AttachmentModel attachment = new AttachmentModel();
                     attachment.path = aHrefMatcher.group(1);
-                    attachment.thumbnail = attachment.path.replaceAll("/src/(\\d+)/(?:.*?)\\.(.*?)$", "/thumb/$1s.$2");
-                    if (attachment.thumbnail.equals(attachment.path)) {
-                        attachment.thumbnail = null; 
-                    } else {
-                        attachment.thumbnail = attachment.thumbnail.replace(".webm", ".png");
-                    }
                     attachment.originalName = aHrefMatcher.group(2);
                     String ext = attachment.path.substring(attachment.path.lastIndexOf('.') + 1);
                     switch (ext) {
@@ -338,7 +322,12 @@ public class PonyachModule extends AbstractWakabaModule {
                         default:
                             attachment.type = AttachmentModel.TYPE_OTHER_FILE;
                     }
-                    
+                    attachment.thumbnail = attachment.path.replaceAll("/src/(\\d+)/(?:.*?)\\.(.*?)$", "/thumb/$1s.$2");
+                    if (attachment.thumbnail.equals(attachment.path)) {
+                        attachment.thumbnail = null;
+                    } else if (attachment.type == AttachmentModel.TYPE_VIDEO) {
+                        attachment.thumbnail = attachment.thumbnail.substring(0, attachment.thumbnail.lastIndexOf('.')) + ".png";
+                    }
                     Matcher sizeMatcher = attachmentSizePattern.matcher(html);
                     if (sizeMatcher.find()) {
                         try {
@@ -365,10 +354,12 @@ public class PonyachModule extends AbstractWakabaModule {
                     myAttachments.add(attachment);
                 }
             }
+            
             @Override
             protected void postprocessPost(PostModel post) {
-                post.comment = post.comment.replaceAll("<a[^>]*href=\"javascript:.*?</a>", "");
-                post.attachments = myAttachments.toArray(new AttachmentModel[myAttachments.size()]);
+                post.comment = RegexUtils.replaceAll(post.comment, jsLinkPattern, "");
+                post.comment = RegexUtils.replaceAll(post.comment, quotePattern, "<span class=\"unkfunc\">$1</span><br/>");
+                post.attachments = myAttachments.toArray(new AttachmentModel[0]);
                 myAttachments.clear();
             }
             
@@ -438,11 +429,7 @@ public class PonyachModule extends AbstractWakabaModule {
         try {
             response = HttpStreamer.getInstance().getFromUrl(url, request, httpClient, null, task);
             if (response.statusCode == 302) {
-                for (Header header : response.headers) {
-                    if (header != null && HttpHeaders.LOCATION.equalsIgnoreCase(header.getName())) {
-                        return fixRelativeUrl(header.getValue().replaceAll("res/0[05]{2}(\\d+)\\.html", "res/$1\\.html"));
-                    }
-                }
+                return fixRelativeUrl(response.locationHeader);
             } else if (response.statusCode == 200) {
                 ByteArrayOutputStream output = new ByteArrayOutputStream(1024);
                 IOUtils.copyStream(response.stream, output);
@@ -458,6 +445,11 @@ public class PonyachModule extends AbstractWakabaModule {
         }
     }
     
+    @Override
+    public UrlPageModel parseUrl(String url) throws IllegalArgumentException {
+        return super.parseUrl(url.replaceAll("res/0[05]{2}(\\d+)\\.html", "res/$1.html"));
+    }
+
     @Override
     public String fixRelativeUrl(String url) {
         if (url.startsWith("//")) return (useHttps() ? "https:" : "http:") + url;
