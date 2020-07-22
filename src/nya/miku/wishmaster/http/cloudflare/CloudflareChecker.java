@@ -151,8 +151,8 @@ public class CloudflareChecker {
                     for (String cookie : cookies) {
                         if (cookie != null) {
                             Logger.d(TAG, cookie);
-                            if ((!cookie.trim().equals("")) && (cookie.startsWith(" " + exception.getRequiredCookieName() + "="))) {
-                                value = cookie.substring(exception.getRequiredCookieName().length() + 2);
+                            if ((!cookie.trim().equals("")) && (cookie.contains(exception.getRequiredCookieName() + "="))) {
+                                value = cookie.trim().substring(exception.getRequiredCookieName().length() + 1);
                             }
                         }
                     }
