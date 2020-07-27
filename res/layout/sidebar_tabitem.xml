@@ -69,7 +69,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_height="match_parent"
         android:paddingLeft="8dp"
         android:paddingRight="8dp"
-        android:contentDescription="@string/close"
-        android:src="?attr/iconBtnClose" />
+        android:contentDescription="@string/close" />
  
 </LinearLayout>

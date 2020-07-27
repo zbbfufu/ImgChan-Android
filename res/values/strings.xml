@@ -175,6 +175,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_remove_favorites">Remove from favorites</string>
     <string name="context_menu_remove_history">Remove from history</string>
     <string name="context_menu_open_browser">Open browser</string>
+    <string name="context_menu_pin">Pin the tab</string>
     <string name="context_menu_autoupdate_background">Auto-update</string>
     <string name="context_menu_autoupdate_background_off">Auto-update (off)</string>
     <string name="context_menu_autoupdate_now">Run auto-update</string>

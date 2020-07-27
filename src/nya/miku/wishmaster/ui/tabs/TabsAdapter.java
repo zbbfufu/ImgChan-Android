@@ -36,7 +36,9 @@ import android.graphics.drawable.LayerDrawable;
 import android.support.v4.content.res.ResourcesCompat;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -65,10 +67,25 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         public void onClick(View v) {}
     };
 
-    private final View.OnClickListener onCloseClick = new View.OnClickListener() {
+    private final View.OnTouchListener onCloseTouch = new View.OnTouchListener() {
         @Override
-        public void onClick(View v) {
-            closeTab((Integer) v.getTag());
+        public boolean onTouch(View v, MotionEvent e) {
+            switch (e.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.setPressed(true);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    v.setPressed(false);
+                    if (e.getEventTime() - e.getDownTime() > ViewConfiguration.getLongPressTimeout())
+                        toggleTabIsPinned((Integer) v.getTag());
+                    else
+                        closeTab((Integer) v.getTag());
+                    break;
+                case MotionEvent.ACTION_CANCEL:
+                    v.setPressed(false);
+                    break;
+            }
+            return true;
         }
     };
     
@@ -198,6 +215,7 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
     public void closeTab(int position) {
         setDraggingItem(-1);
         if (position >= getCount()) return;
+        if (getItem(position).isPinned) return;
         HistoryFragment.setLastClosed(tabsState.tabsArray.get(position));
         tabsIdStack.removeTab(getItem(position).id);
         remove(getItem(position), false);
@@ -218,6 +236,14 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         }
     }
     
+    public void toggleTabIsPinned(int position) {
+        if (position >= getCount()) return;
+        TabModel model = getItem(position);
+        if (model == null) return;
+        model.isPinned = !model.isPinned;
+        notifyDataSetChanged();
+    }
+
     /**
      * Метод для обработки нажатия клавиши "Назад"
      * @return
@@ -229,7 +255,8 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
                 return true;
             }
         } else {
-            if (MainApplication.getInstance().settings.doNotCloseTabs() ^ longPress) {
+            if (getItem(selectedItem).isPinned ||
+                MainApplication.getInstance().settings.doNotCloseTabs() ^ longPress) {
                 tabsIdStack.removeTab(getItem(selectedItem).id);
                 if (tabsIdStack.isEmpty()) {
                     setSelectedItem(TabModel.POSITION_NEWTAB);
@@ -301,6 +328,8 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         switch (model.type) {
             case TabModel.TYPE_NORMAL:
             case TabModel.TYPE_LOCAL:
+                closeBtn.setImageResource(ThemeUtils.getThemeResId(context.getTheme(),
+                            model.isPinned ? R.attr.iconBtnPin : R.attr.iconBtnClose));
                 closeBtn.setVisibility(View.VISIBLE);
                 String titleText = model.title;
                 if (model.unreadPostsCount > 0 || model.autoupdateError) {
@@ -348,7 +377,8 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         }
         
         closeBtn.setTag(position);
-        closeBtn.setOnClickListener(onCloseClick);
+        closeBtn.setOnClickListener(null); // Prevent undesired ripple effects
+        closeBtn.setOnTouchListener(onCloseTouch);
         return view;
     }
     

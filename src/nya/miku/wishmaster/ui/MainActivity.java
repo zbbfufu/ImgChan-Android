@@ -309,16 +309,17 @@ public class MainActivity extends FragmentActivity {
                 menu.add(Menu.NONE, R.id.context_menu_favorites, 4,
                         isFavorite(model) ? R.string.context_menu_remove_favorites : R.string.context_menu_add_favorites);
             }
+            menu.add(Menu.NONE, R.id.context_menu_pin, 5, R.string.context_menu_pin).setCheckable(true).setChecked(model.isPinned);
             if (model.type == TabModel.TYPE_NORMAL && model.pageModel != null && model.pageModel.type == UrlPageModel.TYPE_THREADPAGE) {
                 boolean backgroundAutoupdateEnabled =
                         MainApplication.getInstance().settings.isAutoupdateEnabled() &&
                         MainApplication.getInstance().settings.isAutoupdateBackground();
-                menu.add(Menu.NONE, R.id.context_menu_autoupdate_background, 5,
+                menu.add(Menu.NONE, R.id.context_menu_autoupdate_background, 6,
                         backgroundAutoupdateEnabled ? R.string.context_menu_autoupdate_background : R.string.context_menu_autoupdate_background_off).
                         setCheckable(true).setChecked(model.autoupdateBackground);
             }
             if (TabsTrackerService.getCurrentUpdatingTabId() == -1) {
-                menu.add(Menu.NONE, R.id.context_menu_autoupdate_now, 6, R.string.context_menu_autoupdate_now);
+                menu.add(Menu.NONE, R.id.context_menu_autoupdate_now, 7, R.string.context_menu_autoupdate_now);
             }
         }
     }
@@ -329,6 +330,9 @@ public class MainActivity extends FragmentActivity {
         switch (item.getItemId()) {
             case R.id.context_menu_move:
                 tabsAdapter.setDraggingItem(menuInfo.position);
+                return true;
+            case R.id.context_menu_pin:
+                tabsAdapter.toggleTabIsPinned(menuInfo.position);
                 return true;
             case R.id.context_menu_copy_url:
                 String url = tabsAdapter.getItem(menuInfo.position).webUrl;
