@@ -254,6 +254,30 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         }
     }
     
+    public void clearTabs() {
+        boolean selectedClosed = false;
+        setDraggingItem(-1);
+        for (int i = 0; i < getCount();) {
+            if (getItem(i).isPinned) {++i; continue;}
+            tabsIdStack.removeTab(getItem(i).id);
+            remove(getItem(i), false);
+            if (i == selectedItem) {
+                selectedClosed = true;
+            } else if (i < selectedItem) {
+                --selectedItem;
+            }
+        }
+        if (selectedClosed) {
+            if (!tabsIdStack.isEmpty()) {
+                setSelectedItemId(tabsIdStack.getCurrentTab()); //serialize
+            } else {
+                setSelectedItem(TabModel.POSITION_NEWTAB); //serialize
+            }
+        } else {
+            setSelectedItem(selectedItem, true, MainApplication.getInstance().settings.scrollToActiveTab()); //serialize
+        }
+    }
+
     public void toggleTabIsPinned(int position) {
         if (position >= getCount()) return;
         TabModel model = getItem(position);

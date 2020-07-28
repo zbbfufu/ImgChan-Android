@@ -916,7 +916,10 @@ public class MainActivity extends FragmentActivity {
             return true;
         }
         if (drawerLayout != null && drawerLayout.isDrawerOpen(DRAWER_GRAVITY)) {
-            closeDrawer();
+            if (longPress && MainApplication.getInstance().settings.tabsCleanupEnabled())
+                tabsAdapter.clearTabs();
+            else
+                closeDrawer();
             return true;
         }
         if (tabsAdapter != null && tabsAdapter.back(longPress)) {

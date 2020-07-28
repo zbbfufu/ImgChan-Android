@@ -273,6 +273,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         
         <CheckBoxPreference
             android:defaultValue="false"
+            android:key="@string/pref_key_tabs_cleanup"
+            android:title="@string/pref_tabs_cleanup_title"
+            android:summary="@string/pref_tabs_cleanup_summary" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
             android:key="@string/pref_key_scroll_volume_buttons"
             android:title="@string/pref_scroll_volume_buttons_title"
             android:summary="@string/pref_scroll_volume_buttons_summary" />

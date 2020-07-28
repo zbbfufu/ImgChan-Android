@@ -438,6 +438,10 @@ public class ApplicationSettings {
         return preferences.getBoolean(resources.getString(R.string.pref_key_do_not_close_tabs), false);
     }
     
+    public boolean tabsCleanupEnabled() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_tabs_cleanup), false);
+    }
+
     public boolean scrollVolumeButtons() {
         return preferences.getBoolean(resources.getString(R.string.pref_key_scroll_volume_buttons), false);
     }
