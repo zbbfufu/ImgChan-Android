@@ -355,8 +355,7 @@ public class MainActivity extends FragmentActivity {
                 handleFavorite(tabsAdapter.getItem(menuInfo.position));
                 return true;
             case R.id.context_menu_autoupdate_background:
-                tabsAdapter.getItem(menuInfo.position).autoupdateBackground = !tabsAdapter.getItem(menuInfo.position).autoupdateBackground;
-                tabsAdapter.notifyDataSetChanged();
+                tabsAdapter.toggleTabAutoupdate(menuInfo.position);
                 return true;
             case R.id.context_menu_autoupdate_now:
                 startService(new Intent(this, TabsTrackerService.class).putExtra(TabsTrackerService.EXTRA_UPDATE_IMMEDIATELY, true));

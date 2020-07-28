@@ -62,11 +62,6 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         0.0f,0.0f,0.0f,1.0f,0.0f
     }));
 
-    static final View.OnClickListener nullOnClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {}
-    };
-
     private final View.OnTouchListener onCloseTouch = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View v, MotionEvent e) {
@@ -88,15 +83,38 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
             return true;
         }
     };
-    
-    private final View.OnClickListener onIconClick = new View.OnClickListener() {
+
+    private final View.OnTouchListener onIconTouch = new View.OnTouchListener() {
         @Override
-        public void onClick(View v) {
-            TabModel model = getItem((Integer) v.getTag());
-            if (model != null) {
-                model.autoupdateBackground = !model.autoupdateBackground;
-                notifyDataSetChanged();
+        public boolean onTouch(View v, MotionEvent e) {
+            switch (e.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.setPressed(true);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    v.setPressed(false);
+                    if (e.getEventTime() - e.getDownTime() > ViewConfiguration.getLongPressTimeout())
+                        setDraggingItem((Integer) v.getTag());
+                    else
+                        toggleTabAutoupdate((Integer) v.getTag());
+                    break;
             }
+            return true;
+        }
+    };
+
+    private final View.OnTouchListener onIconLongTouch = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent e) {
+            switch (e.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    break;
+                case MotionEvent.ACTION_UP:
+                    if (e.getEventTime() - e.getDownTime() > ViewConfiguration.getLongPressTimeout())
+                        setDraggingItem((Integer) v.getTag());
+                    break;
+            }
+            return true;
         }
     };
 
@@ -244,6 +262,14 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         notifyDataSetChanged();
     }
 
+    public void toggleTabAutoupdate(int position) {
+        if (position >= getCount()) return;
+        TabModel model = getItem(position);
+        if (model == null) return;
+        model.autoupdateBackground = !model.autoupdateBackground;
+        notifyDataSetChanged();
+    }
+
     /**
      * Метод для обработки нажатия клавиши "Назад"
      * @return
@@ -344,7 +370,7 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
                 Drawable icon = chan != null ? chan.getChanFavicon() :
                     ResourcesCompat.getDrawable(context.getResources(), android.R.drawable.ic_delete, null);
                 ColorFilter filter = null;
-                View.OnClickListener onIconClick = nullOnClickListener;
+                View.OnTouchListener onIconTouch = this.onIconLongTouch;
                 if (icon != null) {
                     if (model.type == TabModel.TYPE_LOCAL) {
                         Drawable[] layers = new Drawable[] {
@@ -352,10 +378,11 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
                         icon = new LayerDrawable(layers);
                     } else if (model.type == TabModel.TYPE_NORMAL && model.pageModel != null && model.pageModel.type == UrlPageModel.TYPE_THREADPAGE) {
                         filter = model.autoupdateBackground ? null : disabledIconColorFilter;
-                        onIconClick = this.onIconClick;
+                        onIconTouch = this.onIconTouch;
                     }
                     favIcon.setTag(position);
-                    favIcon.setOnClickListener(onIconClick);
+                    favIcon.setOnClickListener(null);
+                    favIcon.setOnTouchListener(onIconTouch);
                     favIcon.setColorFilter(filter);
                     favIcon.setImageDrawable(icon);
                     favIcon.setVisibility(View.VISIBLE);
