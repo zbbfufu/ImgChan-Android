@@ -1834,6 +1834,11 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         return adapter.setIntentExtras(sendIntent);
     }
     
+    private static void setImageViewSpoiler(ImageView imageView, boolean isSpoiler) {
+        int alphaValue = isSpoiler ? 8 : 255;
+        CompatibilityUtils.setImageAlpha(imageView, alphaValue);
+    }
+
     private static class PostsListAdapter extends ArrayAdapter<PresentationItemModel> {
         private static final int ITEM_VIEW_TYPE_NORMAL = 0;
         private static final int ITEM_VIEW_TYPE_HIDDEN = 1;
@@ -2641,11 +2646,6 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                     }
                 }
             }
-        }
-        
-        private void setImageViewSpoiler(ImageView imageView, boolean isSpoiler) {
-            int alphaValue = isSpoiler ? 8 : 255;
-            CompatibilityUtils.setImageAlpha(imageView, alphaValue);
         }
         
         private void fillThumbnail(View thumbnailView, AttachmentModel attachment, String hash, boolean nonBusy, boolean isDialog) {
@@ -3842,7 +3842,16 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
     
     @SuppressLint("InlinedApi")
     private void openGridGallery() {
+        final boolean showInformation = settings.showInfoInGridGallery();
         final int tnSize = settings.getPostThumbnailSize();
+        final int tnHeight;
+        if (showInformation) {
+            TextView text = new TextView(activity);
+            CompatibilityUtils.setTextAppearance(text, android.R.style.TextAppearance_Small);
+            tnHeight = tnSize + (int)Math.ceil(2 * (text.getPaint().getFontMetrics().bottom - text.getPaint().getFontMetrics().top));
+        } else {
+            tnHeight = tnSize;
+        }
         
         class GridGalleryAdapter extends ArrayAdapter<Triple<AttachmentModel, String, String>>
                 implements View.OnClickListener, AbsListView.OnScrollListener {
@@ -3850,10 +3859,12 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             private boolean selectingMode = false;
             private boolean[] isSelected = null;
             private volatile boolean isBusy = false;
+            private final LayoutInflater inflater;
             public GridGalleryAdapter(GridView view, List<Triple<AttachmentModel, String, String>> list) {
                 super(activity, 0, list);
                 this.view = view;
                 this.isSelected = new boolean[list.size()];
+                this.inflater = LayoutInflater.from(activity);
             }
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {}
@@ -3876,13 +3887,8 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             public View getView(int position, View convertView, ViewGroup parent) {
                 if (convertView == null) {
                     convertView = new FrameLayout(activity);
-                    convertView.setLayoutParams(new AbsListView.LayoutParams(tnSize, tnSize));
-                    ImageView tnImage = new ImageView(activity);
-                    tnImage.setLayoutParams(new FrameLayout.LayoutParams(tnSize, tnSize, Gravity.CENTER));
-                    tnImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                    tnImage.setId(R.id.post_thumbnail_image);
-                    setViewSize(tnImage, MainApplication.getInstance().settings.getPostThumbnailSize());
-                    ((FrameLayout) convertView).addView(tnImage);
+                    convertView.setLayoutParams(new AbsListView.LayoutParams(tnSize, tnHeight));
+                    ((FrameLayout) convertView).addView(inflater.inflate(R.layout.post_thumbnail, parent, false));
                 }
                 convertView.setTag(getItem(position).getLeft());
                 safeRegisterForContextMenu(convertView);
@@ -3939,6 +3945,44 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 String attachmentHash = getItem(position).getMiddle();
                 ImageView tnImage = (ImageView) view.findViewById(R.id.post_thumbnail_image);
                 setViewSize(tnImage, MainApplication.getInstance().settings.getPostThumbnailSize());
+                TextView size = (TextView) view.findViewById(R.id.post_thumbnail_attachment_size);
+                TextView type = (TextView) view.findViewById(R.id.post_thumbnail_attachment_type);
+                size.setMaxWidth(MainApplication.getInstance().settings.getPostThumbnailSize());
+                type.setMaxWidth(MainApplication.getInstance().settings.getPostThumbnailSize());
+                setImageViewSpoiler(tnImage, attachment.isSpoiler || staticSettings.maskPictures);
+                if (showInformation) {
+                    switch (attachment.type) {
+                        case AttachmentModel.TYPE_IMAGE_GIF:
+                            type.setText(R.string.postitem_gif);
+                            break;
+                        case AttachmentModel.TYPE_VIDEO:
+                            type.setText(R.string.postitem_video);
+                            break;
+                        case AttachmentModel.TYPE_AUDIO:
+                            type.setText(R.string.postitem_audio);
+                            break;
+                        case AttachmentModel.TYPE_OTHER_FILE:
+                            type.setText(R.string.postitem_file);
+                            break;
+                        case AttachmentModel.TYPE_OTHER_NOTFILE:
+                            type.setText(R.string.postitem_link);
+                            break;
+                    }
+                    if (attachment.type == AttachmentModel.TYPE_IMAGE_STATIC || attachment.type == AttachmentModel.TYPE_IMAGE_SVG) {
+                        type.setVisibility(View.GONE);
+                    } else {
+                        type.setVisibility(View.VISIBLE);
+                    }
+                    if (attachment.type == AttachmentModel.TYPE_OTHER_NOTFILE) {
+                        size.setVisibility(View.GONE);
+                    } else {
+                        size.setText(Attachments.getAttachmentSizeString(attachment, resources));
+                        size.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    size.setVisibility(View.GONE);
+                    type.setVisibility(View.GONE);
+                }
                 if (attachment.thumbnail == null || attachment.thumbnail.length() == 0) {
                     tnImage.setTag(Boolean.TRUE);
                     tnImage.setImageResource(Attachments.getDefaultThumbnailResId(attachment.type));

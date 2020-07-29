@@ -553,6 +553,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_do_not_download_videos_summary">Відкривати відео не кешуючи</string>
     <string name="pref_gallery_audioplayer_title">Аудіоплеєр</string>
     <string name="pref_gallery_audioplayer_summary">Не працює на ранніх версіях Android</string>
+    <string name="pref_gallery_info_in_grid_title">Інформація в режимі сітки</string>
+    <string name="pref_gallery_info_in_grid_summary">Відображати інформацію про файлах в режимі сітки</string>
     <string name="pref_enable_autoupdate_title">Автооновлення</string>
     <string name="pref_enable_autoupdate_summary">Стежити за новими постами</string>
     <string name="pref_autoupdate_stop_on_exit_title">Вимикати по завершенні програми</string>

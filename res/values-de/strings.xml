@@ -543,6 +543,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_do_not_download_videos_summary">Video-Dateien direkt öffnen, in den Cache nicht herunterladen</string>
     <string name="pref_gallery_audioplayer_title">Built-in audio-player</string>
     <string name="pref_gallery_audioplayer_summary">Kann manchmal nicht in älteren Versionen von Android arbeiten</string>
+    <string name="pref_gallery_info_in_grid_title">Informationen im Rastermodus</string>
+    <string name="pref_gallery_info_in_grid_summary">Zeigen Sie Dateiinformationen im Rastermodus Galerie an</string>
     <string name="pref_enable_autoupdate_title">Auto-Update aktivieren</string>
     <string name="pref_enable_autoupdate_summary">Die offenen Threads automatisch aktualisieren</string>
     <string name="pref_autoupdate_stop_on_exit_title">Halt am Ausgang</string>

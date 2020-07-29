@@ -390,6 +390,10 @@ public class ApplicationSettings {
         return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_audioplayer), true);
     }
     
+    public boolean showInfoInGridGallery() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_info_in_grid), false);
+    }
+
     public boolean isSFWRelease() {
         return isSFW;
     }
