@@ -1807,7 +1807,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) &&
                  (activity.getActionBar().isShowing() ||
                   (listView.getHeight() <= 0))) ? listView.getPaddingTop() : 0;
-            if (listView.getHeight() > 0) {
+            if ((position != 0 || top != TabModel.DEFAULT_TOP) && listView.getHeight() > 0) {
                 adjTop -= listView.getPaddingTop();
             }
             listView.setSelectionFromTop(position, adjTop);
