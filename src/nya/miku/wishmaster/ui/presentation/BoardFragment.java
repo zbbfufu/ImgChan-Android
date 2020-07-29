@@ -453,6 +453,12 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 tabModel.title);
     }
 
+    public void onTitleClick() {
+        if (pageType == TYPE_POSTSLIST && listLoaded) {
+            openGridGallery();
+        }
+    }
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);

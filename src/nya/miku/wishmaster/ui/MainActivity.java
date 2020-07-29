@@ -459,6 +459,17 @@ public class MainActivity extends FragmentActivity {
             titleView = (TextView)customView.findViewById(R.id.action_bar_title);
             titleView.setLines(1);
             titleView.setText(initialTitleText);
+            titleView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (drawerLayout == null || !drawerLayout.isDrawerOpen(DRAWER_GRAVITY)) {
+                        Fragment currentFragment = MainApplication.getInstance().tabsSwitcher.currentFragment;
+                        if (currentFragment instanceof BoardFragment) {
+                            ((BoardFragment)currentFragment).onTitleClick();
+                        }
+                    }
+                }
+            });
             titleView.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
