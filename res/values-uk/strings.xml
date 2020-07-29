@@ -676,6 +676,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="newtab_select_local_directory">Вказати розташування каталогу</string>
     <string name="pref_scroll_to_active_tab_summary">Прокручувати до активної вкладки при закритті неактивній вкладки</string>
     <string name="pref_scroll_to_active_tab_title">Прокрутка до активної вкладки</string>
+    <string name="pref_scroll_to_top_title">Повернення наверх</string>
+    <string name="pref_scroll_to_top_summary">Прокручувати наверх після оновлення списку тредов</string>
     <string name="pref_web_search_url_title">URL Web-пошуку</string>
     <string name="pref_web_search_url_summary">Персональний URL Web-пошуку</string>
     <string name="pref_makaba_passcode">Пасскод</string>

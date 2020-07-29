@@ -307,6 +307,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:title="@string/pref_scroll_to_active_tab_title"
             android:summary="@string/pref_scroll_to_active_tab_summary" />
 
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_scroll_to_top"
+            android:title="@string/pref_scroll_to_top_title"
+            android:summary="@string/pref_scroll_to_top_summary" />
+
         <EditTextPreference
             android:defaultValue=""
             android:key="@string/pref_key_web_search_url"

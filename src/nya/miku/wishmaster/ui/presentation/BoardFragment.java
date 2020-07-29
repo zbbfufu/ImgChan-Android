@@ -1514,14 +1514,20 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                                 if (nullAdapterIsSet) {
                                     listView.setAdapter(adapter);
                                     listView.requestFocus();
-                                    hackListViewSetPosition(listView, nullAdapterSavedPosition, nullAdapterSavedTop);
+                                    if (!isThreadPage && settings.scrollToTop())
+                                        hackListViewSetPosition(listView, 0, TabModel.DEFAULT_TOP);
+                                    else
+                                        hackListViewSetPosition(listView, nullAdapterSavedPosition, nullAdapterSavedTop);
                                     nullAdapterIsSet = false;
                                 }
                                 adapter.notifyDataSetChanged();
                                 if (isThreadPage && adapter.getCount() != itemsCountBefore) resetSearchCache();
                                 setPullableNoRefreshing();
                                 if (startItemPosition != -1) {
-                                    hackListViewSetPosition(listView, startItemPosition, startItemTop);
+                                    if (!isThreadPage && settings.scrollToTop())
+                                        hackListViewSetPosition(listView, 0, TabModel.DEFAULT_TOP);
+                                    else
+                                        hackListViewSetPosition(listView, startItemPosition, startItemTop);
                                     startItemPosition = -1;
                                 }
                                 String notification;
