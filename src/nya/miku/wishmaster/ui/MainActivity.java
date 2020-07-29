@@ -50,6 +50,7 @@ import nya.miku.wishmaster.ui.theme.GenericThemeEntry;
 import nya.miku.wishmaster.ui.theme.ThemeUtils;
 import nya.miku.wishmaster.ui.tabs.TabsAdapter.TabSelectListener;
 import android.annotation.SuppressLint;
+import android.app.ActionBar;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -79,6 +80,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends FragmentActivity {
@@ -87,6 +89,8 @@ public class MainActivity extends FragmentActivity {
     @SuppressLint("InlinedApi")
     private static final int DRAWER_GRAVITY = Gravity.START;
     
+    private static final String initialTitleText = new String(new char[128]).replaceAll(".", " ");
+
     private NotificationManager notificationManager;
     private BroadcastReceiver broadcastReceiver;
     private IntentFilter intentFilter;
@@ -110,6 +114,7 @@ public class MainActivity extends FragmentActivity {
     
     private HiddenTabsSection hiddenTabsSection = null;
     private ImageView btnRefresh = null;
+    private TextView titleView;
     
     private void initDrawer() {
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer);
@@ -374,6 +379,20 @@ public class MainActivity extends FragmentActivity {
     }
     
     @Override
+    public void setTitle (final CharSequence title) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    titleView.setText(title);
+                }
+            });
+        } else {
+            super.setTitle(title);
+        }
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         Logger.d(TAG, "main activity creating");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -432,6 +451,30 @@ public class MainActivity extends FragmentActivity {
             }
         });
         
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            ActionBar actionBar = getActionBar();
+            actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setDisplayShowCustomEnabled(true);
+            View customView = getLayoutInflater().inflate(R.layout.action_bar_title, null);
+            titleView = (TextView)customView.findViewById(R.id.action_bar_title);
+            titleView.setLines(1);
+            titleView.setText(initialTitleText);
+            titleView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if (tabsAdapter == null) return false;
+                    int tab = tabsAdapter.getSelectedItem();
+                    if (tab < 0) return false;
+                    tabsAdapter.toggleTabIsPinned(tab);
+                    return true;
+                }
+            });
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                titleView.setPadding(10, 0, 0, 0);
+            }
+            actionBar.setCustomView(customView);
+        }
+
         final DragSortListView list = (DragSortListView)findViewById(R.id.sidebar_tabs_list);
         TabsState state = MainApplication.getInstance().tabsState;
         tabsAdapter = initTabsListView(list, state);
