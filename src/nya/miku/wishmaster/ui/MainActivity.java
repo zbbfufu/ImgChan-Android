@@ -477,6 +477,7 @@ public class MainActivity extends FragmentActivity {
                     int tab = tabsAdapter.getSelectedItem();
                     if (tab < 0) return false;
                     tabsAdapter.toggleTabIsPinned(tab);
+                    v.setPressed(false);
                     return true;
                 }
             });
