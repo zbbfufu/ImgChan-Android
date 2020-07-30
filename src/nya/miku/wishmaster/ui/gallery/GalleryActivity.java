@@ -1331,6 +1331,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
             public void run() {
                 try {
                     recycleTag(tag, false);
+                    final String injectedJS = "javascript:var v = document.getElementsByTagName('video'); if (v.length > 0) v[0].loop = true;";
                     webView = new WebViewFixed(GalleryActivity.this);
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         webView.setWebViewClient(new WebViewClient() {
@@ -1350,6 +1351,11 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
                                 }
                                 showError(tag, "HTTP ERROR " + error.getStatusCode());
                             }
+                            @Override
+                            public void onPageFinished(WebView webView, String url) {
+                                super.onPageFinished(webView, url);
+                                webView.loadUrl(injectedJS);
+                            }
                         });
                     } else {
                         webView.setWebViewClient(new WebViewClient() {
@@ -1360,6 +1366,11 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
                                     return;
                                 }
                                 showError(tag, "LOAD ERROR " + errorCode + "\n" + description);
+                            }
+                            @Override
+                            public void onPageFinished(WebView webView, String url) {
+                                super.onPageFinished(webView, url);
+                                webView.loadUrl(injectedJS);
                             }
                         });
                     }
