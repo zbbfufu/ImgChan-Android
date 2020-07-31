@@ -116,6 +116,31 @@ public class MainActivity extends FragmentActivity {
     private ImageView btnRefresh = null;
     private TextView titleView;
     
+    private View getFirstImageView(ViewGroup vg) {
+        for (int i = 0; i < vg.getChildCount(); ++i) {
+            View v = vg.getChildAt(i);
+            if (v instanceof ImageView) {
+                return v;
+            } else if (v instanceof ViewGroup) {
+                v = getFirstImageView((ViewGroup)v);
+                if (v != null) return v;
+            }
+        }
+        return null;
+    }
+
+    private View getDrawerToggleView() {
+        Window window = getWindow();
+        View v = window.getDecorView();
+        int resId = getResources().getIdentifier("action_bar_container", "id", "android");
+        v = v.findViewById(resId);
+        if (v != null && v instanceof ViewGroup) {
+            return getFirstImageView((ViewGroup)v);
+        } else {
+            return null;
+        }
+    }
+
     private void initDrawer() {
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer);
         if (drawerLayout == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) return;
@@ -154,6 +179,21 @@ public class MainActivity extends FragmentActivity {
         
         drawerLayout.setDrawerShadow(R.drawable.drawer_shadow, DRAWER_GRAVITY);
         CompatibilityImpl.activeActionBar(this);
+
+        View toggle = getDrawerToggleView();
+        if (toggle != null) {
+            toggle.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View view) {
+                    if (drawerLayout.isDrawerOpen(DRAWER_GRAVITY) &&
+                        MainApplication.getInstance().settings.tabsCleanupEnabled()) {
+                        tabsAdapter.clearTabs();
+                        return true;
+                    }
+                    return false;
+                }
+            });
+        }
     }
     
     private void openDrawer() {
