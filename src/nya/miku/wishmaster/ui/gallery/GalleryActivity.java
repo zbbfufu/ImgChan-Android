@@ -1028,7 +1028,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
                 videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                     @Override
                     public void onPrepared(final MediaPlayer mp) {
-                        mp.setLooping(true);
+                        mp.setLooping(settings.loopMedia());
 
                         durationView.setText("00:00 / " + formatMediaPlayerTime(mp.getDuration()));
 
@@ -1061,6 +1061,14 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
                         if (tag.timer != null) tag.timer.cancel();
                         showError(tag, getString(R.string.gallery_error_play));
                         return true;
+                    }
+                });
+                videoView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if (!videoView.isPlaying()) {
+                            videoView.start();
+                        }
                     }
                 });
 
@@ -1118,7 +1126,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
                             tag.audioPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                                 @Override
                                 public void onPrepared(final MediaPlayer mp) {
-                                    mp.setLooping(true);
+                                    mp.setLooping(settings.loopMedia());
                                     
                                     durationView.setText(getSpannedText("00:00 / " + formatMediaPlayerTime(mp.getDuration())));
                                     
@@ -1151,6 +1159,14 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
                                     if (tag.timer != null) tag.timer.cancel();
                                     showError(tag, getString(R.string.gallery_error_play));
                                     return true;
+                                }
+                            });
+                            durationView.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    if (!tag.audioPlayer.isPlaying()) {
+                                        tag.audioPlayer.start();
+                                    }
                                 }
                             });
                             try {
@@ -1331,7 +1347,8 @@ public class GalleryActivity extends Activity implements View.OnClickListener, V
             public void run() {
                 try {
                     recycleTag(tag, false);
-                    final String injectedJS = "javascript:var v = document.getElementsByTagName('video'); if (v.length > 0) v[0].loop = true;";
+                    final String injectedJS = "javascript:var v = document.getElementsByTagName('video'); if (v.length > 0) v[0].loop = " +
+                        (settings.loopMedia() ? "true" : "false") + ";";
                     webView = new WebViewFixed(GalleryActivity.this);
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         webView.setWebViewClient(new WebViewClient() {

@@ -358,6 +358,10 @@ public class ApplicationSettings {
         return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_autoplay), false);
     }
 
+    public boolean loopMedia() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_loop), true);
+    }
+
     public boolean scrollThreadFromGallery() {
         return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_scroll_thread), false);
     }
