@@ -2919,6 +2919,19 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             for (int id : new int[] {R.id.board_navigation_previous, R.id.board_navigation_next, R.id.board_navigation_page }) {
                 navigationBarView.findViewById(id).setOnClickListener(navigationBarOnClickListener);
             }
+            navigationBarView.findViewById(R.id.board_navigation_page).setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if (presentationModel.source.boardModel.catalogAllowed) {
+                        UrlPageModel model = new UrlPageModel();
+                        model.chanName = chan.getChanName();
+                        model.type = UrlPageModel.TYPE_CATALOGPAGE;
+                        model.boardName = tabModel.pageModel.boardName;
+                        UrlHandler.open(model, activity);
+                    }
+                    return true;
+                }
+            });
             ((TextView) navigationBarView.findViewById(R.id.board_navigation_page)).setText(String.valueOf(tabModel.pageModel.boardPage));
             if (tabModel.pageModel.boardPage == presentationModel.source.boardModel.firstPage) {
                 navigationBarView.findViewById(R.id.board_navigation_previous).setVisibility(View.INVISIBLE);
