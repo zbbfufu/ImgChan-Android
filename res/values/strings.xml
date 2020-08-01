@@ -560,6 +560,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_autoupdate_notification_summary">Does not allow the system to close the process when the application is minimized</string>
     <string name="pref_autoupdate_progress_title">Show progress in drawer</string>
     <string name="pref_autoupdate_progress_summary">Show auto-update progress in drawer</string>
+    <string name="pref_autoupdate_with_back_title">Update with Back key</string>
+    <string name="pref_autoupdate_with_back_summary">Update with Back key when drawer is open</string>
     <string name="pref_subscriptions_enabled_title">Track replies</string>
     <string name="pref_subscriptions_enabled_summary">Track replies to posts you are subscribed</string>
     <string name="pref_subscribe_threads_title">Track threads</string>

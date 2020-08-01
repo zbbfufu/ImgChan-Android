@@ -490,6 +490,10 @@ public class ApplicationSettings {
         return preferences.getBoolean(resources.getString(R.string.pref_key_autoupdate_progress), false);
     }
 
+    public boolean isAutoupdateWithBack() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_autoupdate_with_back), false);
+    }
+
     public int getAutoupdateDelay() {
         int defaultValue = 60;
         String autoupdateDelayStr = preferences.getString(resources.getString(R.string.pref_key_autoupdate_delay), null);

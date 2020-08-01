@@ -363,7 +363,7 @@ public class MainActivity extends FragmentActivity {
                         backgroundAutoupdateEnabled ? R.string.context_menu_autoupdate_background : R.string.context_menu_autoupdate_background_off).
                         setCheckable(true).setChecked(model.autoupdateBackground);
             }
-            if (TabsTrackerService.getCurrentUpdatingTabId() == -1) {
+            if (!MainApplication.getInstance().settings.isAutoupdateWithBack() && TabsTrackerService.getCurrentUpdatingTabId() == -1) {
                 menu.add(Menu.NONE, R.id.context_menu_autoupdate_now, 7, R.string.context_menu_autoupdate_now);
             }
         }
@@ -1013,6 +1013,8 @@ public class MainActivity extends FragmentActivity {
         if (drawerLayout != null && drawerLayout.isDrawerOpen(DRAWER_GRAVITY)) {
             if (longPress && MainApplication.getInstance().settings.tabsCleanupEnabled())
                 tabsAdapter.clearTabs();
+            else if (MainApplication.getInstance().settings.isAutoupdateWithBack() && TabsTrackerService.getCurrentUpdatingTabId() == -1)
+                startService(new Intent(this, TabsTrackerService.class).putExtra(TabsTrackerService.EXTRA_UPDATE_IMMEDIATELY, true));
             else
                 closeDrawer();
             return true;

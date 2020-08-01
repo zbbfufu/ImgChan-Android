@@ -73,6 +73,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_key_autoupdate_background">PREF_KEY_AUTOUPDATE_BACKGROUND</string>
     <string name="pref_key_autoupdate_notification">PREF_KEY_AUTOUPDATE_NOTIFICATION</string>
     <string name="pref_key_autoupdate_progress">PREF_KEY_AUTOUPDATE_PROGRESS</string>
+    <string name="pref_key_autoupdate_with_back">PREF_KEY_AUTOUPDATE_WITH_BACK</string>
     <string name="pref_key_subscriptions_enabled">PREF_KEY_SUBSCRIPTIONS_ENABLED</string>
     <string name="pref_key_subscribe_threads">PREF_KEY_SUBSCRIBE_THREADS</string>
     <string name="pref_key_highlight_subscriptions">PREF_KEY_HIGHLIGHT_SUBSCRIPTIONS</string>
