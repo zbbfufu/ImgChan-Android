@@ -3585,6 +3585,9 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                         view.setBackgroundColor(bgColor);
                         TextView comment = (TextView)view.findViewById(R.id.post_comment);
                         if (comment != null) comment.setTextIsSelectable(false);
+                        view.setBackgroundResource(ThemeUtils.resolveAttribute(activity.getTheme(),
+                                    android.R.attr.selectableItemBackground, true).resourceId);
+                        view.setClickable(true);
                         view.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
@@ -3598,6 +3601,34 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                                 String url = chan.buildUrl(urlModel);
                                 UrlHandler.open(url, activity);
                                 dialog.dismiss();
+                            }
+                        });
+                        view.setOnLongClickListener(new View.OnLongClickListener() {
+                            @Override
+                            public boolean onLongClick(View view) {
+                                UrlPageModel urlModel = new UrlPageModel();
+                                urlModel.chanName = chan.getChanName();
+                                urlModel.type = UrlPageModel.TYPE_THREADPAGE;
+                                urlModel.boardName = tabModel.pageModel.boardName;
+                                urlModel.threadNumber = items.get(position).sourceModel.parentThread;
+                                if (!urlModel.threadNumber.equals(items.get(position).sourceModel.number))
+                                    urlModel.postNumber = items.get(position).sourceModel.number;
+                                String tabTitle = null;
+                                String subject = items.get(0).sourceModel.subject;
+                                if (subject != null && subject.length() != 0) {
+                                    tabTitle = subject;
+                                } else {
+                                    Spanned spannedComment = items.get(0).spannedComment;
+                                    if (spannedComment != null) {
+                                        tabTitle = spannedComment.toString().replace('\n', ' ');
+                                        if (tabTitle.length() > MAX_TITLE_LENGHT) tabTitle = tabTitle.substring(0, MAX_TITLE_LENGHT);
+                                    }
+                                }
+                                if (tabTitle != null)
+                                    tabTitle = resources.getString(R.string.tabs_title_threadpage_loaded, urlModel.boardName, tabTitle);
+                                UrlHandler.open(urlModel, activity, false, tabTitle);
+                                dialog.dismiss();
+                                return true;
                             }
                         });
                         return view;
