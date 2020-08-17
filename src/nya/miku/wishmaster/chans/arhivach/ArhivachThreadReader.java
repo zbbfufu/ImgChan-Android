@@ -42,6 +42,7 @@ import nya.miku.wishmaster.api.models.BadgeIconModel;
 import nya.miku.wishmaster.api.models.PostModel;
 import nya.miku.wishmaster.api.models.ThreadModel;
 import nya.miku.wishmaster.api.util.CryptoUtils;
+import nya.miku.wishmaster.api.util.RegexUtils;
 import nya.miku.wishmaster.common.Logger;
 
 /**
@@ -62,11 +63,15 @@ public class ArhivachThreadReader  implements Closeable {
 
     private static final Pattern URL_PATTERN =
             Pattern.compile("((https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])");
+    private static final Pattern ATTACHMENT_PX_SIZE_PATTERN = Pattern.compile("(\\d+)\\s*[x×х]\\s*(\\d+)"); // \u0078 \u00D7 \u0445
+    private static final Pattern ATTACHMENT_SIZE_PATTERN =
+            Pattern.compile("([\\d.]+)\\s*([кkмm])?[бb]", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private static final Pattern IMAGE_WITH_TITLE_PATTERN = Pattern.compile("src=\"([^\"]+)\"(?:.*?title=\"([^\"]*)\")?");
 
     private static final char[] DATA_START = "class=\"thread_inner\"".toCharArray();
+    private static final char[] TAG_CLOSE = ">".toCharArray();
 
     private static final int FILTER_THREAD_END = 0;
-   // private static final int FILTER_POST_HEAD = 1;
     private static final int FILTER_ATTACHMENT = 1;
     private static final int FILTER_ATTACHMENT_ORIGINAL = 2;
     private static final int FILTER_ATTACHMENT_THUMBNAIL = 3;
@@ -84,25 +89,22 @@ public class ArhivachThreadReader  implements Closeable {
     private static final int FILTER_MAIL = 14;
     private static final int FILTER_OP = 15;
     private static final int FILTER_DELETED = 16;
+    private static final int FILTER_BADGE = 17;
 
     public static final char[][] FILTERS_OPEN = {
             "</html>".toCharArray(),
-
-            //"class=\"post_head\"".toCharArray(),
 
             "<div class=\"post_image_block\"".toCharArray(),
             "<a".toCharArray(),
             "<img".toCharArray(),
 
             "class=\"post_comment_body\"".toCharArray(),
-
             "class=\"post_comment\"".toCharArray(),
-
             "</div>".toCharArray(),
 
             "class=\"poster_sage\"".toCharArray(),
 
-            "class=\"poster_name\">".toCharArray(),
+            "class=\"poster_name\"".toCharArray(),
 
             "class=\"poster_trip\"".toCharArray(),
 
@@ -119,24 +121,22 @@ public class ArhivachThreadReader  implements Closeable {
             "label-success\">OP".toCharArray(),
 
             "class=\"post post_deleted\"".toCharArray(),
+
+            "<img hspace=".toCharArray(),
     };
 
     private static final char[][] FILTERS_CLOSE = {
             null,
 
-           // "</div>".toCharArray(),
+            TAG_CLOSE,
+            "</a>".toCharArray(),
+            TAG_CLOSE,
 
-            ">".toCharArray(),
-            ">".toCharArray(),
-            ">".toCharArray(),
-
-            ">".toCharArray(),
-
-            ">".toCharArray(),
-
+            TAG_CLOSE,
+            TAG_CLOSE,
             null,
 
-            ">".toCharArray(),
+            TAG_CLOSE,
 
             "</span>".toCharArray(),
 
@@ -150,11 +150,13 @@ public class ArhivachThreadReader  implements Closeable {
 
             "\"".toCharArray(),
 
-            ">".toCharArray(),
+            TAG_CLOSE,
 
             "</span>".toCharArray(),
 
-            ">".toCharArray(),
+            TAG_CLOSE,
+
+            TAG_CLOSE,
     };
 
     private final Reader _in;
@@ -243,6 +245,7 @@ public class ArhivachThreadReader  implements Closeable {
             if (currentPost.email == null) currentPost.email = "";
             if (currentPost.trip == null) currentPost.trip = "";
             currentPost.comment = CryptoUtils.fixCloudflareEmails(currentPost.comment);
+            currentPost.name = StringEscapeUtils.unescapeHtml4(RegexUtils.removeHtmlTags(currentPost.name));
             currentPost.subject = StringEscapeUtils.unescapeHtml4(CryptoUtils.fixCloudflareEmails(currentPost.subject));
             postsBuf.add(currentPost);
         }
@@ -255,7 +258,6 @@ public class ArhivachThreadReader  implements Closeable {
                 finalizeThread();
                 break;
             case FILTER_ATTACHMENT:
-                skipUntilSequence(FILTERS_CLOSE[filterIndex]);
                 parseAttachment();
                 break;
             case FILTER_START_COMMENT_BODY:
@@ -268,10 +270,11 @@ public class ArhivachThreadReader  implements Closeable {
                 currentPost.sage=true;
                 break;
             case FILTER_NAME:
+                skipUntilSequence(TAG_CLOSE);
                 parseName(readUntilSequence(FILTERS_CLOSE[filterIndex]));
                 break;
             case FILTER_TRIP:
-                skipUntilSequence(">".toCharArray());
+                skipUntilSequence(TAG_CLOSE);
                 currentPost.trip = readUntilSequence(FILTERS_CLOSE[filterIndex]);
                 break;
             case FILTER_TIME:
@@ -296,25 +299,17 @@ public class ArhivachThreadReader  implements Closeable {
                 skipUntilSequence(FILTERS_CLOSE[filterIndex]);
                 currentPost.deleted = true;
                 break;
+            case FILTER_BADGE:
+                parseBadgeIcon(readUntilSequence(FILTERS_CLOSE[filterIndex]));
+                break;
         }
     }
 
     protected void parseName(String s) {
-        int index = s.indexOf("<");
-        if (index>0) {
-            currentPost.name = s.substring(0, index);
-            Matcher matcher = Pattern.compile("src=\"([^\"]*)\"(?:.*?title=\"([^\"]*)\")?",Pattern.MULTILINE).matcher(s);
-            ArrayList<BadgeIconModel> icons=new ArrayList<BadgeIconModel>();
-            while (matcher.find()) {
-                BadgeIconModel icon = new BadgeIconModel();
-                icon.source=matcher.group(1);
-                icon.description=matcher.group(2);
-                icons.add(icon);
-            }
-            if (icons.size()>0)
-                currentPost.icons = icons.toArray(new BadgeIconModel[icons.size()]);
-        } else
-            currentPost.name=s;
+        if (s.contains("<img")) {
+            parseBadgeIcon(s);
+        }
+        currentPost.name = s;
     }
 
     protected void parseEmail(String s) {
@@ -324,43 +319,100 @@ public class ArhivachThreadReader  implements Closeable {
     }
 
     protected void readPost() throws IOException {
-        String commentData = readUntilSequence(FILTERS_OPEN[FILTER_END_COMMENT]);
-        currentPost.comment = commentData;
-
+        currentPost.comment = readUntilSequence(FILTERS_OPEN[FILTER_END_COMMENT]);
     }
 
     private void parseAttachment() throws IOException {
-        skipUntilSequence(FILTERS_OPEN[FILTER_ATTACHMENT_ORIGINAL]);
-        String attachment = readUntilSequence(FILTERS_CLOSE[FILTER_ATTACHMENT_ORIGINAL]);
+        String metaData = readUntilSequence(FILTERS_CLOSE[FILTER_ATTACHMENT]);
+        String thumbnail = "";
+        String original = "";
+        String fileName = null;
 
-        String thumbnail="";
-        String original="";
-
-        Matcher matcher = URL_PATTERN.matcher(attachment);
-        if (matcher.find()) original = matcher.group(1);
         skipUntilSequence(FILTERS_OPEN[FILTER_ATTACHMENT_THUMBNAIL]);
-        attachment = readUntilSequence(FILTERS_CLOSE[FILTER_ATTACHMENT_THUMBNAIL]);
-        matcher = URL_PATTERN.matcher(attachment);
+        String attachment = readUntilSequence(FILTERS_CLOSE[FILTER_ATTACHMENT_THUMBNAIL]);
+        Matcher matcher = URL_PATTERN.matcher(attachment);
         if (matcher.find()) thumbnail = matcher.group(1);
 
-        if ((original.length()>0)) {
+        skipUntilSequence(FILTERS_OPEN[FILTER_ATTACHMENT_ORIGINAL]);
+        attachment = readUntilSequence(FILTERS_CLOSE[FILTER_ATTACHMENT_ORIGINAL]);
+        matcher = URL_PATTERN.matcher(attachment);
+        if (matcher.find()) {
+            original = matcher.group(1);
+            fileName = attachment.substring(attachment.lastIndexOf(TAG_CLOSE[0])+1);
+        }
+
+        if (original.length() > 0) {
             AttachmentModel model = new AttachmentModel();
-            model.type = AttachmentModel.TYPE_OTHER_FILE;
             model.size = -1;
             model.width = -1;
             model.height = -1;
             model.path = original;
-            if (thumbnail.length()>0)
+            model.originalName = StringEscapeUtils.unescapeHtml4(fileName);
+            if (thumbnail.length() > 0)
                 model.thumbnail = thumbnail;
             else
                 model.thumbnail = original;
             String ext = model.path.substring(model.path.lastIndexOf('.') + 1).toLowerCase(Locale.US);
-            if (ext.equals("png") || ext.equals("jpg") || ext.equals("jpeg")) model.type = AttachmentModel.TYPE_IMAGE_STATIC;
-            else if (ext.equals("gif")) model.type = AttachmentModel.TYPE_IMAGE_GIF;
-            else if (ext.equals("webm") || ext.equals("mp4")) model.type = AttachmentModel.TYPE_VIDEO;
-            else if (ext.equals("mp3") || ext.equals("ogg")) model.type = AttachmentModel.TYPE_AUDIO;
+            switch (ext) {
+                case "png":
+                case "jpg":
+                case "jpeg":
+                    model.type = AttachmentModel.TYPE_IMAGE_STATIC;
+                    break;
+                case "gif":
+                    model.type = AttachmentModel.TYPE_IMAGE_GIF;
+                    break;
+                case "webm":
+                case "mp4":
+                    model.type = AttachmentModel.TYPE_VIDEO;
+                    break;
+                case "mp3":
+                case "ogg":
+                    model.type = AttachmentModel.TYPE_AUDIO;
+                    break;
+                default:
+                    model.type = AttachmentModel.TYPE_OTHER_FILE;
+                    break;
+            }
+            matcher = ATTACHMENT_PX_SIZE_PATTERN.matcher(metaData);
+            if (matcher.find()) {
+                try {
+                    int width = Integer.parseInt(matcher.group(1));
+                    int height = Integer.parseInt(matcher.group(2));
+                    model.width = width;
+                    model.height = height;
+                } catch (NumberFormatException e) {}
+            }
+            matcher = ATTACHMENT_SIZE_PATTERN.matcher(metaData);
+            if (matcher.find()) {
+                try {
+                    String digits = matcher.group(1).replace(',', '.');
+                    int multiplier = 1;
+                    String prefix = matcher.group(2);
+                    if (prefix != null) {
+                        prefix = prefix.toLowerCase(Locale.US);
+                        if (prefix.equals("к") || prefix.equals("k")) multiplier = 1024;
+                        else if (prefix.equals("м") || prefix.equals("m")) multiplier = 1024 * 1024;
+                    }
+                    model.size = Math.round(Float.parseFloat(digits) / 1024 * multiplier);
+                } catch (NumberFormatException e) {}
+            }
             ++currentThread.attachmentsCount;
             currentAttachments.add(model);
+        }
+    }
+
+    private void parseBadgeIcon(String s) {
+        Matcher matcher = IMAGE_WITH_TITLE_PATTERN.matcher(s);
+        if (matcher.find()) {
+            BadgeIconModel icon = new BadgeIconModel();
+            icon.source = matcher.group(1);
+            icon.description = matcher.group(2);
+            int size = currentPost.icons == null ? 0 : currentPost.icons.length;
+            BadgeIconModel[] icons = new BadgeIconModel[size + 1];
+            for (int i = 0; i < size; i++) icons[i] = currentPost.icons[i];
+            icons[size] = icon;
+            currentPost.icons = icons;
         }
     }
 
