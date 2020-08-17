@@ -48,6 +48,8 @@ import android.content.res.Resources;
  */
 public class MakabaJsonMapper {
     private static final Pattern ICON_PATTERN = Pattern.compile("<img.+?src=\"(.+?)\".+?(?:title=\"(.+?)\")?.*?/>");
+    private static final Pattern HASH_LINK_PATTERN_1 = Pattern.compile("<a[^>]+href=\"(.+?/catalog.html)\"[^>]+title=\"([a-z]+)\"[^>]*>");
+    private static final Pattern HASH_LINK_PATTERN_2 = Pattern.compile("<a[^>]+title=\"([a-z]+)\"[^>]+href=\"(.+?/catalog.html)\"[^>]*>");
     
     static BoardModel defaultBoardModel(String boardName, Resources resources) {
         BoardModel model = new BoardModel();
@@ -180,6 +182,17 @@ public class MakabaJsonMapper {
         model.timestamp = source.getLong("timestamp") * 1000;
         model.parentThread = getStringSafe(source, "parent", model.number);
         if (model.parentThread.equals("0")) model.parentThread = model.number;
+        
+        model.comment = model.comment.replace("\\r\\n", "").replace("\\t", "  ");
+        if (model.number.equals(model.parentThread)) {
+            String tag = source.optString("tags", "");
+            if (tag.length() > 0) model.subject += " /" + tag + "/";
+            model.comment = model.comment
+                    .replaceAll("<style.*?>.*?</style>", "")
+                    .replaceAll("<script.*?>.*?</script>", "");
+            model.comment = RegexUtils.replaceAll(model.comment, HASH_LINK_PATTERN_1, "<a href=\"$1"+HASHTAG_PREFIX+"$2\">");
+            model.comment = RegexUtils.replaceAll(model.comment, HASH_LINK_PATTERN_2, "<a href=\"$2"+HASHTAG_PREFIX+"$1\">");
+        }
         
         if (source.has("files")) {
             JSONArray filesArray = source.getJSONArray("files");

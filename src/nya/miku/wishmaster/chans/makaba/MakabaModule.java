@@ -23,8 +23,6 @@ import static nya.miku.wishmaster.chans.makaba.MakabaJsonMapper.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -76,6 +74,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -98,8 +97,6 @@ public class MakabaModule extends CloudflareChanModule {
     private String domain;
     /** что-то типа 'https://2ch.hk/' */
     private String domainUrl;
-    
-    private static final String HASHTAG_PREFIX = "\u00A0#";
     
     /** id текущей mail.ru капчи*/
     private String captchaMailRuId;
@@ -497,11 +494,14 @@ public class MakabaModule extends CloudflareChanModule {
                     result[i] = model;
                 }
                 return result;
+            } catch (HttpWrongStatusCodeException cf) {
+                checkCloudflareError(cf, url);
+                last = cf;
             } catch (Exception e) {
                 last = e;
             }
         }
-        throw last == null ? new Exception() : last;
+        throw last;
     }
 
     @Override
@@ -570,36 +570,39 @@ public class MakabaModule extends CloudflareChanModule {
 
     @Override
     public PostModel[] search(String boardName, String searchRequest, ProgressListener listener, CancellableTask task) throws Exception {
-        String url;
-        HttpRequestModel request;
         if (searchRequest.startsWith(HASHTAG_PREFIX)) {
-            url = domainUrl + "makaba/makaba.fcgi?task=hashtags&board=" + boardName + "&tag=" +
-                    URLEncoder.encode(searchRequest.substring(HASHTAG_PREFIX.length()), "UTF-8") + "&json=1";
-            request = HttpRequestModel.DEFAULT_GET;
+            String hashtag = " /" + searchRequest.substring(HASHTAG_PREFIX.length()) + "/";
+            ThreadModel[] threads = getCatalog(boardName, 0, listener, task, null);
+            List<PostModel> posts = new ArrayList<>();
+            for (ThreadModel thread : threads) {
+                if (thread.posts[0].subject.contains(hashtag))
+                    posts.add(thread.posts[0]);
+            }
+            return posts.toArray(new PostModel[0]);
         } else {
-            url = domainUrl + "makaba/makaba.fcgi";
+            String url = domainUrl + "makaba/makaba.fcgi";
             HttpEntity postEntity = ExtendedMultipartBuilder.create().
                     addString("task", "search").
                     addString("board", boardName).
                     addString("find", searchRequest).
                     addString("json", "1").
                     build();
-            request = HttpRequestModel.builder().setPOST(postEntity).build();
+            HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntity).build();
+            JSONObject response;
+            try {
+                response = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, true);
+            } catch (HttpWrongStatusCodeException e) {
+                checkCloudflareError(e, url);
+                throw e;
+            }
+            if (listener != null) listener.setIndeterminate();
+            JSONArray posts = response.getJSONArray("posts");
+            PostModel[] result = new PostModel[posts.length()];
+            for (int i=0; i<posts.length(); ++i) {
+                result[i] = mapPostModel(posts.getJSONObject(i), boardName);
+            }
+            return result;
         }
-        JSONObject response = null;
-        try {
-            response = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, true);
-        } catch (HttpWrongStatusCodeException e) {
-            checkCloudflareError(e, url);
-            throw e;
-        }
-        if (listener != null) listener.setIndeterminate();
-        JSONArray posts = response.getJSONArray("posts");
-        PostModel[] result = new PostModel[posts.length()];
-        for (int i=0; i<posts.length(); ++i) {
-            result[i] = mapPostModel(posts.getJSONObject(i), boardName);
-        }
-        return result;
     }
     
     @Override
@@ -837,15 +840,12 @@ public class MakabaModule extends CloudflareChanModule {
                 break;
             case UrlPageModel.TYPE_SEARCHPAGE:
                 if (model.searchRequest.startsWith(HASHTAG_PREFIX)) {
-                    url.append("makaba/makaba.fcgi?task=hashtags&board=").append(model.boardName).append("&tag=");
-                    try {
-                        url.append(URLEncoder.encode(model.searchRequest.substring(HASHTAG_PREFIX.length()), "UTF-8"));
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                    break;
+                    url.append(model.boardName).append("/catalog.html").append(model.searchRequest);
+                } else {
+                    url.append("makaba/makaba.fcgi?task=search&board=").append(model.boardName)
+                            .append("&find=").append(Uri.encode(model.searchRequest));
                 }
-                throw new IllegalArgumentException("can't build url for search page");
+                break;
             case UrlPageModel.TYPE_THREADPAGE:
                 url.append(model.boardName).append("/res/").append(model.threadNumber).append(".html");
                 if (model.postNumber != null && model.postNumber.length() != 0) url.append("#").append(model.postNumber);
@@ -866,21 +866,26 @@ public class MakabaModule extends CloudflareChanModule {
         model.chanName = CHAN_NAME;
         try {
             if (path.contains("/catalog")) {
-                model.type = UrlPageModel.TYPE_CATALOGPAGE;
-                Matcher matcher = Pattern.compile("(.+?)/(catalog(?:_.+?)?)\\.html").matcher(path);
+                Matcher matcher = Pattern.compile("(.+?)/(catalog(?:_.+?)?)\\.html(" + HASHTAG_PREFIX + "[a-z]+)?").matcher(path);
                 if (!matcher.find()) throw new Exception();
                 model.boardName = matcher.group(1);
-                int index = Arrays.asList(CATALOG_TYPES).indexOf(matcher.group(2));
-                model.catalogType = index == -1 ? 0 : index;
-            } else if (path.startsWith("makaba/makaba.fcgi?") && path.contains("task=hashtags") && path.contains("board=")) {
+                if (matcher.group(3) == null) {
+                    model.type = UrlPageModel.TYPE_CATALOGPAGE;
+                    int index = Arrays.asList(CATALOG_TYPES).indexOf(matcher.group(2));
+                    model.catalogType = index == -1 ? 0 : index;
+                } else {
+                    model.type = UrlPageModel.TYPE_SEARCHPAGE;
+                    model.searchRequest = matcher.group(3);
+                }
+            } else if (path.startsWith("makaba/makaba.fcgi?") && path.contains("task=search") && path.contains("board=")) {
                 model.type = UrlPageModel.TYPE_SEARCHPAGE;
                 String boardName = path.substring(path.indexOf("board=") + 6);
-                if (boardName.indexOf("&") != -1) boardName = boardName.substring(0, boardName.indexOf("&"));
+                if (boardName.contains("&")) boardName = boardName.substring(0, boardName.indexOf("&"));
                 model.boardName = boardName;
-                if (path.indexOf("tag") == -1) throw new IllegalStateException("cannot parse hashtag");
-                String hashtag = path.substring(path.indexOf("tag=") + 4);
-                if (hashtag.indexOf("&") != -1) hashtag = hashtag.substring(0, hashtag.indexOf("&"));
-                model.searchRequest = HASHTAG_PREFIX + URLDecoder.decode(hashtag, "UTF-8");
+                if (!path.contains("find=")) throw new IllegalStateException("cannot parse search request");
+                String request = path.substring(path.indexOf("find=") + 5);
+                if (request.contains("&")) request = request.substring(0, request.indexOf("&"));
+                model.searchRequest = Uri.decode(request);
             } else if (path.contains("/res/")) {
                 model.type = UrlPageModel.TYPE_THREADPAGE;
                 Matcher matcher = Pattern.compile("(.+?)/res/([0-9]+?).html(.*)").matcher(path);
