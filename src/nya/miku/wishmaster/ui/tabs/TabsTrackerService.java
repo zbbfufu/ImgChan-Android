@@ -18,6 +18,7 @@
 
 package nya.miku.wishmaster.ui.tabs;
 
+import java.lang.Thread;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.LockSupport;
@@ -84,6 +85,8 @@ public class TabsTrackerService extends Service {
     private static List<Triple<String, String, String>> subscriptionsData = null;
     /** ID вкладки, которая обновляется в данный момент или -1 */
     private static long currentUpdatingTabId = -1;
+    /** ID потока, в котором выполняется сервис */
+    private static Thread thread;
     
     /** true, если сервис сейчас работает */
     public static boolean isRunning() {
@@ -261,6 +264,9 @@ public class TabsTrackerService extends Service {
         timerDelay = settings.getAutoupdateDelay();
         if (running) {
             Logger.d(TAG, "TabsTrackerService service already running");
+            if (immediately && thread != null) {
+                LockSupport.unpark(thread);
+            }
             return;
         }
         clearUnread();
@@ -393,6 +399,7 @@ public class TabsTrackerService extends Service {
         
         @Override
         public void run() {
+            thread = Thread.currentThread();
             while (true) {
                 if (isCancelled()) {
                     cancelForeground(TRACKER_NOTIFICATION_UPDATE_ID);
@@ -432,6 +439,15 @@ public class TabsTrackerService extends Service {
             }
         }
         
+        @Override
+        public void cancel() {
+            super.cancel();
+            if (thread != null) {
+                LockSupport.unpark(thread);
+                thread = null;
+            }
+        }
+
         //если secondsRemaining == -1, текст будет "выполняется обновление"
         private Notification getUpdateNotification(int secondsRemaining) {
             return notifUpdate.
