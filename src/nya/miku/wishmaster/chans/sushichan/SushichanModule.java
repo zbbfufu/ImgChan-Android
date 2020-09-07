@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package nya.miku.wishmaster.chans.samachan;
+package nya.miku.wishmaster.chans.sushichan;
 
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -35,19 +35,24 @@ import nya.miku.wishmaster.api.models.UrlPageModel;
 import nya.miku.wishmaster.api.util.ChanModels;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
-public class SamachanModule extends AbstractVichanModule {
-    private static final String CHAN_NAME = "samachan.org";
-
+public class SushichanModule extends AbstractVichanModule {
+    private static final String CHAN_NAME = "sushichan";
+    private static final String DEFAULT_DOMAIN = "sushigirl.us";
     private static final SimpleBoardModel[] BOARDS = new SimpleBoardModel[] {
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "a", "Anime/Japan", " ", true),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "z", "Everything", " ", true)
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "lounge", "sushi social", " ", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "arcade", "vidya gaems and other gaems too", " ", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "kawaii", "cute things", " ", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "kitchen", "tasty morsels & delights", " ", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "tunes", "enjoyable sounds", " ", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "culture", "arts & literature", " ", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "silicon", "technology", " ", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "otaku", "Japan / Otaku / Anime", "", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "yakuza", "site meta-discussion", " ", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "hell", "internet death cult", "", true),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "lewd", "dat ecchi & hentai goodness", "", true)
     };
 
-    private static final String[] ATTACHMENT_FORMATS = new String[] {
-            "jpg", "png", "gif", "mp3", "mp4", "webm"
-    };
-
-    public SamachanModule(SharedPreferences preferences, Resources resources) {
+    public SushichanModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
     }
 
@@ -58,22 +63,22 @@ public class SamachanModule extends AbstractVichanModule {
 
     @Override
     public String getDisplayingName() {
-        return "Samachan";
+        return "Sushichan";
     }
 
     @Override
     public Drawable getChanFavicon() {
-        return ResourcesCompat.getDrawable(resources, R.drawable.favicon_samachan, null);
+        return ResourcesCompat.getDrawable(resources, R.drawable.favicon_sushichan, null);
     }
 
     @Override
     protected String getUsingDomain() {
-        return CHAN_NAME;
+        return DEFAULT_DOMAIN;
     }
 
     @Override
     protected boolean canHttps() {
-        return false;
+        return true;
     }
 
     @Override
@@ -84,18 +89,28 @@ public class SamachanModule extends AbstractVichanModule {
     @Override
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel model = super.getBoard(shortName, listener, task);
+        model.attachmentsMaxCount = 4;
         model.allowCustomMark = true;
         model.customMarkDescription = "Spoiler";
-        model.attachmentsFormatFilters = ATTACHMENT_FORMATS;
+        model.markType = BoardModel.MARK_INFINITY;
         return model;
     }
 
     @Override
     protected AttachmentModel mapAttachment(JSONObject object, String boardName, boolean isSpoiler) {
         AttachmentModel attachment = super.mapAttachment(object, boardName, isSpoiler);
-        if (attachment != null) {
-            String ext = object.optString("ext", "");
-            if (ext.equals(".webm")) attachment.thumbnail = null;
+        if (attachment != null && attachment.thumbnail != null) {
+            switch (attachment.type) {
+                case AttachmentModel.TYPE_VIDEO:
+                case AttachmentModel.TYPE_OTHER_FILE:
+                    attachment.thumbnail = null;
+                    break;
+                case AttachmentModel.TYPE_IMAGE_STATIC:
+                case AttachmentModel.TYPE_IMAGE_GIF:
+                case AttachmentModel.TYPE_IMAGE_SVG:
+                    attachment.thumbnail = attachment.thumbnail.substring(0, attachment.thumbnail.lastIndexOf('.')) + ".png";
+                    break;
+            }
         }
         return attachment;
     }
@@ -108,6 +123,6 @@ public class SamachanModule extends AbstractVichanModule {
 
     @Override
     public UrlPageModel parseUrl(String url) throws IllegalArgumentException {
-        return super.parseUrl(url.replaceAll("-\\w+.*html", ".html"));
+        return super.parseUrl(url.replaceAll("[-+].+?html", ".html"));
     }
 }

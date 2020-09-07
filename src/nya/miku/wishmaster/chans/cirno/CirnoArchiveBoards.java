@@ -27,28 +27,20 @@ import java.util.Map;
 import nya.miku.wishmaster.api.models.BoardModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
 
-public class CirnoBoards {
-    private static final String[] ATTACHMENT_FILTERS = new String[] { "jpg", "jpeg", "png", "gif", "webm", "mp4", "ogv", "swf" };
-    
-    private static final List<String> IICHAN_BOARDS_410 = Arrays.asList("gnx", "int", "ts", "cu", "dev", "ci");
-    
-    private static final List<String> IICHAN_SPOILER_MARK_BOARDS = Arrays.asList("bro", "med", "tv", "a", "fi", "to", "vn", "vg");
-    
-    private static final List<String> IICHAN_READONLY_BOARDS = Arrays.asList(
-            "o", "w", "ma", "azu", "me", "hau", "sos", "mo", "sp", "bg", "ls", "maid", "ne", "fr", "an", "gf", "med");
-    
-    private static final List<BoardModel> LIST_IICHAN = new ArrayList<BoardModel>();
-    private static final Map<String, BoardModel> MAP_IICHAN = new HashMap<String, BoardModel>();
-    private static final SimpleBoardModel[] SIMPLE_ARRAY_IICHAN;
-    
+public class CirnoArchiveBoards {
+    private static final String[] ATTACHMENT_FILTERS = new String[] { "jpg", "jpeg", "png", "gif" };
+
+    private static final List<String> POSTING_BOARDS = Arrays.asList("dev", "abe");
+
+    private static final List<BoardModel> BOARDS_LIST = new ArrayList<>();
+    private static final Map<String, BoardModel> BOARDS_MAP = new HashMap<>();
+    private static final SimpleBoardModel[] BOARDS_SIMPLE_ARRAY;
     static {
         addBoard("d", "Работа сайта", "Обсуждения", "Мод-тян", false);
         addBoard("b", "Бред", "Общее", "Сырно", true);
         addBoard("hr", "Высокое разрешение", "Общее", "Аноним", false);
-        addBoard("ci", "Городская жизнь", "Общее", "Аноним", false);
         addBoard("tran", "Иностранные языки", "Общее", "Е. Д. Поливанов", false);
-        addBoard("tv", "Кино, ТВ и мультфильмы", "Общее", "К. С. Станиславский", false);
-        addBoard("cu", "Кулинария", "Общее", "Аноним", false);
+        addBoard("tv", "Кино и ТВ", "Общее", "К. С. Станиславский", false);
         addBoard("l", "Литература", "Общее", "Ф. М. Достоевский", false);
         addBoard("bro", "My Little Pony", "Общее", "Эпплджек", false);
         addBoard("m", "Макросы/копипаста", "Общее", "Копипаста-гей", false);
@@ -57,55 +49,68 @@ public class CirnoBoards {
         addBoard("mi", "Оружие", "Общее", "Й. Швейк", false);
         addBoard("x", "Паранормальные явления", "Общее", "Эмма Ай", false);
         addBoard("r", "Просьбы", "Общее", "Аноним", false);
-        addBoard("dev", "Разработка", "Общее", "Стив Балмер", false);
         addBoard("o", "Рисование", "Общее", "Аноним", false);
-        addBoard("tu", "Туризм", "Общее", "Аноним", false);
         addBoard("ph", "Фото", "Общее", "Аноним", false);
         addBoard("s", "Электроника и ПО", "Общее", "Чии", false);
-        addBoard("es", "Бесконечное лето", "Игры", "Пионер", false);
         addBoard("vg", "Видеоигры", "Игры", "Марио", false);
         addBoard("au", "Автомобили", "Транспорт", "Джереми Кларксон", false);
         addBoard("tr", "Транспорт", "Транспорт", "Аноним", false);
         addBoard("a", "Аниме и манга", "Японская культура", "Мокона", false);
         addBoard("aa", "Аниме-арт", "Японская культура", "Ракка", false);
         addBoard("vn", "Визуальные новеллы", "Японская культура", "Сэйбер", false);
-        addBoard("vo", "Vocaloid", "Японская культура", "", false); //hatsune
-        addBoard("abe", "Ёситоси Абэ", "Японская культура", "Chada", false);
         addBoard("c", "Косплей", "Японская культура", "Аноним", false);
         addBoard("rm", "Rozen Maiden", "Японская культура", "Суйгинто", false);
         addBoard("tan", "Сетевые персонажи", "Японская культура", "Уныл-тян", false);
         addBoard("to", "Touhou", "Японская культура", "Нитори", false);
         addBoard("fi", "Фигурки", "Японская культура", "Фигурка анонима", false);
-        addBoard("ts", "Цундере", "Японская культура", "Baka Inu", false);
         addBoard("jp", "Япония", "Японская культура", "名無しさん", false);
-        
-        SIMPLE_ARRAY_IICHAN = new SimpleBoardModel[LIST_IICHAN.size()];
-        for (int i=0; i<LIST_IICHAN.size(); ++i) SIMPLE_ARRAY_IICHAN[i] = new SimpleBoardModel(LIST_IICHAN.get(i));
+        addBoard("azu", "Azumanga Daioh", "Закрытые доски", "Осака", false);
+        addBoard("dn", "Death Note", "Закрытые доски", "Аноним", true);
+        addBoard("gf", "GIF- и FLASH-анимация", "Закрытые доски", "Аноним", true);
+        addBoard("an", "Живопись", "Закрытые доски", "Кот Синкая", false);
+        addBoard("ne", "Животные", "Закрытые доски", "Пушок", false);
+        addBoard("ma", "Манга", "Закрытые доски", "Иноуэ Орихимэ", false);
+        addBoard("me", "Меха", "Закрытые доски", "Лакс Кляйн", false);
+        addBoard("med", "Медицина", "Закрытые доски", "Антон Буслов", false);
+        addBoard("mo", "Мотоциклы", "Закрытые доски", "Аноним", false);
+        addBoard("bg", "Настольные игры", "Закрытые доски", "Аноним", false);
+        addBoard("ls", "Lucky☆Star", "Закрытые доски", "Цукаса", false);
+        addBoard("w", "Обои", "Закрытые доски", "Аноним", false);
+        addBoard("old_o", "Оэкаки", "Закрытые доски", "Аноним", false);
+        addBoard("p", "Политика", "Закрытые доски", "Аноним", true);
+        addBoard("maid", "Служанки", "Закрытые доски", "Госюдзин-сама", false);
+        addBoard("sp", "Спорт", "Закрытые доски", "Спортакус", false);
+        addBoard("sos", "Suzumiya Haruhi no Yūutsu", "Закрытые доски", "Кёнко", false);
+        addBoard("t", "Торренты", "Закрытые доски", "Аноним", false);
+        addBoard("fr", "Фурри", "Закрытые доски", "Аноним", false);
+        addBoard("abe", "Old Home", "Доски конгломерата", "Chada", false);
+        addBoard("misc", "Баннеры", "Разное", "Аноним", false);
+        addBoard("tenma", "Юбилейные баннеры", "Разное", "Аноним", false);
+        addBoard("dev", "Работа сайта", "Служебные разделы", "", false);
+
+        BOARDS_SIMPLE_ARRAY = new SimpleBoardModel[BOARDS_LIST.size()];
+        for (int i = 0; i< BOARDS_LIST.size(); ++i) BOARDS_SIMPLE_ARRAY[i] = new SimpleBoardModel(BOARDS_LIST.get(i));
     }
-    
+
     static BoardModel getBoard(String boardName) {
-        BoardModel board = MAP_IICHAN.get(boardName);
+        BoardModel board = BOARDS_MAP.get(boardName);
         if (board == null) return createDefaultBoardModel(boardName, boardName, null, "Аноним", false);
         return board;
     }
-    
+
     static SimpleBoardModel[] getBoardsList() {
-        return SIMPLE_ARRAY_IICHAN;
+        return BOARDS_SIMPLE_ARRAY;
     }
-    
-    static boolean is410Board(String boardName) {
-        return IICHAN_BOARDS_410.indexOf(boardName) != -1;
-    }
-    
+
     private static void addBoard(String name, String description, String category, String defaultPosterName, boolean nsfw) {
         BoardModel model = createDefaultBoardModel(name, description, category, defaultPosterName, nsfw);
-        LIST_IICHAN.add(model);
-        MAP_IICHAN.put(name, model);
+        BOARDS_LIST.add(model);
+        BOARDS_MAP.put(name, model);
     }
-    
+
     private static BoardModel createDefaultBoardModel(String name, String description, String category, String defaultPosterName, boolean nsfw) {
         BoardModel model = new BoardModel();
-        model.chan = CirnoModule.IICHAN_NAME;
+        model.chan = CirnoArchiveModule.IIYAKUJI_NAME;
         model.boardName = name;
         model.boardDescription = description;
         model.boardCategory = category;
@@ -114,30 +119,28 @@ public class CirnoBoards {
         model.timeZoneId = "GMT+3";
         model.defaultUserName = defaultPosterName;
         model.bumpLimit = 500;
-        
-        model.readonlyBoard = IICHAN_READONLY_BOARDS.indexOf(name) != -1;
-        model.requiredFileForNewThread = !name.equals("d");
+
+        model.readonlyBoard = !POSTING_BOARDS.contains(name);
+        model.requiredFileForNewThread = true;
         model.allowDeletePosts = !model.readonlyBoard;
-        model.allowDeleteFiles = model.allowDeletePosts;
-        model.allowReport = BoardModel.REPORT_WITH_COMMENT;
-        model.allowNames = !name.equals("b") && !name.equals("bro");
+        model.allowDeleteFiles = !model.readonlyBoard;
+        model.allowReport = BoardModel.REPORT_NOT_ALLOWED;
+        model.allowNames = true;
         model.allowSubjects = true;
         model.allowSage = false;
         model.allowEmails = false;
         model.ignoreEmailIfSage = false;
-        model.allowCustomMark = IICHAN_SPOILER_MARK_BOARDS.indexOf(name) != -1;
-        model.customMarkDescription = "Spoiler";
+        model.allowCustomMark = false;
         model.allowRandomHash = true;
         model.allowIcons = false;
-        model.attachmentsMaxCount = name.equals("d") ? 0 : 1;
+        model.attachmentsMaxCount = 1;
         model.attachmentsFormatFilters = ATTACHMENT_FILTERS;
         model.markType = BoardModel.MARK_WAKABAMARK;
-        
+
         model.firstPage = 0;
         model.lastPage = BoardModel.LAST_PAGE_UNDEFINED;
-        
-        model.catalogAllowed = !name.equals("d");
+
+        model.catalogAllowed = model.readonlyBoard && !name.equals("abe_old");
         return model;
     }
-    
 }
