@@ -18,8 +18,6 @@
 
 package nya.miku.wishmaster.chans.fourchan;
 
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -45,6 +43,7 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
@@ -434,7 +433,17 @@ public class FourchanModule extends CloudflareChanModule {
     
     @Override
     public PostModel[] search(String boardName, String searchRequest, ProgressListener listener, CancellableTask task) throws Exception {
-        throw new Exception("Open this page in the browser");
+        String url = "https://find.4chan.org/api?b=" + boardName + "&q=" + Uri.encode(searchRequest);
+        JSONObject response = downloadJSONObject(url, false, listener, task);
+        JSONArray threads = response.getJSONArray("threads");
+        List<PostModel> postsList = new ArrayList<>();
+        for (int i=0, len=threads.length(); i<len; ++i) {
+            JSONArray posts = threads.getJSONObject(i).getJSONArray("posts");
+            for (int j = 0, plen=posts.length(); j < plen; j++) {
+                postsList.add(FourchanJsonMapper.mapPostModel(posts.getJSONObject(j), boardName));
+            }
+        }
+        return postsList.toArray(new PostModel[0]);
     }
     
     @Override
@@ -553,8 +562,8 @@ public class FourchanModule extends CloudflareChanModule {
                     return url.append("boards.4chan.org/").append(model.boardName).append("/thread/").append(model.threadNumber).
                             append(model.postNumber == null || model.postNumber.length() == 0 ? "" : ("#p" + model.postNumber)).toString();
                 case UrlPageModel.TYPE_SEARCHPAGE:
-                    return url.append("boards.4chan.org/").append(model.boardName).append("/catalog#s=").
-                            append(URLEncoder.encode(model.searchRequest, "UTF-8")).toString();
+                    return url.append("boards.4chan.org/search#/").append(Uri.encode(model.searchRequest)).
+                            append('/').append(model.boardName).toString();
                 case UrlPageModel.TYPE_OTHERPAGE:
                     return url.append(model.otherPath.startsWith("/") ? "boards.4chan.org" : "").append(model.otherPath).toString();
             }
@@ -613,14 +622,19 @@ public class FourchanModule extends CloudflareChanModule {
             String search = pageCatalogSearch.group(2);
             if (search != null) {
                 model.type = UrlPageModel.TYPE_SEARCHPAGE;
-                model.searchRequest = search;
-                try {
-                    model.searchRequest = URLDecoder.decode(model.searchRequest, "UTF-8");
-                } catch (Exception e) {}
+                model.searchRequest = Uri.decode(search);
             } else {
                 model.type = UrlPageModel.TYPE_CATALOGPAGE;
                 model.catalogType = 0;
             }
+            return model;
+        }
+        
+        Matcher searchPage = Pattern.compile("search#/([^/]+)/(\\w+)").matcher(path);
+        if (searchPage.find()) {
+            model.boardName = searchPage.group(2);
+            model.searchRequest = Uri.decode(searchPage.group(1));
+            model.type = UrlPageModel.TYPE_SEARCHPAGE;
             return model;
         }
         

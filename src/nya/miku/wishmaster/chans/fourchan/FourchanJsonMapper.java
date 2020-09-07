@@ -76,7 +76,7 @@ public class FourchanJsonMapper {
         model.markType = BoardModel.MARK_4CHAN;
         model.firstPage = 1;
         model.lastPage = 10;
-        model.searchAllowed = false;
+        model.searchAllowed = true;
         model.catalogAllowed = true;
         return model;
     }
