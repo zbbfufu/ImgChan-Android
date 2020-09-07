@@ -594,6 +594,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_clear_cache_title">Стерти кеш</string>
     <string name="pref_clear_cache_summary">%.1f МБ</string>
     <string name="pref_clear_cache_confirmation">Ви дійсно хочете стерти кеш?</string>
+    <string name="pref_clear_cookies_title">Очистити cookies</string>
+    <string name="pref_clear_cookies_summary">Очистити дані cookies для цієї іміджборди</string>
+    <string name="pref_clear_cookies_confirmation">Ви дійсно хочете стерти всі cookies, які стосуються %s?</string>
     <string name="pref_update_on_startup_title">Перевіряти під час запуску</string>
     <string name="pref_update_on_startup_summary">Але не частіше ніж один раз на день</string>
     <string name="pref_update_allow_beta_title">Дозволити тестові версії</string>

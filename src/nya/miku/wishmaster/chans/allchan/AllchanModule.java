@@ -155,6 +155,7 @@ public class AllchanModule extends CloudflareChanModule {
         addHttpsPreference(preferenceGroup, true);
         addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
+        addClearCookiesPreference(preferenceGroup);
         
         final CheckBoxPreference proxyPreference = (CheckBoxPreference) preferenceGroup.findPreference(getSharedKey(PREF_KEY_USE_PROXY));
         proxyPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {            

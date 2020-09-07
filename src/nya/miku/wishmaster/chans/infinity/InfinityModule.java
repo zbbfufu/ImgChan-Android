@@ -153,6 +153,7 @@ public class InfinityModule extends AbstractVichanModule {
         preferenceGroup.addPreference(onionPref);
         httpsPref.setDependency(getSharedKey(PREF_KEY_USE_ONION));
         addProxyPreferences(preferenceGroup);
+        addClearCookiesPreference(preferenceGroup);
     }
     
     @Override

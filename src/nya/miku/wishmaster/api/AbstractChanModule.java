@@ -43,7 +43,9 @@ import cz.msebera.android.httpclient.HttpHost;
 import cz.msebera.android.httpclient.client.HttpClient;
 import cz.msebera.android.httpclient.cookie.Cookie;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -238,6 +240,33 @@ public abstract class AbstractChanModule implements HttpChanModule {
         passwordPref.getEditText().setFilters(new InputFilter[] { new InputFilter.LengthFilter(255) });
         group.addPreference(passwordPref);
     }
+
+    protected void addClearCookiesPreference(PreferenceGroup group) {
+        final Context context = group.getContext();
+        final Preference pref = new Preference(context);
+        pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                new AlertDialog.Builder(context).
+                    setMessage(context.getString(R.string.pref_clear_cookies_confirmation, getDisplayingName())).
+                    setCancelable(true).
+                    setNegativeButton(android.R.string.no, null).
+                    setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            clearCookies();
+                            pref.setEnabled(false);
+                        }
+                    }).
+                    show();
+                return true;
+            }
+        });
+        pref.setTitle(R.string.pref_clear_cookies_title);
+        pref.setSummary(R.string.pref_clear_cookies_summary);
+        pref.setEnabled(!httpClient.getCookieStore().getCookies().isEmpty());
+        group.addPreference(pref);
+    }
     
     @Override
     public HttpClient getHttpClient() {
@@ -252,9 +281,15 @@ public abstract class AbstractChanModule implements HttpChanModule {
     }
     
     @Override
+    public void clearCookies() {
+        httpClient.getCookieStore().clear();
+    }
+
+    @Override
     public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
         addPasswordPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
+        addClearCookiesPreference(preferenceGroup);
     }
     
     /**

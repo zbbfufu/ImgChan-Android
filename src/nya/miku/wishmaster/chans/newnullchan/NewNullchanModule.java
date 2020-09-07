@@ -170,6 +170,7 @@ public class NewNullchanModule extends CloudflareChanModule {
         addHttpsPreference(preferenceGroup, true);
         addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
+        addClearCookiesPreference(preferenceGroup);
     }
 
     private boolean useHttps() {
@@ -187,6 +188,12 @@ public class NewNullchanModule extends CloudflareChanModule {
         c.setDomain(getUsingDomain());
         c.setPath("/");
         httpClient.getCookieStore().addCookie(c);
+    }
+
+    @Override
+    public void clearCookies() {
+        super.clearCookies();
+        setDisclaimerCookie();
     }
 
     private String getUsingDomain() {

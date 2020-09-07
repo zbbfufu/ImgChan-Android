@@ -162,10 +162,17 @@ public class MikubaModule extends CloudflareChanModule {
     }
     
     @Override
+    public void clearCookies() {
+        super.clearCookies();
+        preferences.edit().remove(getSharedKey(PREF_KEY_SESSION_COOKIE)).commit();
+    }
+
+    @Override
     public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
         addHttpsPreference(preferenceGroup, true);
         addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
+        addClearCookiesPreference(preferenceGroup);
     }
     
     private boolean useHttps() {

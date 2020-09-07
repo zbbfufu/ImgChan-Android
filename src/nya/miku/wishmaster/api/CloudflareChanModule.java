@@ -84,6 +84,15 @@ public abstract class CloudflareChanModule extends AbstractChanModule {
         }
     }
     
+    @Override
+    public void clearCookies() {
+        super.clearCookies();
+        preferences.edit().
+            remove(getSharedKey(PREF_KEY_CLOUDFLARE_COOKIE_VALUE)).
+            remove(getSharedKey(PREF_KEY_CLOUDFLARE_COOKIE_DOMAIN)).
+            commit();
+    }
+
     protected void checkCloudflareError(HttpWrongStatusCodeException e, String url) throws CloudflareException {
         if (e.getStatusCode() == 403) {
             String html = e.getHtmlString();

@@ -187,6 +187,12 @@ public class PonyachModule extends AbstractWakabaModule {
     }
     
     @Override
+    public void clearCookies() {
+        super.clearCookies();
+        preferences.edit().remove(getSharedKey(PREF_KEY_PHPSESSION_COOKIE)).commit();
+    }
+
+    @Override
     public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
         final Context context = preferenceGroup.getContext();
         EditTextPreference passcodePref = new EditTextPreference(context);
@@ -258,6 +264,7 @@ public class PonyachModule extends AbstractWakabaModule {
         addHttpsPreference(preferenceGroup, useHttpsDefaultValue());
         addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
+        addClearCookiesPreference(preferenceGroup);
     }
     
     @Override
