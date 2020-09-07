@@ -185,6 +185,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_remove_favorites">Стерти з обраного</string>
     <string name="context_menu_remove_history">Стерти з історії</string>
     <string name="context_menu_open_browser">Браузер</string>
+    <string name="context_menu_pin">Закріпити</string>
     <string name="context_menu_autoupdate_background">Автооновлення</string>
     <string name="context_menu_autoupdate_background_off">Автооновлення (викл.)</string>
     <string name="context_menu_autoupdate_now">Виконати автооновлення</string>
@@ -510,6 +511,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_external_links_confirmation_summary">Запит перед відкриттям лінків назовні</string>
     <string name="pref_do_not_close_tabs_title">Не закривати вкладки</string>
     <string name="pref_do_not_close_tabs_summary">Дія кнопки Назад</string>
+    <string name="pref_tabs_cleanup_title">Очищення вкладок</string>
+    <string name="pref_tabs_cleanup_summary">Закриття всіх незакріплені вкладок по утриманню кнопки Назад в шторці</string>
     <string name="pref_scroll_volume_buttons_title">Прокрутка кнопками гучності</string>
     <string name="pref_scroll_volume_buttons_summary">Використовувати кнопки гучності для прокрутки сторінки</string>
     <string name="pref_preferences_submenu_title">Меню опцій</string>
@@ -550,6 +553,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_do_not_download_videos_summary">Відкривати відео не кешуючи</string>
     <string name="pref_gallery_audioplayer_title">Аудіоплеєр</string>
     <string name="pref_gallery_audioplayer_summary">Не працює на ранніх версіях Android</string>
+    <string name="pref_gallery_info_in_grid_title">Інформація в режимі сітки</string>
+    <string name="pref_gallery_info_in_grid_summary">Відображати інформацію про файлах в режимі сітки</string>
     <string name="pref_enable_autoupdate_title">Автооновлення</string>
     <string name="pref_enable_autoupdate_summary">Стежити за новими постами</string>
     <string name="pref_autoupdate_stop_on_exit_title">Вимикати по завершенні програми</string>
@@ -566,6 +571,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_autoupdate_notification_summary">Не дозволяти системі закривати мінімізований процес</string>
     <string name="pref_autoupdate_progress_title">Відображати прогрес в шторці</string>
     <string name="pref_autoupdate_progress_summary">Показувати прогрес автооновлення в шторці</string>
+    <string name="pref_autoupdate_with_back_title">Оновлення кнопкою Назад</string>
+    <string name="pref_autoupdate_with_back_summary">Оновлення кнопкою Назад при відкритій шторці</string>
     <string name="pref_subscriptions_enabled_title">Відстежувати відповіді</string>
     <string name="pref_subscriptions_enabled_summary">Відстежувати відповіді на пости, на які ви підписані</string>
     <string name="pref_subscribe_threads_title">Відстежувати треди</string>
@@ -671,6 +678,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="newtab_select_local_directory">Вказати розташування каталогу</string>
     <string name="pref_scroll_to_active_tab_summary">Прокручувати до активної вкладки при закритті неактивній вкладки</string>
     <string name="pref_scroll_to_active_tab_title">Прокрутка до активної вкладки</string>
+    <string name="pref_scroll_to_top_title">Повернення наверх</string>
+    <string name="pref_scroll_to_top_summary">Прокручувати наверх після оновлення списку тредов</string>
     <string name="pref_web_search_url_title">URL Web-пошуку</string>
     <string name="pref_web_search_url_summary">Персональний URL Web-пошуку</string>
     <string name="pref_user_agent_string_title">User-Agent</string>

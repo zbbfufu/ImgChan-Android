@@ -175,6 +175,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_remove_favorites">Aus den Favoriten entfernen</string>
     <string name="context_menu_remove_history">Aus dem Verlauf entfernen</string>
     <string name="context_menu_open_browser">Browser öffnen</string>
+    <string name="context_menu_pin">Anheften</string>
     <string name="context_menu_autoupdate_background">Auto-update</string>
     <string name="context_menu_autoupdate_background_off">Auto-update (aus)</string>
     <string name="context_menu_autoupdate_now">Auto-update starten</string>
@@ -500,6 +501,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_external_links_confirmation_summary">Bestätigen Sie, bevor Sie externe Links öffnen</string>
     <string name="pref_do_not_close_tabs_title">Tabs nicht schließen</string>
     <string name="pref_do_not_close_tabs_summary">Tabs durch Drücken der Zurück-Taste nicht schließen</string>
+    <string name="pref_tabs_cleanup_title">Bereinigung der Tabs</string>
+    <string name="pref_tabs_cleanup_summary">Schließen Sie alle nicht fixierten Tabs, indem Sie lange auf die Schaltfläche Zurück in der Schublade drücken</string>
     <string name="pref_scroll_volume_buttons_title">Lautstärketasten zum Scrollen</string>
     <string name="pref_scroll_volume_buttons_summary">Lautstärketasten zum Scrollen verwenden</string>
     <string name="pref_preferences_submenu_title">Einstellungsmenü</string>
@@ -540,6 +543,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_do_not_download_videos_summary">Video-Dateien direkt öffnen, in den Cache nicht herunterladen</string>
     <string name="pref_gallery_audioplayer_title">Built-in audio-player</string>
     <string name="pref_gallery_audioplayer_summary">Kann manchmal nicht in älteren Versionen von Android arbeiten</string>
+    <string name="pref_gallery_info_in_grid_title">Informationen im Rastermodus</string>
+    <string name="pref_gallery_info_in_grid_summary">Zeigen Sie Dateiinformationen im Rastermodus Galerie an</string>
     <string name="pref_enable_autoupdate_title">Auto-Update aktivieren</string>
     <string name="pref_enable_autoupdate_summary">Die offenen Threads automatisch aktualisieren</string>
     <string name="pref_autoupdate_stop_on_exit_title">Halt am Ausgang</string>
@@ -556,6 +561,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_autoupdate_notification_summary">Das System darf den Prozess nicht schließen, wenn die Anwendung minimiert wird</string>
     <string name="pref_autoupdate_progress_title">Zeige Fortschritt in Schublade</string>
     <string name="pref_autoupdate_progress_summary">Zeigt den Fortschritt der automatischen Aktualisierung in der Schublade an</string>
+    <string name="pref_autoupdate_with_back_title">Update mit Zurück-Taste</string>
+    <string name="pref_autoupdate_with_back_summary">Update mit Zurück-Taste, wenn die Schublade geöffnet ist</string>
     <string name="pref_subscriptions_enabled_title">Antworten verfolgen</string>
     <string name="pref_subscriptions_enabled_summary">Die Antworten auf jeden von Ihnen abonnierten Post verfolgen</string>
     <string name="pref_subscribe_threads_title">Threads verfolgen</string>
@@ -659,6 +666,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="newtab_select_local_directory">Speicherort angeben</string>
     <string name="pref_scroll_to_active_tab_title">Blättern Sie zur aktiven Registerkarte</string>
     <string name="pref_scroll_to_active_tab_summary">Blättern Sie zum aktiven Tab, wenn Sie die inaktive Registerkarte schließen</string>
+    <string name="pref_scroll_to_top_title">Scrollen Sie nach oben</string>
+    <string name="pref_scroll_to_top_summary">Scrollen Sie nach dem Aktualisieren einer Threadliste nach oben</string>
     <string name="pref_web_search_url_title">Websuch-URL</string>
     <string name="pref_web_search_url_summary">Benutzerdefinierte URL für die Websuche</string>
     <string name="pref_user_agent_string_title">User-Agent</string>

@@ -54,6 +54,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <item name="context_menu_remove_history" type="id"/>
     <item name="context_menu_remove_favorites" type="id"/>
     <item name="context_menu_open_browser" type="id"/>
+    <item name="context_menu_pin" type="id"/>
     <item name="context_menu_autoupdate_background" type="id"/>
     <item name="context_menu_autoupdate_now" type="id"/>
     <item name="context_menu_open_in_new_tab" type="id"/>
@@ -63,8 +64,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <item name="context_menu_reply_with_quote" type="id"/>
     <item name="context_menu_reply_no_reading" type="id"/>
     <item name="context_menu_copy_and_share" type="id"/>
+    <item name="context_menu_copy_thread_url" type="id"/>
     <item name="context_menu_copy_post_url" type="id"/>
     <item name="context_menu_copy_post_text" type="id"/>
+    <item name="context_menu_share_thread_link" type="id"/>
     <item name="context_menu_share_post_link" type="id"/>
     <item name="context_menu_share_post_text" type="id"/>
     <item name="context_menu_share_link" type="id"/>

@@ -192,6 +192,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:key="@string/pref_key_gallery_nativegif"
                 android:title="@string/pref_gallery_nativegif_title"
                 android:summary="@string/pref_gallery_nativegif_summary" />
+
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="@string/pref_key_gallery_info_in_grid"
+                android:title="@string/pref_gallery_info_in_grid_title"
+                android:summary="@string/pref_gallery_info_in_grid_summary" />
         </PreferenceScreen>
         
         <ListPreference
@@ -273,6 +279,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         
         <CheckBoxPreference
             android:defaultValue="false"
+            android:key="@string/pref_key_tabs_cleanup"
+            android:title="@string/pref_tabs_cleanup_title"
+            android:summary="@string/pref_tabs_cleanup_summary" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
             android:key="@string/pref_key_scroll_volume_buttons"
             android:title="@string/pref_scroll_volume_buttons_title"
             android:summary="@string/pref_scroll_volume_buttons_summary" />
@@ -294,6 +306,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:key="@string/pref_key_scroll_to_active_tab"
             android:title="@string/pref_scroll_to_active_tab_title"
             android:summary="@string/pref_scroll_to_active_tab_summary" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_scroll_to_top"
+            android:title="@string/pref_scroll_to_top_title"
+            android:summary="@string/pref_scroll_to_top_summary" />
 
         <EditTextPreference
             android:defaultValue=""
@@ -416,6 +434,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:key="@string/pref_key_autoupdate_progress"
             android:title="@string/pref_autoupdate_progress_title"
             android:summary="@string/pref_autoupdate_progress_summary"
+            android:dependency="@string/pref_key_enable_autoupdate" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_autoupdate_with_back"
+            android:title="@string/pref_autoupdate_with_back_title"
+            android:summary="@string/pref_autoupdate_with_back_summary"
             android:dependency="@string/pref_key_enable_autoupdate" />
     </PreferenceCategory>
     

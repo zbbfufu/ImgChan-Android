@@ -69,6 +69,8 @@ public class TabModel implements Serializable {
     @Tag(13) public boolean autoupdateError;
     /** true, если есть непрочитанные ответы на отвлеживаемые посты */
     @Tag(14) public boolean unreadSubscriptions;
+    /** true, если вкладка незакрываемая */
+    @Tag(15) public boolean isPinned;
 
     /** статус автообновления вкладки */
     public boolean autoupdateComplete;

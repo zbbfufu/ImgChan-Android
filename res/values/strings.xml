@@ -175,6 +175,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_remove_favorites">Remove from favorites</string>
     <string name="context_menu_remove_history">Remove from history</string>
     <string name="context_menu_open_browser">Open browser</string>
+    <string name="context_menu_pin">Pin the tab</string>
     <string name="context_menu_autoupdate_background">Auto-update</string>
     <string name="context_menu_autoupdate_background_off">Auto-update (off)</string>
     <string name="context_menu_autoupdate_now">Run auto-update</string>
@@ -499,6 +500,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_external_links_confirmation_summary">Ask before going external links</string>
     <string name="pref_do_not_close_tabs_title">Do not close tabs</string>
     <string name="pref_do_not_close_tabs_summary">Do not close tabs by pressing the Back button</string>
+    <string name="pref_tabs_cleanup_title">Tabs cleanup</string>
+    <string name="pref_tabs_cleanup_summary">Close all unpinned tabs by long pressing the Back button in drawer</string>
     <string name="pref_scroll_volume_buttons_title">Scroll with volume buttons</string>
     <string name="pref_scroll_volume_buttons_summary">Use volume buttons for page scrolling</string>
     <string name="pref_preferences_submenu_title">Preferences menu</string>
@@ -539,6 +542,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_do_not_download_videos_summary">Open video files directly not downloading into cache</string>
     <string name="pref_gallery_audioplayer_title">Built-in audio player</string>
     <string name="pref_gallery_audioplayer_summary">May not work on older versions of Android</string>
+    <string name="pref_gallery_info_in_grid_title">Information in grid mode</string>
+    <string name="pref_gallery_info_in_grid_summary">Show file information in gallery grid mode</string>
     <string name="pref_enable_autoupdate_title">Enable auto-update</string>
     <string name="pref_enable_autoupdate_summary">Update the open threads automatically</string>
     <string name="pref_autoupdate_stop_on_exit_title">Stop on application exit</string>
@@ -555,6 +560,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_autoupdate_notification_summary">Does not allow the system to close the process when the application is minimized</string>
     <string name="pref_autoupdate_progress_title">Show progress in drawer</string>
     <string name="pref_autoupdate_progress_summary">Show auto-update progress in drawer</string>
+    <string name="pref_autoupdate_with_back_title">Update with Back key</string>
+    <string name="pref_autoupdate_with_back_summary">Update with Back key when drawer is open</string>
     <string name="pref_subscriptions_enabled_title">Track replies</string>
     <string name="pref_subscriptions_enabled_summary">Track replies to posts you are subscribed</string>
     <string name="pref_subscribe_threads_title">Track threads</string>
@@ -658,6 +665,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="newtab_select_local_directory">Specify directory location</string>
     <string name="pref_scroll_to_active_tab_summary">Scroll to the active tab when closing inactive tab</string>
     <string name="pref_scroll_to_active_tab_title">Scroll to the active tab</string>
+    <string name="pref_scroll_to_top_title">Scroll to the top</string>
+    <string name="pref_scroll_to_top_summary">Scroll to the top after updating a threads list</string>
     <string name="pref_web_search_url_title">Web search URL</string>
     <string name="pref_web_search_url_summary">Custom Web search URL</string>
     <string name="pref_user_agent_string_title">User-Agent</string>

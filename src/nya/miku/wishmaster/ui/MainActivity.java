@@ -50,6 +50,7 @@ import nya.miku.wishmaster.ui.theme.GenericThemeEntry;
 import nya.miku.wishmaster.ui.theme.ThemeUtils;
 import nya.miku.wishmaster.ui.tabs.TabsAdapter.TabSelectListener;
 import android.annotation.SuppressLint;
+import android.app.ActionBar;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -79,6 +80,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends FragmentActivity {
@@ -87,6 +89,8 @@ public class MainActivity extends FragmentActivity {
     @SuppressLint("InlinedApi")
     private static final int DRAWER_GRAVITY = Gravity.START;
     
+    private static final String initialTitleText = new String(new char[128]).replaceAll(".", " ");
+
     private NotificationManager notificationManager;
     private BroadcastReceiver broadcastReceiver;
     private IntentFilter intentFilter;
@@ -110,7 +114,33 @@ public class MainActivity extends FragmentActivity {
     
     private HiddenTabsSection hiddenTabsSection = null;
     private ImageView btnRefresh = null;
+    private TextView titleView;
     
+    private View getFirstImageView(ViewGroup vg) {
+        for (int i = 0; i < vg.getChildCount(); ++i) {
+            View v = vg.getChildAt(i);
+            if (v instanceof ImageView) {
+                return v;
+            } else if (v instanceof ViewGroup) {
+                v = getFirstImageView((ViewGroup)v);
+                if (v != null) return v;
+            }
+        }
+        return null;
+    }
+
+    private View getDrawerToggleView() {
+        Window window = getWindow();
+        View v = window.getDecorView();
+        int resId = getResources().getIdentifier("action_bar_container", "id", "android");
+        v = v.findViewById(resId);
+        if (v != null && v instanceof ViewGroup) {
+            return getFirstImageView((ViewGroup)v);
+        } else {
+            return null;
+        }
+    }
+
     private void initDrawer() {
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer);
         if (drawerLayout == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) return;
@@ -149,6 +179,21 @@ public class MainActivity extends FragmentActivity {
         
         drawerLayout.setDrawerShadow(R.drawable.drawer_shadow, DRAWER_GRAVITY);
         CompatibilityImpl.activeActionBar(this);
+
+        View toggle = getDrawerToggleView();
+        if (toggle != null) {
+            toggle.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View view) {
+                    if (drawerLayout.isDrawerOpen(DRAWER_GRAVITY) &&
+                        MainApplication.getInstance().settings.tabsCleanupEnabled()) {
+                        tabsAdapter.clearTabs();
+                        return true;
+                    }
+                    return false;
+                }
+            });
+        }
     }
     
     private void openDrawer() {
@@ -309,16 +354,17 @@ public class MainActivity extends FragmentActivity {
                 menu.add(Menu.NONE, R.id.context_menu_favorites, 4,
                         isFavorite(model) ? R.string.context_menu_remove_favorites : R.string.context_menu_add_favorites);
             }
+            menu.add(Menu.NONE, R.id.context_menu_pin, 5, R.string.context_menu_pin).setCheckable(true).setChecked(model.isPinned);
             if (model.type == TabModel.TYPE_NORMAL && model.pageModel != null && model.pageModel.type == UrlPageModel.TYPE_THREADPAGE) {
                 boolean backgroundAutoupdateEnabled =
                         MainApplication.getInstance().settings.isAutoupdateEnabled() &&
                         MainApplication.getInstance().settings.isAutoupdateBackground();
-                menu.add(Menu.NONE, R.id.context_menu_autoupdate_background, 5,
+                menu.add(Menu.NONE, R.id.context_menu_autoupdate_background, 6,
                         backgroundAutoupdateEnabled ? R.string.context_menu_autoupdate_background : R.string.context_menu_autoupdate_background_off).
                         setCheckable(true).setChecked(model.autoupdateBackground);
             }
-            if (TabsTrackerService.getCurrentUpdatingTabId() == -1) {
-                menu.add(Menu.NONE, R.id.context_menu_autoupdate_now, 6, R.string.context_menu_autoupdate_now);
+            if (!MainApplication.getInstance().settings.isAutoupdateWithBack() && TabsTrackerService.getCurrentUpdatingTabId() == -1) {
+                menu.add(Menu.NONE, R.id.context_menu_autoupdate_now, 7, R.string.context_menu_autoupdate_now);
             }
         }
     }
@@ -329,6 +375,9 @@ public class MainActivity extends FragmentActivity {
         switch (item.getItemId()) {
             case R.id.context_menu_move:
                 tabsAdapter.setDraggingItem(menuInfo.position);
+                return true;
+            case R.id.context_menu_pin:
+                tabsAdapter.toggleTabIsPinned(menuInfo.position);
                 return true;
             case R.id.context_menu_copy_url:
                 String url = tabsAdapter.getItem(menuInfo.position).webUrl;
@@ -351,8 +400,7 @@ public class MainActivity extends FragmentActivity {
                 handleFavorite(tabsAdapter.getItem(menuInfo.position));
                 return true;
             case R.id.context_menu_autoupdate_background:
-                tabsAdapter.getItem(menuInfo.position).autoupdateBackground = !tabsAdapter.getItem(menuInfo.position).autoupdateBackground;
-                tabsAdapter.notifyDataSetChanged();
+                tabsAdapter.toggleTabAutoupdate(menuInfo.position);
                 return true;
             case R.id.context_menu_autoupdate_now:
                 startService(new Intent(this, TabsTrackerService.class).putExtra(TabsTrackerService.EXTRA_UPDATE_IMMEDIATELY, true));
@@ -370,6 +418,20 @@ public class MainActivity extends FragmentActivity {
         }
     }
     
+    @Override
+    public void setTitle (final CharSequence title) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    titleView.setText(title);
+                }
+            });
+        } else {
+            super.setTitle(title);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Logger.d(TAG, "main activity creating");
@@ -429,6 +491,42 @@ public class MainActivity extends FragmentActivity {
             }
         });
         
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            ActionBar actionBar = getActionBar();
+            actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setDisplayShowCustomEnabled(true);
+            View customView = getLayoutInflater().inflate(R.layout.action_bar_title, null);
+            titleView = (TextView)customView.findViewById(R.id.action_bar_title);
+            titleView.setLines(1);
+            titleView.setText(initialTitleText);
+            titleView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (drawerLayout == null || !drawerLayout.isDrawerOpen(DRAWER_GRAVITY)) {
+                        Fragment currentFragment = MainApplication.getInstance().tabsSwitcher.currentFragment;
+                        if (currentFragment instanceof BoardFragment) {
+                            ((BoardFragment)currentFragment).onTitleClick();
+                        }
+                    }
+                }
+            });
+            titleView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if (tabsAdapter == null) return false;
+                    int tab = tabsAdapter.getSelectedItem();
+                    if (tab < 0) return false;
+                    tabsAdapter.toggleTabIsPinned(tab);
+                    v.setPressed(false);
+                    return true;
+                }
+            });
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                titleView.setPadding(10, 0, 0, 0);
+            }
+            actionBar.setCustomView(customView);
+        }
+
         final DragSortListView list = (DragSortListView)findViewById(R.id.sidebar_tabs_list);
         TabsState state = MainApplication.getInstance().tabsState;
         tabsAdapter = initTabsListView(list, state);
@@ -913,7 +1011,12 @@ public class MainActivity extends FragmentActivity {
             return true;
         }
         if (drawerLayout != null && drawerLayout.isDrawerOpen(DRAWER_GRAVITY)) {
-            closeDrawer();
+            if (longPress && MainApplication.getInstance().settings.tabsCleanupEnabled())
+                tabsAdapter.clearTabs();
+            else if (MainApplication.getInstance().settings.isAutoupdateWithBack() && TabsTrackerService.getCurrentUpdatingTabId() == -1)
+                startService(new Intent(this, TabsTrackerService.class).putExtra(TabsTrackerService.EXTRA_UPDATE_IMMEDIATELY, true));
+            else
+                closeDrawer();
             return true;
         }
         if (tabsAdapter != null && tabsAdapter.back(longPress)) {

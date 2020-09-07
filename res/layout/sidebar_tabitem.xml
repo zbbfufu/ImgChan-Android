@@ -31,25 +31,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
         android:visibility="visible" />
-    
-    <ImageView
-        android:id="@+id/tab_state_indicator"
-        android:layout_gravity="center_vertical"
-        android:layout_width="3dp"
-        android:layout_height="match_parent"
-        android:paddingLeft="0dp"
-        android:paddingRight="0dp"
-        android:contentDescription="@string/empty" />
 
-    <ImageView
-        android:id="@+id/tab_favicon"
-        android:layout_gravity="center_vertical"
-        android:layout_width="40dp"
-        android:layout_height="match_parent"
-        android:paddingLeft="1dp"
-        android:paddingRight="4dp"
-        android:contentDescription="@string/empty" />
- 
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent" >
+
+        <ImageView
+            android:id="@+id/tab_state_indicator"
+            android:layout_gravity="center_vertical"
+            android:layout_width="3dp"
+            android:layout_height="match_parent"
+            android:paddingLeft="0dp"
+            android:paddingRight="0dp"
+            android:contentDescription="@string/empty" />
+
+        <ImageView
+            android:id="@+id/tab_favicon"
+            android:layout_gravity="center_vertical"
+            android:layout_width="43dp"
+            android:layout_height="match_parent"
+            android:paddingLeft="4dp"
+            android:paddingRight="4dp"
+            android:contentDescription="@string/empty" />
+
+    </FrameLayout>
+
     <TextView
         android:id="@+id/tab_text_view"
         android:layout_gravity="center_vertical"
@@ -69,7 +75,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_height="match_parent"
         android:paddingLeft="8dp"
         android:paddingRight="8dp"
-        android:contentDescription="@string/close"
-        android:src="?attr/iconBtnClose" />
+        android:contentDescription="@string/close" />
  
 </LinearLayout>

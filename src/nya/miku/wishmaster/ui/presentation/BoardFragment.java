@@ -453,6 +453,12 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 tabModel.title);
     }
 
+    public void onTitleClick() {
+        if (pageType == TYPE_POSTSLIST && listLoaded) {
+            openGridGallery();
+        }
+    }
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
@@ -571,14 +577,12 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             case R.id.menu_search:
                 searchUsingChan = false;
                 initSearchBar();
-                searchBarView.setVisibility(View.VISIBLE);
-                ((EditText) searchBarView.findViewById(R.id.board_search_field)).requestFocus();
+                showSearchBar();
                 return true;
             case R.id.menu_search_threads:
                 searchUsingChan = true;
                 initSearchBar();
-                searchBarView.setVisibility(View.VISIBLE);
-                ((EditText) searchBarView.findViewById(R.id.board_search_field)).requestFocus();
+                showSearchBar();
                 return true;
             case R.id.menu_save_page:
                 saveThisPage();
@@ -744,7 +748,9 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             menu.add(Menu.NONE, R.id.context_menu_open_in_new_tab, 1, R.string.context_menu_open_in_new_tab);
             menu.add(Menu.NONE, R.id.context_menu_thread_preview, 2, R.string.context_menu_thread_preview);
             menu.add(Menu.NONE, R.id.context_menu_reply_no_reading, 3, R.string.context_menu_reply_no_reading);
-            menu.add(Menu.NONE, R.id.context_menu_hide, 4, R.string.context_menu_hide_thread);
+            menu.add(Menu.NONE, R.id.context_menu_copy_thread_url, 4, R.string.context_menu_copy_url);
+            menu.add(Menu.NONE, R.id.context_menu_share_thread_link, 5, R.string.context_menu_share_link);
+            menu.add(Menu.NONE, R.id.context_menu_hide, 6, R.string.context_menu_hide_thread);
             if (presentationModel.source.boardModel.readonlyBoard || tabModel.type == TabModel.TYPE_LOCAL) {
                 menu.findItem(R.id.context_menu_reply_no_reading).setVisible(false);
             }
@@ -758,6 +764,27 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         shareIntent.putExtra(Intent.EXTRA_SUBJECT, absoluteUrl);
         shareIntent.putExtra(Intent.EXTRA_TEXT, absoluteUrl);
         startActivity(Intent.createChooser(shareIntent, getString(R.string.share_via)));
+    }
+
+    private void openInNewTab(int position) {
+        UrlPageModel modelNewTab = new UrlPageModel();
+        modelNewTab.chanName = chan.getChanName();
+        modelNewTab.type = UrlPageModel.TYPE_THREADPAGE;
+        modelNewTab.boardName = tabModel.pageModel.boardName;
+        modelNewTab.threadNumber = adapter.getItem(position).sourceModel.parentThread;
+        String tabTitle = null;
+        String subject = adapter.getItem(position).sourceModel.subject;
+        if (subject != null && subject.length() != 0) {
+            tabTitle = subject;
+        } else {
+            Spanned spannedComment = adapter.getItem(position).spannedComment;
+            if (spannedComment != null) {
+                tabTitle = spannedComment.toString().replace('\n', ' ');
+                if (tabTitle.length() > MAX_TITLE_LENGHT) tabTitle = tabTitle.substring(0, MAX_TITLE_LENGHT);
+            }
+        }
+        if (tabTitle != null) tabTitle = resources.getString(R.string.tabs_title_threadpage_loaded, modelNewTab.boardName, tabTitle);
+        UrlHandler.open(modelNewTab, activity, false, tabTitle);
     }
 
     @Override
@@ -807,24 +834,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         if (nullAdapterIsSet || position == -1 || adapter.getCount() <= position) return false;
         switch (item.getItemId()) {
             case R.id.context_menu_open_in_new_tab:
-                UrlPageModel modelNewTab = new UrlPageModel();
-                modelNewTab.chanName = chan.getChanName();
-                modelNewTab.type = UrlPageModel.TYPE_THREADPAGE;
-                modelNewTab.boardName = tabModel.pageModel.boardName;
-                modelNewTab.threadNumber = adapter.getItem(position).sourceModel.parentThread;
-                String tabTitle = null;
-                String subject = adapter.getItem(position).sourceModel.subject;
-                if (subject != null && subject.length() != 0) {
-                    tabTitle = subject;
-                } else {
-                    Spanned spannedComment = adapter.getItem(position).spannedComment;
-                    if (spannedComment != null) {
-                        tabTitle = spannedComment.toString().replace('\n', ' ');
-                        if (tabTitle.length() > MAX_TITLE_LENGHT) tabTitle = tabTitle.substring(0, MAX_TITLE_LENGHT);
-                    }
-                }
-                if (tabTitle != null) tabTitle = resources.getString(R.string.tabs_title_threadpage_loaded, modelNewTab.boardName, tabTitle);
-                UrlHandler.open(modelNewTab, activity, false, tabTitle);
+                openInNewTab(position);
                 return true;
             case R.id.context_menu_thread_preview:
                 showThreadPreviewDialog(position);
@@ -836,6 +846,31 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 model.boardName = tabModel.pageModel.boardName;
                 model.threadNumber = adapter.getItem(position).sourceModel.parentThread;
                 openPostForm(ChanModels.hashUrlPageModel(model), presentationModel.source.boardModel, getSendPostModel(model));
+                return true;
+            case R.id.context_menu_copy_thread_url:
+                UrlPageModel copyThreadLinkUrlPageModel = new UrlPageModel();
+                copyThreadLinkUrlPageModel.chanName = chan.getChanName();
+                copyThreadLinkUrlPageModel.type = UrlPageModel.TYPE_THREADPAGE;
+                copyThreadLinkUrlPageModel.boardName = tabModel.pageModel.boardName;
+                copyThreadLinkUrlPageModel.threadNumber = adapter.getItem(position).sourceModel.number;
+
+                String copyThreadLinkUrl = chan.buildUrl(copyThreadLinkUrlPageModel);
+                Clipboard.copyText(activity, copyThreadLinkUrl);
+                Toast.makeText(activity, resources.getString(R.string.notification_url_copied, copyThreadLinkUrl), Toast.LENGTH_LONG).show();
+                return true;
+            case R.id.context_menu_share_thread_link:
+                UrlPageModel shareThreadLinkUrlPageModel = new UrlPageModel();
+                shareThreadLinkUrlPageModel.chanName = chan.getChanName();
+                shareThreadLinkUrlPageModel.type = UrlPageModel.TYPE_THREADPAGE;
+                shareThreadLinkUrlPageModel.boardName = tabModel.pageModel.boardName;
+                shareThreadLinkUrlPageModel.threadNumber = adapter.getItem(position).sourceModel.number;
+
+                String shareThreadLinkUrl = chan.buildUrl(shareThreadLinkUrlPageModel);
+                Intent shareThreadLinkIntent = new Intent(Intent.ACTION_SEND);
+                shareThreadLinkIntent.setType("text/plain");
+                shareThreadLinkIntent.putExtra(Intent.EXTRA_SUBJECT, shareThreadLinkUrl);
+                shareThreadLinkIntent.putExtra(Intent.EXTRA_TEXT, shareThreadLinkUrl);
+                startActivity(Intent.createChooser(shareThreadLinkIntent, resources.getString(R.string.share_via)));
                 return true;
             case R.id.context_menu_hide:
                 adapter.getItem(position).hidden = true;
@@ -1479,14 +1514,20 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                                 if (nullAdapterIsSet) {
                                     listView.setAdapter(adapter);
                                     listView.requestFocus();
-                                    hackListViewSetPosition(listView, nullAdapterSavedPosition, nullAdapterSavedTop);
+                                    if (!isThreadPage && settings.scrollToTop())
+                                        hackListViewSetPosition(listView, 0, TabModel.DEFAULT_TOP);
+                                    else
+                                        hackListViewSetPosition(listView, nullAdapterSavedPosition, nullAdapterSavedTop);
                                     nullAdapterIsSet = false;
                                 }
                                 adapter.notifyDataSetChanged();
                                 if (isThreadPage && adapter.getCount() != itemsCountBefore) resetSearchCache();
                                 setPullableNoRefreshing();
                                 if (startItemPosition != -1) {
-                                    hackListViewSetPosition(listView, startItemPosition, startItemTop);
+                                    if (!isThreadPage && settings.scrollToTop())
+                                        hackListViewSetPosition(listView, 0, TabModel.DEFAULT_TOP);
+                                    else
+                                        hackListViewSetPosition(listView, startItemPosition, startItemTop);
                                     startItemPosition = -1;
                                 }
                                 String notification;
@@ -1772,7 +1813,7 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) &&
                  (activity.getActionBar().isShowing() ||
                   (listView.getHeight() <= 0))) ? listView.getPaddingTop() : 0;
-            if (listView.getHeight() > 0) {
+            if ((position != 0 || top != TabModel.DEFAULT_TOP) && listView.getHeight() > 0) {
                 adjTop -= listView.getPaddingTop();
             }
             listView.setSelectionFromTop(position, adjTop);
@@ -1794,9 +1835,16 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
     }
     
     public Intent setIntentExtras(Intent sendIntent) {
+        if (adapter == null)
+            return sendIntent;
         return adapter.setIntentExtras(sendIntent);
     }
     
+    private static void setImageViewSpoiler(ImageView imageView, boolean isSpoiler) {
+        int alphaValue = isSpoiler ? 8 : 255;
+        CompatibilityUtils.setImageAlpha(imageView, alphaValue);
+    }
+
     private static class PostsListAdapter extends ArrayAdapter<PresentationItemModel> {
         private static final int ITEM_VIEW_TYPE_NORMAL = 0;
         private static final int ITEM_VIEW_TYPE_HIDDEN = 1;
@@ -2460,17 +2508,24 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             }
             //информация о треде (для списка тредов), количество постов, надпись о закрытом/прикрепленном треде
             if (popupWidth == null && fragment().pageType == TYPE_THREADSLIST) {
-                if (model.postsCountString != null) {
-                    tag.postsCountView.setText(model.postsCountString);
-                    if (!tag.postsCountIsVisible) {
-                        tag.postsCountView.setVisibility(View.VISIBLE);
-                        tag.postsCountIsVisible = true;
+                tag.postsCountView.setText(model.postsCountString);
+                tag.postsCountView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        fragment().showThreadPreviewDialog(tag.position);
                     }
-                } else {
-                    if (tag.postsCountIsVisible) {
-                        tag.postsCountView.setVisibility(View.GONE);
-                        tag.postsCountIsVisible = false;
+                });
+                tag.postsCountView.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        fragment().openInNewTab(tag.position);
+                        v.setPressed(false);
+                        return true;
                     }
+                });
+                if (!tag.postsCountIsVisible) {
+                    tag.postsCountView.setVisibility(View.VISIBLE);
+                    tag.postsCountIsVisible = true;
                 }
                 if (model.threadConditionString != null) {
                     tag.threadConditionView.setText(model.threadConditionString);
@@ -2597,11 +2652,6 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                     }
                 }
             }
-        }
-        
-        private void setImageViewSpoiler(ImageView imageView, boolean isSpoiler) {
-            int alphaValue = isSpoiler ? 8 : 255;
-            CompatibilityUtils.setImageAlpha(imageView, alphaValue);
         }
         
         private void fillThumbnail(View thumbnailView, AttachmentModel attachment, String hash, boolean nonBusy, boolean isDialog) {
@@ -2869,6 +2919,19 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             for (int id : new int[] {R.id.board_navigation_previous, R.id.board_navigation_next, R.id.board_navigation_page }) {
                 navigationBarView.findViewById(id).setOnClickListener(navigationBarOnClickListener);
             }
+            navigationBarView.findViewById(R.id.board_navigation_page).setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if (presentationModel.source.boardModel.catalogAllowed) {
+                        UrlPageModel model = new UrlPageModel();
+                        model.chanName = chan.getChanName();
+                        model.type = UrlPageModel.TYPE_CATALOGPAGE;
+                        model.boardName = tabModel.pageModel.boardName;
+                        UrlHandler.open(model, activity);
+                    }
+                    return true;
+                }
+            });
             ((TextView) navigationBarView.findViewById(R.id.board_navigation_page)).setText(String.valueOf(tabModel.pageModel.boardPage));
             if (tabModel.pageModel.boardPage == presentationModel.source.boardModel.firstPage) {
                 navigationBarView.findViewById(R.id.board_navigation_previous).setVisibility(View.INVISIBLE);
@@ -2970,6 +3033,15 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
         public void onNothingSelected(AdapterView<?> parent) { }
     }
     
+    private void showSearchBar() {
+        searchBarView.setVisibility(View.VISIBLE);
+        final EditText searchFieldView = (EditText)searchBarView.findViewById(R.id.board_search_field);
+        final InputMethodManager imm = (InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        searchFieldView.requestFocus();
+        if (imm == null) return;
+        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+    }
+
     private void initSearchBar() {
         if (searchBarInitialized) return;
         final EditText field = (EditText) searchBarView.findViewById(R.id.board_search_field);
@@ -3508,9 +3580,57 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 ListView dlgList = new ListView(activity);
                 dlgList.setAdapter(new ArrayAdapter<PresentationItemModel>(activity, 0, items) {
                     @Override
-                    public View getView(int position, View convertView, ViewGroup parent) {
+                    public View getView(final int position, View convertView, ViewGroup parent) {
                         View view = adapter.getView(position, convertView, parent, dlgWidth, getItem(position));
                         view.setBackgroundColor(bgColor);
+                        TextView comment = (TextView)view.findViewById(R.id.post_comment);
+                        if (comment != null) comment.setTextIsSelectable(false);
+                        view.setBackgroundResource(ThemeUtils.resolveAttribute(activity.getTheme(),
+                                    android.R.attr.selectableItemBackground, true).resourceId);
+                        view.setClickable(true);
+                        view.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                UrlPageModel urlModel = new UrlPageModel();
+                                urlModel.chanName = chan.getChanName();
+                                urlModel.type = UrlPageModel.TYPE_THREADPAGE;
+                                urlModel.boardName = tabModel.pageModel.boardName;
+                                urlModel.threadNumber = items.get(position).sourceModel.parentThread;
+                                if (!urlModel.threadNumber.equals(items.get(position).sourceModel.number))
+                                    urlModel.postNumber = items.get(position).sourceModel.number;
+                                String url = chan.buildUrl(urlModel);
+                                UrlHandler.open(url, activity);
+                                dialog.dismiss();
+                            }
+                        });
+                        view.setOnLongClickListener(new View.OnLongClickListener() {
+                            @Override
+                            public boolean onLongClick(View view) {
+                                UrlPageModel urlModel = new UrlPageModel();
+                                urlModel.chanName = chan.getChanName();
+                                urlModel.type = UrlPageModel.TYPE_THREADPAGE;
+                                urlModel.boardName = tabModel.pageModel.boardName;
+                                urlModel.threadNumber = items.get(position).sourceModel.parentThread;
+                                if (!urlModel.threadNumber.equals(items.get(position).sourceModel.number))
+                                    urlModel.postNumber = items.get(position).sourceModel.number;
+                                String tabTitle = null;
+                                String subject = items.get(0).sourceModel.subject;
+                                if (subject != null && subject.length() != 0) {
+                                    tabTitle = subject;
+                                } else {
+                                    Spanned spannedComment = items.get(0).spannedComment;
+                                    if (spannedComment != null) {
+                                        tabTitle = spannedComment.toString().replace('\n', ' ');
+                                        if (tabTitle.length() > MAX_TITLE_LENGHT) tabTitle = tabTitle.substring(0, MAX_TITLE_LENGHT);
+                                    }
+                                }
+                                if (tabTitle != null)
+                                    tabTitle = resources.getString(R.string.tabs_title_threadpage_loaded, urlModel.boardName, tabTitle);
+                                UrlHandler.open(urlModel, activity, false, tabTitle);
+                                dialog.dismiss();
+                                return true;
+                            }
+                        });
                         return view;
                     }
                 });
@@ -3772,7 +3892,16 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
     
     @SuppressLint("InlinedApi")
     private void openGridGallery() {
+        final boolean showInformation = settings.showInfoInGridGallery();
         final int tnSize = settings.getPostThumbnailSize();
+        final int tnHeight;
+        if (showInformation) {
+            TextView text = new TextView(activity);
+            CompatibilityUtils.setTextAppearance(text, android.R.style.TextAppearance_Small);
+            tnHeight = tnSize + (int)Math.ceil(2 * (text.getPaint().getFontMetrics().bottom - text.getPaint().getFontMetrics().top));
+        } else {
+            tnHeight = tnSize;
+        }
         
         class GridGalleryAdapter extends ArrayAdapter<Triple<AttachmentModel, String, String>>
                 implements View.OnClickListener, AbsListView.OnScrollListener {
@@ -3780,10 +3909,12 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             private boolean selectingMode = false;
             private boolean[] isSelected = null;
             private volatile boolean isBusy = false;
+            private final LayoutInflater inflater;
             public GridGalleryAdapter(GridView view, List<Triple<AttachmentModel, String, String>> list) {
                 super(activity, 0, list);
                 this.view = view;
                 this.isSelected = new boolean[list.size()];
+                this.inflater = LayoutInflater.from(activity);
             }
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {}
@@ -3806,13 +3937,8 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
             public View getView(int position, View convertView, ViewGroup parent) {
                 if (convertView == null) {
                     convertView = new FrameLayout(activity);
-                    convertView.setLayoutParams(new AbsListView.LayoutParams(tnSize, tnSize));
-                    ImageView tnImage = new ImageView(activity);
-                    tnImage.setLayoutParams(new FrameLayout.LayoutParams(tnSize, tnSize, Gravity.CENTER));
-                    tnImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                    tnImage.setId(R.id.post_thumbnail_image);
-                    setViewSize(tnImage, MainApplication.getInstance().settings.getPostThumbnailSize());
-                    ((FrameLayout) convertView).addView(tnImage);
+                    convertView.setLayoutParams(new AbsListView.LayoutParams(tnSize, tnHeight));
+                    ((FrameLayout) convertView).addView(inflater.inflate(R.layout.post_thumbnail, parent, false));
                 }
                 convertView.setTag(getItem(position).getLeft());
                 safeRegisterForContextMenu(convertView);
@@ -3869,6 +3995,44 @@ public class BoardFragment extends Fragment implements AdapterView.OnItemClickLi
                 String attachmentHash = getItem(position).getMiddle();
                 ImageView tnImage = (ImageView) view.findViewById(R.id.post_thumbnail_image);
                 setViewSize(tnImage, MainApplication.getInstance().settings.getPostThumbnailSize());
+                TextView size = (TextView) view.findViewById(R.id.post_thumbnail_attachment_size);
+                TextView type = (TextView) view.findViewById(R.id.post_thumbnail_attachment_type);
+                size.setMaxWidth(MainApplication.getInstance().settings.getPostThumbnailSize());
+                type.setMaxWidth(MainApplication.getInstance().settings.getPostThumbnailSize());
+                setImageViewSpoiler(tnImage, attachment.isSpoiler || staticSettings.maskPictures);
+                if (showInformation) {
+                    switch (attachment.type) {
+                        case AttachmentModel.TYPE_IMAGE_GIF:
+                            type.setText(R.string.postitem_gif);
+                            break;
+                        case AttachmentModel.TYPE_VIDEO:
+                            type.setText(R.string.postitem_video);
+                            break;
+                        case AttachmentModel.TYPE_AUDIO:
+                            type.setText(R.string.postitem_audio);
+                            break;
+                        case AttachmentModel.TYPE_OTHER_FILE:
+                            type.setText(R.string.postitem_file);
+                            break;
+                        case AttachmentModel.TYPE_OTHER_NOTFILE:
+                            type.setText(R.string.postitem_link);
+                            break;
+                    }
+                    if (attachment.type == AttachmentModel.TYPE_IMAGE_STATIC || attachment.type == AttachmentModel.TYPE_IMAGE_SVG) {
+                        type.setVisibility(View.GONE);
+                    } else {
+                        type.setVisibility(View.VISIBLE);
+                    }
+                    if (attachment.type == AttachmentModel.TYPE_OTHER_NOTFILE) {
+                        size.setVisibility(View.GONE);
+                    } else {
+                        size.setText(Attachments.getAttachmentSizeString(attachment, resources));
+                        size.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    size.setVisibility(View.GONE);
+                    type.setVisibility(View.GONE);
+                }
                 if (attachment.thumbnail == null || attachment.thumbnail.length() == 0) {
                     tnImage.setTag(Boolean.TRUE);
                     tnImage.setImageResource(Attachments.getDefaultThumbnailResId(attachment.type));

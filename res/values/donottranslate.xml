@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_key_swipe_to_hide_thread">PREF_KEY_SWIPE_TO_HIDE_THREAD</string>
     <string name="pref_key_external_links_confirmation">PREF_KEY_EXTERNAL_LINKS_CONFIRMATION</string>
     <string name="pref_key_do_not_close_tabs">PREF_KEY_DO_NOT_CLOSE_TABS</string>
+    <string name="pref_key_tabs_cleanup">PREF_KEY_TABS_CLEANUP</string>
     <string name="pref_key_scroll_volume_buttons">PREF_KEY_SCROLL_VOLUME_BUTTONS</string>
     <string name="pref_key_preferences_submenu">PREF_KEY_PREFERENCES_SUBMENU</string>
     <string name="pref_key_pin_markup">PREF_KEY_PIN_MARKUP</string>
@@ -64,6 +65,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_key_gallery_webview_videoplayer">PREF_KEY_GALLERY_WEBVIEW_VIDEOPLAYER</string>
     <string name="pref_key_do_not_download_videos">PREF_KEY_DO_NOT_DOWNLOAD_VIDEOS</string>
     <string name="pref_key_gallery_audioplayer">PREF_KEY_GALLERY_AUDIOPLAYER</string>
+    <string name="pref_key_gallery_info_in_grid">PREF_KEY_GALLERY_INFO_IN_GRID</string>
     <string name="pref_key_enable_autoupdate">PREF_KEY_ENABLE_AUTOUPDATE</string>
     <string name="pref_key_autoupdate_stop_on_exit">PREF_KEY_AUTOUPDATE_STOP_ON_EXIT</string>
     <string name="pref_key_autoupdate_only_wifi">PREF_KEY_AUTOUPDATE_ONLY_WIFI</string>
@@ -71,6 +73,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_key_autoupdate_background">PREF_KEY_AUTOUPDATE_BACKGROUND</string>
     <string name="pref_key_autoupdate_notification">PREF_KEY_AUTOUPDATE_NOTIFICATION</string>
     <string name="pref_key_autoupdate_progress">PREF_KEY_AUTOUPDATE_PROGRESS</string>
+    <string name="pref_key_autoupdate_with_back">PREF_KEY_AUTOUPDATE_WITH_BACK</string>
     <string name="pref_key_subscriptions_enabled">PREF_KEY_SUBSCRIPTIONS_ENABLED</string>
     <string name="pref_key_subscribe_threads">PREF_KEY_SUBSCRIBE_THREADS</string>
     <string name="pref_key_highlight_subscriptions">PREF_KEY_HIGHLIGHT_SUBSCRIPTIONS</string>
@@ -206,6 +209,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="intent_overchan_quote_text">OVERCHAN_QUOTE_TEXT</string>
     <string name="intent_overchan_post_number">OVERCHAN_POST_NUMBER</string>
     <string name="intent_overchan_post_uri">OVERCHAN_POST_URI</string>
+    <string name="pref_key_scroll_to_top">PREF_KEY_SCROLL_TO_TOP</string>
     <string name="pref_key_scroll_to_active_tab">PREF_KEY_SCROLL_TO_ACTIVE_TAB</string>
     <string name="pref_key_web_search_url">PREF_KEY_WEB_SEARCH_URL</string>
     <string name="pref_key_user_agent_string">PREF_KEY_USER_AGENT_STRING</string>

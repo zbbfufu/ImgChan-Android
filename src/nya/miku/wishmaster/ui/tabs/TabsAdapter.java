@@ -36,7 +36,9 @@ import android.graphics.drawable.LayerDrawable;
 import android.support.v4.content.res.ResourcesCompat;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -60,26 +62,59 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         0.0f,0.0f,0.0f,1.0f,0.0f
     }));
 
-    static final View.OnClickListener nullOnClickListener = new View.OnClickListener() {
+    private final View.OnTouchListener onCloseTouch = new View.OnTouchListener() {
         @Override
-        public void onClick(View v) {}
-    };
-
-    private final View.OnClickListener onCloseClick = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            closeTab((Integer) v.getTag());
+        public boolean onTouch(View v, MotionEvent e) {
+            switch (e.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.setPressed(true);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    v.setPressed(false);
+                    if (e.getEventTime() - e.getDownTime() > ViewConfiguration.getLongPressTimeout())
+                        toggleTabIsPinned((Integer) v.getTag());
+                    else
+                        closeTab((Integer) v.getTag());
+                    break;
+                case MotionEvent.ACTION_CANCEL:
+                    v.setPressed(false);
+                    break;
+            }
+            return true;
         }
     };
-    
-    private final View.OnClickListener onIconClick = new View.OnClickListener() {
+
+    private final View.OnTouchListener onIconTouch = new View.OnTouchListener() {
         @Override
-        public void onClick(View v) {
-            TabModel model = getItem((Integer) v.getTag());
-            if (model != null) {
-                model.autoupdateBackground = !model.autoupdateBackground;
-                notifyDataSetChanged();
+        public boolean onTouch(View v, MotionEvent e) {
+            switch (e.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.setPressed(true);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    v.setPressed(false);
+                    if (e.getEventTime() - e.getDownTime() > ViewConfiguration.getLongPressTimeout())
+                        setDraggingItem((Integer) v.getTag());
+                    else
+                        toggleTabAutoupdate((Integer) v.getTag());
+                    break;
             }
+            return true;
+        }
+    };
+
+    private final View.OnTouchListener onIconLongTouch = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent e) {
+            switch (e.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    break;
+                case MotionEvent.ACTION_UP:
+                    if (e.getEventTime() - e.getDownTime() > ViewConfiguration.getLongPressTimeout())
+                        setDraggingItem((Integer) v.getTag());
+                    break;
+            }
+            return true;
         }
     };
 
@@ -198,6 +233,7 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
     public void closeTab(int position) {
         setDraggingItem(-1);
         if (position >= getCount()) return;
+        if (getItem(position).isPinned) return;
         HistoryFragment.setLastClosed(tabsState.tabsArray.get(position));
         tabsIdStack.removeTab(getItem(position).id);
         remove(getItem(position), false);
@@ -218,6 +254,46 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         }
     }
     
+    public void clearTabs() {
+        boolean selectedClosed = false;
+        setDraggingItem(-1);
+        for (int i = 0; i < getCount();) {
+            if (getItem(i).isPinned) {++i; continue;}
+            tabsIdStack.removeTab(getItem(i).id);
+            remove(getItem(i), false);
+            if (i == selectedItem) {
+                selectedClosed = true;
+            } else if (i < selectedItem) {
+                --selectedItem;
+            }
+        }
+        if (selectedClosed) {
+            if (!tabsIdStack.isEmpty()) {
+                setSelectedItemId(tabsIdStack.getCurrentTab()); //serialize
+            } else {
+                setSelectedItem(TabModel.POSITION_NEWTAB); //serialize
+            }
+        } else {
+            setSelectedItem(selectedItem, true, MainApplication.getInstance().settings.scrollToActiveTab()); //serialize
+        }
+    }
+
+    public void toggleTabIsPinned(int position) {
+        if (position >= getCount()) return;
+        TabModel model = getItem(position);
+        if (model == null) return;
+        model.isPinned = !model.isPinned;
+        notifyDataSetChanged();
+    }
+
+    public void toggleTabAutoupdate(int position) {
+        if (position >= getCount()) return;
+        TabModel model = getItem(position);
+        if (model == null) return;
+        model.autoupdateBackground = !model.autoupdateBackground;
+        notifyDataSetChanged();
+    }
+
     /**
      * Метод для обработки нажатия клавиши "Назад"
      * @return
@@ -229,7 +305,8 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
                 return true;
             }
         } else {
-            if (MainApplication.getInstance().settings.doNotCloseTabs() ^ longPress) {
+            if (getItem(selectedItem).isPinned ||
+                MainApplication.getInstance().settings.doNotCloseTabs() ^ longPress) {
                 tabsIdStack.removeTab(getItem(selectedItem).id);
                 if (tabsIdStack.isEmpty()) {
                     setSelectedItem(TabModel.POSITION_NEWTAB);
@@ -301,6 +378,8 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         switch (model.type) {
             case TabModel.TYPE_NORMAL:
             case TabModel.TYPE_LOCAL:
+                closeBtn.setImageResource(ThemeUtils.getThemeResId(context.getTheme(),
+                            model.isPinned ? R.attr.iconBtnPin : R.attr.iconBtnClose));
                 closeBtn.setVisibility(View.VISIBLE);
                 String titleText = model.title;
                 if (model.unreadPostsCount > 0 || model.autoupdateError) {
@@ -315,7 +394,7 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
                 Drawable icon = chan != null ? chan.getChanFavicon() :
                     ResourcesCompat.getDrawable(context.getResources(), android.R.drawable.ic_delete, null);
                 ColorFilter filter = null;
-                View.OnClickListener onIconClick = nullOnClickListener;
+                View.OnTouchListener onIconTouch = this.onIconLongTouch;
                 if (icon != null) {
                     if (model.type == TabModel.TYPE_LOCAL) {
                         Drawable[] layers = new Drawable[] {
@@ -323,10 +402,11 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
                         icon = new LayerDrawable(layers);
                     } else if (model.type == TabModel.TYPE_NORMAL && model.pageModel != null && model.pageModel.type == UrlPageModel.TYPE_THREADPAGE) {
                         filter = model.autoupdateBackground ? null : disabledIconColorFilter;
-                        onIconClick = this.onIconClick;
+                        onIconTouch = this.onIconTouch;
                     }
                     favIcon.setTag(position);
-                    favIcon.setOnClickListener(onIconClick);
+                    favIcon.setOnClickListener(null);
+                    favIcon.setOnTouchListener(onIconTouch);
                     favIcon.setColorFilter(filter);
                     favIcon.setImageDrawable(icon);
                     favIcon.setVisibility(View.VISIBLE);
@@ -348,7 +428,8 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         }
         
         closeBtn.setTag(position);
-        closeBtn.setOnClickListener(onCloseClick);
+        closeBtn.setOnClickListener(null); // Prevent undesired ripple effects
+        closeBtn.setOnTouchListener(onCloseTouch);
         return view;
     }
     

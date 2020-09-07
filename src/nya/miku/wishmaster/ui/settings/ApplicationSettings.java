@@ -102,6 +102,10 @@ public class ApplicationSettings {
         return preferences.getBoolean(resources.getString(R.string.pref_key_scroll_to_active_tab), true);
     }
 
+    public boolean scrollToTop() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_scroll_to_top), false);
+    }
+
     public String getWebSearchUrl() {
         String url = preferences.getString(resources.getString(R.string.pref_key_web_search_url), null);
         if (url == null || url.length() == 0) return null;
@@ -397,6 +401,10 @@ public class ApplicationSettings {
         return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_audioplayer), true);
     }
     
+    public boolean showInfoInGridGallery() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_info_in_grid), false);
+    }
+
     public boolean isSFWRelease() {
         return isSFW;
     }
@@ -445,6 +453,10 @@ public class ApplicationSettings {
         return preferences.getBoolean(resources.getString(R.string.pref_key_do_not_close_tabs), false);
     }
     
+    public boolean tabsCleanupEnabled() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_tabs_cleanup), false);
+    }
+
     public boolean scrollVolumeButtons() {
         return preferences.getBoolean(resources.getString(R.string.pref_key_scroll_volume_buttons), false);
     }
@@ -483,6 +495,10 @@ public class ApplicationSettings {
     
     public boolean isAutoupdateProgress() {
         return preferences.getBoolean(resources.getString(R.string.pref_key_autoupdate_progress), false);
+    }
+
+    public boolean isAutoupdateWithBack() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_autoupdate_with_back), false);
     }
 
     public int getAutoupdateDelay() {
