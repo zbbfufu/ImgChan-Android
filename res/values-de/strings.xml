@@ -529,6 +529,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_gallery_swipe_to_close_summary">Zum Schließen von Galerie oben oder unten swipe</string>
     <string name="pref_gallery_autoplay_title">Medien automatisch abspielen</string>
     <string name="pref_gallery_autoplay_summary">Aktivieren Sie die automatische Wiedergabe von Mediendateien</string>
+    <string name="pref_gallery_loop_title">Medien schleifen</string>
+    <string name="pref_gallery_loop_summary">Aktivieren Sie die Schleife von Mediendateien</string>
     <string name="pref_gallery_scroll_thread_title">Bis Anhänge blättern</string>
     <string name="pref_gallery_scroll_thread_summary">Thread bis Posts mit Anhängen aus Galerie blättern</string>
     <string name="pref_gallery_scaleimageview_title">Image Viewer</string>

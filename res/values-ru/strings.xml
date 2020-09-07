@@ -536,6 +536,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_gallery_swipe_to_close_summary">Закрывать галерею свайпом вверх или вниз</string>
     <string name="pref_gallery_autoplay_title">Автовоспроизведение медиафайлов</string>
     <string name="pref_gallery_autoplay_summary">Разрешить автовоспроизведение медиафайлов</string>
+    <string name="pref_gallery_loop_title">Зацикливание медиафайлов</string>
+    <string name="pref_gallery_loop_summary">Разрешить зацикливание медиафайлов</string>
     <string name="pref_gallery_scroll_thread_title">Прокручивать к вложениям</string>
     <string name="pref_gallery_scroll_thread_summary">Прокручивать тред к постам с вложениями из галереи</string>
     <string name="pref_gallery_scaleimageview_title">Просмотрщик изображений</string>

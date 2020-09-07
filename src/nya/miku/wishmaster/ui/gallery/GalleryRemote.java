@@ -120,6 +120,15 @@ public class GalleryRemote {
         }
     }
 
+    public String getUserAgentString() {
+        try {
+            return binder.getUserAgentString(contextId);
+        } catch (Exception e) {
+            Logger.e(TAG, e);
+            return null;
+        }
+    }
+
     public void tryScrollParent(String postNumber, boolean closeDialogs) {
         try {
             binder.tryScrollParent(contextId, postNumber, closeDialogs);

@@ -156,6 +156,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:title="@string/pref_gallery_autoplay_title"
                 android:summary="@string/pref_gallery_autoplay_summary" />
 
+			<CheckBoxPreference
+                android:defaultValue="true"
+                android:key="@string/pref_key_gallery_loop"
+                android:title="@string/pref_gallery_loop_title"
+                android:summary="@string/pref_gallery_loop_summary" />
+
             <CheckBoxPreference
                 android:defaultValue="true"
                 android:key="@string/pref_key_gallery_videoplayer"

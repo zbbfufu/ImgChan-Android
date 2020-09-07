@@ -38,6 +38,7 @@ public class GallerySettings implements Parcelable {
     private static final int FLAG_WEBVIEW_VIDEO_PLAYER = 1 << 9;
     private static final int FLAG_ORIGINAL_NAMES = 1 << 10;
     private static final int FLAG_AUTOPLAY_MEDIA = 1 << 11;
+    private static final int FLAG_LOOP_MEDIA = 1 << 12;
     
     private final int flags;
     private final File downloadsDir;
@@ -93,6 +94,7 @@ public class GallerySettings implements Parcelable {
         if (settings.useWebViewVideoPlayer()) flags |= FLAG_WEBVIEW_VIDEO_PLAYER;
         if (settings.isDownloadOriginalNames()) flags |= FLAG_ORIGINAL_NAMES;
         if (settings.autoplayMedia()) flags |= FLAG_AUTOPLAY_MEDIA;
+        if (settings.loopMedia()) flags |= FLAG_LOOP_MEDIA;
         return new GallerySettings(flags, settings.getDownloadDirectory(), settings.getTheme());
     }
     
@@ -150,5 +152,9 @@ public class GallerySettings implements Parcelable {
 
     public boolean autoplayMedia() {
         return (flags & FLAG_AUTOPLAY_MEDIA) != 0;
+    }
+
+    public boolean loopMedia() {
+        return (flags & FLAG_LOOP_MEDIA) != 0;
     }
 }
