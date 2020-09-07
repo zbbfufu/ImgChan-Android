@@ -660,5 +660,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_scroll_to_active_tab_title">Scroll to the active tab</string>
     <string name="pref_web_search_url_title">Web search URL</string>
     <string name="pref_web_search_url_summary">Custom Web search URL</string>
+    <string name="pref_user_agent_string_title">User-Agent</string>
+    <string name="pref_user_agent_string_summary">Custom User-Agent string</string>
     <string name="pref_makaba_passcode">Passcode</string>
 </resources>

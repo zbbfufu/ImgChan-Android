@@ -18,9 +18,14 @@
 
 package nya.miku.wishmaster.http.client;
 
+import java.io.Closeable;
 import java.util.Date;
 import android.os.Build;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.webkit.CookieManager;
+import nya.miku.wishmaster.R;
+import nya.miku.wishmaster.common.MainApplication;
 import nya.miku.wishmaster.http.HttpConstants;
 import nya.miku.wishmaster.http.SSLCompatibility;
 import cz.msebera.android.httpclient.HttpHost;
@@ -71,6 +76,7 @@ public class ExtendedHttpClient extends HttpClientWrapper {
         }
     }
 
+    private OnSharedPreferenceChangeListener prefsListener;
     private final CookieStore cookieStore;
     private final HttpHost proxy;
     private volatile HttpClient httpClient;
@@ -95,6 +101,24 @@ public class ExtendedHttpClient extends HttpClientWrapper {
             synchronized (this) {
                 if (httpClient == null) {
                     httpClient = build(proxy, getCookieStore());
+                }
+                if (prefsListener == null) {
+                    prefsListener = new OnSharedPreferenceChangeListener() {
+                        @Override
+                        public void onSharedPreferenceChanged(SharedPreferences preferences, String key) {
+                            if (key.equals(MainApplication.getInstance().resources.getString(R.string.pref_key_user_agent_string))) {
+                                if (httpClient != null) {
+                                    if (httpClient instanceof Closeable) {
+                                        try {
+                                            ((Closeable)httpClient).close();
+                                        } catch (Exception e) {}
+                                    }
+                                    httpClient = null;
+                                }
+                            }
+                        }
+                    };
+                    MainApplication.getInstance().preferences.registerOnSharedPreferenceChangeListener(prefsListener);
                 }
             }
         }
@@ -130,7 +154,7 @@ public class ExtendedHttpClient extends HttpClientWrapper {
         SSLCompatibility.waitIfInstallingAsync();
         return HttpClients.custom().
                 setDefaultRequestConfig(getDefaultRequestConfigBuilder(HttpConstants.DEFAULT_HTTP_TIMEOUT).build()).
-                setUserAgent(HttpConstants.USER_AGENT_STRING).
+                setUserAgent(MainApplication.getInstance().settings.getUserAgentString()).
                 setProxy(proxy).
                 setDefaultCookieStore(cookieStore).
                 setSSLSocketFactory(ExtendedSSLSocketFactory.getSocketFactory()).

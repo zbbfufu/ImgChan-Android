@@ -19,7 +19,7 @@ import cz.msebera.android.httpclient.message.BasicHeader;
 import cz.msebera.android.httpclient.message.BasicNameValuePair;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.common.Logger;
-import nya.miku.wishmaster.http.HttpConstants;
+import nya.miku.wishmaster.common.MainApplication;
 import nya.miku.wishmaster.http.client.ExtendedHttpClient;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
@@ -54,7 +54,7 @@ public class StormwallRecaptchaChecker {
             
             HttpRequestModel rqModel = HttpRequestModel.builder().setPOST(new UrlEncodedFormEntity(pairs, "UTF-8"))
             .setCustomHeaders(new Header[] {
-                    new BasicHeader(HttpHeaders.USER_AGENT, HttpConstants.USER_AGENT_STRING),
+                    new BasicHeader(HttpHeaders.USER_AGENT, MainApplication.getInstance().settings.getUserAgentString()),
                     new BasicHeader(HttpHeaders.ACCEPT, "text/plain, */*; q=0.01"),
                     new BasicHeader(HttpHeaders.REFERER, exception.getUrl()),
             }).setNoRedirect(true).build();

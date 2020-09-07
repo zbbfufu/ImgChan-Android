@@ -669,5 +669,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_scroll_to_active_tab_summary">Прокручивать до активной вкладки при закрытии неактивной вкладки</string>
     <string name="pref_web_search_url_title">URL Web-поиска</string>
     <string name="pref_web_search_url_summary">Персональный URL Web-поиска</string>
+    <string name="pref_user_agent_string_title">User-Agent</string>
+    <string name="pref_user_agent_string_summary">Персональный User-Agent</string>
     <string name="pref_makaba_passcode">Пасскод</string>
 </resources>

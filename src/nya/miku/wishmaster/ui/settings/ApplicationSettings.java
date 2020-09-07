@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import nya.miku.wishmaster.R;
+import nya.miku.wishmaster.http.HttpConstants;
 import nya.miku.wishmaster.lib.org_json.JSONException;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 import nya.miku.wishmaster.ui.CompatibilityImpl;
@@ -105,6 +106,12 @@ public class ApplicationSettings {
         String url = preferences.getString(resources.getString(R.string.pref_key_web_search_url), null);
         if (url == null || url.length() == 0) return null;
         return url;
+    }
+
+    public String getUserAgentString() {
+        String agent = preferences.getString(resources.getString(R.string.pref_key_user_agent_string), null);
+        if (agent == null || agent.length() == 0) return HttpConstants.USER_AGENT_STRING;
+        return agent;
     }
 
     public enum DownloadThumbnailsMode {
