@@ -19,8 +19,8 @@ public class StormwallExceptionAntiDDOS extends MultipurposeException {
     private static final String SERVICE_NAME = "Stormwall";
     private static final String TAG = "StormwallException";
 
-    private static final Pattern PATTERN_CE = Pattern.compile("var cE = \"([^\"]+)");
-    private static final Pattern PATTERN_CK = Pattern.compile("var cK = (\\d+)");
+    private static final Pattern PATTERN_CE = Pattern.compile(" cE = \"([^\"]+)");
+    private static final Pattern PATTERN_CK = Pattern.compile(" cK = (\\d+)");
 
     protected static final String STORMWALL_COOKIE_NAME = "swp_token";
 

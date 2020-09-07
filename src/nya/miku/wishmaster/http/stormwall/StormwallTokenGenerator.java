@@ -19,11 +19,11 @@ public class StormwallTokenGenerator {
         return ALPHABET[newCharPos];
     }
 
-    public static String encrypt(int cK, String сЕ) {
+    public static String encrypt(int inputKey, String inputText) {
         StringBuilder result = new StringBuilder();
-        int modifier = cK;
-        for (int i = 0; i < сЕ.length(); i++) {
-            result.append(shift(-1 * modifier, сЕ.charAt(i)));
+        int modifier = inputKey;
+        for (int i = 0; i < inputText.length(); i++) {
+            result.append(shift(-1 * modifier, inputText.charAt(i)));
             modifier++;
             if (modifier >= ALPHABET.length) {
                 modifier = 0;
