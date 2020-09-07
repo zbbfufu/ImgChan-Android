@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import nya.miku.wishmaster.api.models.PostModel;
+import nya.miku.wishmaster.api.util.CryptoUtils;
 import nya.miku.wishmaster.api.util.WakabaReader;
 
 /**
@@ -39,8 +40,10 @@ public class Chan410Reader extends WakabaReader {
     private static final Pattern SPAN_ADMIN_PATTERN = Pattern.compile("<span class=\"admin\">(.*?)</span>(.*?)", Pattern.DOTALL);
     private static final char[] END_THREAD_FILTER = "<div id=\"thread".toCharArray();
     private static final char[] BADGE_FILTER = "class=\"post-badge".toCharArray();
+    private static final char[] USER_ID_FILTER = " ID:".toCharArray();
     private int curPos = 0;
     private int badgePos = 0;
+    private int idPos = 0;
     
     public Chan410Reader(InputStream in) {
         super(in, DateFormats.CHAN_410_DATE_FORMAT);
@@ -73,6 +76,20 @@ public class Chan410Reader extends WakabaReader {
             }
         } else {
             if (badgePos != 0) badgePos = ch == BADGE_FILTER[0] ? 1 : 0;
+        }
+        
+        if (ch == USER_ID_FILTER[idPos]) {
+            ++idPos;
+            if (idPos == USER_ID_FILTER.length) {
+                String id = readUntilSequence("<".toCharArray()).trim();
+                if (id.length() == 6) {
+                    currentPost.name += " ID: " + id;
+                    currentPost.color = CryptoUtils.hashIdColor(id);
+                }
+                idPos = 0;
+            }
+        } else {
+            if (idPos != 0) idPos = ch == USER_ID_FILTER[0] ? 1 : 0;
         }
     }
     
