@@ -246,7 +246,8 @@ public class InfinityModule extends AbstractVichanModule {
         model.boardDescription = json.optString("title", shortName);
         model.uniqueAttachmentNames = true;
         model.timeZoneId = "US/Eastern";
-        model.defaultUserName = json.optString("anonymous", "Anonymous");
+        model.defaultUserName = json.optString("anonymous", "");
+        if (model.defaultUserName.equals("")) model.defaultUserName = "Anonymous";
         model.bumpLimit = json.optInt("reply_limit", 500);
         model.readonlyBoard = false;
         model.requiredFileForNewThread = json.optBoolean("force_image_op", false);
