@@ -87,7 +87,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         CHAN_DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         CHAN_DATEFORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
-    private static DateFormat COOKIE_DATEFORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+    private static final DateFormat COOKIE_DATEFORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
     private static final Pattern MIME_TYPE_PATTERN = Pattern.compile("-(application|audio|image|text|video)(.+)");
     private static final Pattern RED_TEXT_MARK_PATTERN = Pattern.compile("<span class=\"redText\">(.*?)</span>");
     private static final Pattern ORANGE_TEXT_MARK_PATTERN = Pattern.compile("<span class=\"orangeText\">(.*?)</span>");
@@ -349,33 +349,38 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
 
     private ThreadModel mapCatalogThreadModel(JSONObject object) {
         ThreadModel model = mapThreadModel(object);
-        model.postsCount = object.optInt("postCount") + 1;
-        model.attachmentsCount = object.optInt("fileCount", -1);
         PostModel post = mapPostModel(object);
         post.number = model.threadNumber;
         post.parentThread = model.threadNumber;
-        String thumb = object.optString("thumb", "");
-        if (thumb.length() > 0) {
-            AttachmentModel attachment = new AttachmentModel();
-            attachment.thumbnail = thumb;
-            if (thumb.contains("-")) {
-                Matcher mimeMatcher = MIME_TYPE_PATTERN.matcher(thumb);
-                if (mimeMatcher.find()) {
-                    String mime = mimeMatcher.group(1) + "/" + mimeMatcher.group(2);
-                    attachment.type = getAttachmentType(mime);
-                    String ext = MimeTypes.toExtension(mime);
-                    if (ext != null) attachment.path = thumb.replace("t_", "") + "." + ext;
-                }
-            } else if (thumb.length() < 32) { //Internal static image (e.g. spoiler)
-                attachment.thumbnail = fixRelativeUrl(thumb); //fix equal hashes in cache
-                attachment.path = attachment.thumbnail;
-            } else {
+        if (post.attachments == null || post.attachments.length == 0) {
+            /* Generate OP's attachment based on thumbnail */
+            String thumb = object.optString("thumb", "");
+            if (thumb.length() > 0) {
+                AttachmentModel attachment = new AttachmentModel();
+                attachment.thumbnail = thumb;
                 attachment.path = thumb;
+                if (thumb.contains("-")) {
+                    Matcher mimeMatcher = MIME_TYPE_PATTERN.matcher(thumb);
+                    if (mimeMatcher.find()) {
+                        String mime = mimeMatcher.group(1) + "/" + mimeMatcher.group(2);
+                        attachment.type = getAttachmentType(mime);
+                        String ext = MimeTypes.toExtension(mime);
+                        if (ext != null) attachment.path = thumb.replace("t_", "") + "." + ext;
+                    }
+                } else if (thumb.length() < 32) { //Internal static image (e.g. spoiler)
+                    attachment.thumbnail = fixRelativeUrl(thumb); //fix equal hashes in cache
+                    attachment.path = attachment.thumbnail;
+                }
+                attachment.height = -1;
+                attachment.width = -1;
+                attachment.size = -1;
+                post.attachments = new AttachmentModel[] { attachment };
             }
-            attachment.height = -1;
-            attachment.width = -1;
-            attachment.size = -1;
-            post.attachments = new AttachmentModel[] { attachment };
+        }
+        model.postsCount = object.optInt("postCount") + 1;
+        model.attachmentsCount = object.optInt("fileCount", 0);
+        if (post.attachments != null && post.attachments.length > 0) {
+            model.attachmentsCount += post.attachments.length;
         }
         model.posts = new PostModel[] { post };
         return model;
@@ -444,13 +449,15 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
 
     private AttachmentModel mapAttachment(JSONObject object) {
         AttachmentModel model = new AttachmentModel();
-        model.originalName = StringEscapeUtils.unescapeHtml4(object.optString("originalName")).replace("&apos;", "'");
+        model.originalName = object.optString("originalName", "");
+        model.originalName = model.originalName.length() == 0 ? null
+                : StringEscapeUtils.unescapeHtml4(model.originalName).replace("&apos;", "'");
         model.thumbnail = object.optString("thumb");
         model.path = object.optString("path");
         model.height = object.optInt("height", -1);
         model.width = object.optInt("width", -1);
-        model.size = object.optInt("size", -1) / 1024;
-        model.size = model.size < 0 ? -1 : model.size;
+        model.size = object.optInt("size", -1);
+        if (model.size > 0) model.size = Math.round(model.size / 1024f);
         model.type = getAttachmentType(object.optString("mime"));
         return model;
     }

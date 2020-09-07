@@ -78,7 +78,7 @@ public class EndChanModule extends AbstractLynxChanModule {
     static final String CHAN_NAME = "endchan.xyz";
     private static final String DEFAULT_DOMAIN = "endchan.net";
     private static final String PREF_KEY_DOMAIN = "domain";
-    private static final Pattern EMBED_HREF_PATTERN = Pattern.compile("<span class=\"youtube_wrapper\".*?<a href=\"([^\"]+)\".*?</span>");
+    private static final Pattern EMBED_HREF_PATTERN = Pattern.compile("<span class=\".+?_wrapper\".*?<a href=\"([^\"]+)\".*?</span>");
     
     private String domain;
     private Map<String, String> captchas = new HashMap<>();
