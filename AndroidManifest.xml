@@ -128,8 +128,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 
                 <data android:host="7chan.org" />
                 
-                <data android:host="samachan.org" />
-                <data android:host="www.samachan.org" />
+                <data android:host="sushigirl.us" />
+                <data android:host="www.sushigirl.us" />
 
                 <data android:host="lainchan.org" />
                 <data android:host="www.lainchan.org" />
@@ -227,6 +227,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
                 <data android:host="uboachan.net" />
                 <data android:host="www.uboachan.net" />
+
+                <data android:host="haibane.ru" />
+                <data android:host="haibanej33s4gfts.onion" />
                 <!-- end of domains -->
             </intent-filter>
             <intent-filter>
