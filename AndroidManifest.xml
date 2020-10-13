@@ -175,6 +175,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="2ch.wf" />
                 <data android:host="2ch.yt" />
                 
+                <data android:host="arhivach.net" />
+                <data android:host="www.arhivach.net" />
                 <data android:host="arhivach.ng" />
                 <data android:host="www.arhivach.ng" />
                 <data android:host="arhivachovtj2jrp.onion" />
