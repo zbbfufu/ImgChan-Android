@@ -137,7 +137,6 @@ public class ArhivachModule extends CloudflareChanModule {
         preferenceGroup.addPreference(onionPref);
         httpsPref.setDependency(getSharedKey(PREF_KEY_USE_ONION));
         domainPref.setDependency(getSharedKey(PREF_KEY_USE_ONION));
-        addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
         addClearCookiesPreference(preferenceGroup);
     }

@@ -168,7 +168,6 @@ public class NewNullchanModule extends CloudflareChanModule {
     public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
         addDomainPreference(preferenceGroup);
         addHttpsPreference(preferenceGroup, true);
-        addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
         addClearCookiesPreference(preferenceGroup);
     }

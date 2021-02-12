@@ -122,7 +122,6 @@ public class LolifoxModule extends InfinityModule {
         onionPref.setDisableDependentsState(true);
         preferenceGroup.addPreference(onionPref);
         httpsPref.setDependency(getSharedKey(PREF_KEY_USE_ONION));
-        addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
         addClearCookiesPreference(preferenceGroup);
     }
