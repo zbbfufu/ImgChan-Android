@@ -510,7 +510,7 @@ public class HaibaneModule extends AbstractWakabaModule {
                 if (model.postNumber != null && model.postNumber.length() > 0) url.append("#").append(model.postNumber);
                 break;
             case UrlPageModel.TYPE_CATALOGPAGE:
-                url.append("/catalog/").append(model.boardPage);
+                url.append("catalog/").append(model.boardName);
                 break;
             case UrlPageModel.TYPE_OTHERPAGE:
                 url.append(model.otherPath.startsWith("/") ? model.otherPath.substring(1) : model.otherPath);
