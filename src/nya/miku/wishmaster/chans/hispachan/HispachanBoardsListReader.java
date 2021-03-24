@@ -37,23 +37,24 @@ import nya.miku.wishmaster.api.util.RegexUtils;
 
 public class HispachanBoardsListReader implements Closeable {
     private final Reader _in;
-    private StringBuilder readBuffer = new StringBuilder();
+    private final StringBuilder readBuffer = new StringBuilder();
     private String currentCategory;
     private List<SimpleBoardModel> boards;
     private boolean afterCategoryName, nsfwCategory;
 
+    private static final String BOARD_TAG = "<a rel=\"board\"";
     private static final int FILTER_CATEGORY = 0;
     private static final int FILTER_BOARD = 1;
     private static final int FILTER_NSFW = 2;
     private static final char[][] FILTERS = {
             "<b>".toCharArray(),
-            "<a rel=\"board\"".toCharArray(),
+            BOARD_TAG.toCharArray(),
             "NSFW".toCharArray()
     };
     private static final char[] B_CLOSE = "</b>".toCharArray();
     private static final char[] A_CLOSE = "</a>".toCharArray();
 
-    private static final Pattern BOARD_PATTERN = Pattern.compile("href=\"/(\\w+)/\"(?:[^>]*)>(.*)", Pattern.DOTALL);
+    private static final Pattern BOARD_PATTERN = Pattern.compile("href=\"/([a-z]+)/\"(?:[^>]*)>([^<]*)");
 
     public HispachanBoardsListReader(Reader reader) {
         _in = reader;
@@ -85,42 +86,25 @@ public class HispachanBoardsListReader implements Closeable {
                 }
             }
         }
-        return boards.toArray(new SimpleBoardModel[boards.size()]);
+        return boards.toArray(new SimpleBoardModel[0]);
     }
 
     private void handleFilter(int filter) throws IOException {
         switch (filter) {
             case FILTER_CATEGORY:
-                String cat = readUntilSequence(B_CLOSE);
-                if (!cat.contains("INFORMACIÓN")) {
-                    currentCategory = StringEscapeUtils.unescapeHtml4(cat);
-                    afterCategoryName = true;
-                    nsfwCategory = false;
+                String input = readUntilSequence(B_CLOSE);
+                if (!input.contains(BOARD_TAG)) {
+                    if (!input.contains("INFORMACIÓN")) {
+                        currentCategory = StringEscapeUtils.unescapeHtml4(input);
+                        afterCategoryName = true;
+                        nsfwCategory = false;
+                    }
+                } else {
+                    parseBoardString(input);
                 }
                 break;
             case FILTER_BOARD:
-                String board = readUntilSequence(A_CLOSE);
-                Matcher boardMatcher = BOARD_PATTERN.matcher(board);
-                if (boardMatcher.find()) {
-                    afterCategoryName = false;
-                    SimpleBoardModel model = new SimpleBoardModel();
-                    model.chan = HispachanModule.CHAN_NAME;
-                    model.boardName = boardMatcher.group(1);
-                    model.boardDescription = StringEscapeUtils.unescapeHtml4(
-                            RegexUtils.removeHtmlTags(boardMatcher.group(2)))
-                            .replace("\u2022", "")
-                            .replace("\u00a0", " ")
-                            .trim();
-                    model.boardCategory = currentCategory;
-                    model.nsfw = nsfwCategory;
-                    if ("SEXY".equals(model.boardCategory.toUpperCase(Locale.US))
-                            && model.boardName.startsWith("s")
-                            && !model.boardDescription.startsWith("Chicas Sexy")) {
-                        model.boardDescription = "Chicas Sexy " + model.boardDescription;
-                    }
-                    boards.add(model);
-                    afterCategoryName = false;
-                }
+                parseBoardString(readUntilSequence(A_CLOSE));
                 break;
             case FILTER_NSFW:
                 if (afterCategoryName) {
@@ -133,18 +117,22 @@ public class HispachanBoardsListReader implements Closeable {
         }
     }
 
-    private void skipUntilSequence(char[] sequence) throws IOException {
-        int len = sequence.length;
-        if (len == 0) return;
-        int pos = 0;
-        int curChar;
-        while ((curChar = _in.read()) != -1) {
-            if (curChar == sequence[pos]) {
-                ++pos;
-                if (pos == len) break;
-            } else {
-                if (pos != 0) pos = curChar == sequence[0] ? 1 : 0;
-            }
+    private void parseBoardString(String htmlInput) {
+        Matcher boardMatcher = BOARD_PATTERN.matcher(htmlInput);
+        if (boardMatcher.find()) {
+            afterCategoryName = false;
+            SimpleBoardModel model = new SimpleBoardModel();
+            model.chan = HispachanModule.CHAN_NAME;
+            model.boardName = boardMatcher.group(1);
+            model.boardDescription = StringEscapeUtils.unescapeHtml4(
+                    RegexUtils.removeHtmlTags(boardMatcher.group(2)))
+                    .replace("\u2022", "")
+                    .replace("\u00a0", " ")
+                    .trim();
+            model.boardCategory = currentCategory;
+            model.nsfw = nsfwCategory;
+            boards.add(model);
+            afterCategoryName = false;
         }
     }
 
