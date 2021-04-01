@@ -269,7 +269,9 @@ public class HttpStreamer {
                 if (responseModel.notModified())
                     return null;
                 else
-                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusCode+" - "+responseModel.statusReason);
+                    throw new HttpWrongStatusCodeException(responseModel.statusCode,
+                            responseModel.statusCode + " - " + responseModel.statusReason,
+                            (anyCode ? tryGetBytes(responseModel.stream) : null));
             if (detector != null)
                 detector.check(responseModel);
             if (responseModel.stream == null) throw new HttpRequestException(new NullPointerException());
@@ -375,7 +377,9 @@ public class HttpStreamer {
                 if (responseModel.notModified())
                     return null;
                 else
-                    throw new HttpWrongStatusCodeException(responseModel.statusCode, responseModel.statusCode+" - "+responseModel.statusReason);
+                    throw new HttpWrongStatusCodeException(responseModel.statusCode,
+                            responseModel.statusCode + " - " + responseModel.statusReason,
+                            (anyCode ? tryGetBytes(responseModel.stream) : null));
             if (detector != null)
                 detector.check(responseModel);
             if (responseModel.stream == null) throw new HttpRequestException(new NullPointerException());
