@@ -1014,10 +1014,13 @@ public class MakabaModule extends CloudflareChanModule {
         if (!canHashwall()) return super.downloadJSONObject(url, checkIfModified, listener, task);
         HttpRequestModel rqModel = HttpRequestModel.builder().setGET().setCheckIfModified(checkIfModified).build();
         try {
-            JSONObject object = HttpStreamer.getInstance().getJSONObjectFromUrl(url, rqModel, httpClient, listener, task, false, hashwallDetector);
+            JSONObject object = HttpStreamer.getInstance().getJSONObjectFromUrl(url, rqModel, httpClient, listener, task, true, hashwallDetector);
             if (task != null && task.isCancelled()) throw new Exception("interrupted");
             if (listener != null) listener.setIndeterminate();
             return object;
+        } catch (HttpWrongStatusCodeException e) {
+            checkCloudflareError(e, url);
+            throw e;
         } catch (HttpWrongResponseException e) {
             handleWrongResponse(url, e);
             return null;
@@ -1029,10 +1032,13 @@ public class MakabaModule extends CloudflareChanModule {
         if (!canHashwall()) return super.downloadJSONArray(url, checkIfModified, listener, task);
         HttpRequestModel rqModel = HttpRequestModel.builder().setGET().setCheckIfModified(checkIfModified).build();
         try {
-            JSONArray array = HttpStreamer.getInstance().getJSONArrayFromUrl(url, rqModel, httpClient, listener, task, false, hashwallDetector);
+            JSONArray array = HttpStreamer.getInstance().getJSONArrayFromUrl(url, rqModel, httpClient, listener, task, true, hashwallDetector);
             if (task != null && task.isCancelled()) throw new Exception("interrupted");
             if (listener != null) listener.setIndeterminate();
             return array;
+        } catch (HttpWrongStatusCodeException e) {
+            checkCloudflareError(e, url);
+            throw e;
         } catch (HttpWrongResponseException e) {
             handleWrongResponse(url, e);
             return null;
