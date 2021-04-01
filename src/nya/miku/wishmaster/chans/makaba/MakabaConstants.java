@@ -90,6 +90,9 @@ public class MakabaConstants {
     public static final String PREF_KEY_NOCAPTCHA_COOKIE_VALUE = "nocaptcha_cookie";
     public static final String PREF_KEY_NOCAPTCHA_COOKIE_DOMAIN = "nocaptcha_domain";
     public static final String PREF_KEY_PASSCODE = "passcode";
+    public static final String PREF_KEY_HASHWALL_COOKIE_NAME = "hw_cookie_name";
+    public static final String PREF_KEY_HASHWALL_COOKIE_VALUE = "hw_cookie_value";
+    public static final String PREF_KEY_HASHMWALL_COOKIE_DOMAIN = "hw_cookie_domain";
 
     public static final String MAILRU_JS_URL = "https://api-nocaptcha.mail.ru/captcha?public_key=";
     public static final Pattern MAILRU_ID_PATTERN = Pattern.compile("id:\\s*\"([^\"]*)\"");
@@ -98,4 +101,6 @@ public class MakabaConstants {
 
     public static final String USERCODE_COOKIE_NAME = "usercode_auth";
     public static final String USERCODE_NOCAPTCHA_COOKIE_NAME = "passcode_auth";
+
+    public static final Pattern PATTERN_HASHWALL_COOKIE = Pattern.compile("([A-Za-z0-9]+=[A-Ha-h0-9]{40});");
 }

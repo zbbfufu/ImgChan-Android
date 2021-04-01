@@ -54,12 +54,16 @@ import nya.miku.wishmaster.api.util.UrlPathUtils;
 import nya.miku.wishmaster.common.IOUtils;
 import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
+import nya.miku.wishmaster.http.hashwall.HashwallExceptionAntiDDOS;
+import nya.miku.wishmaster.http.interactive.InteractiveException;
 import nya.miku.wishmaster.http.recaptcha.Recaptcha2;
 import nya.miku.wishmaster.http.recaptcha.Recaptcha2solved;
 import nya.miku.wishmaster.http.streamer.HttpRequestException;
 import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
+import nya.miku.wishmaster.http.streamer.HttpWrongResponseDetector;
+import nya.miku.wishmaster.http.streamer.HttpWrongResponseException;
 import nya.miku.wishmaster.http.streamer.HttpWrongStatusCodeException;
 import nya.miku.wishmaster.lib.org_json.JSONArray;
 import nya.miku.wishmaster.lib.org_json.JSONException;
@@ -118,6 +122,10 @@ public class MakabaModule extends CloudflareChanModule {
                 preferences.getString(getSharedKey(PREF_KEY_DOMAIN), DEFAULT_DOMAIN),
                 preferences.getBoolean(getSharedKey(PREF_KEY_USE_HTTPS_MAKABA), true));
     }
+
+    public boolean canHashwall() {
+        return true;
+    }
     
     @Override
     public String getChanName() {
@@ -133,6 +141,42 @@ public class MakabaModule extends CloudflareChanModule {
     public Drawable getChanFavicon() {
         return ResourcesCompat.getDrawable(resources, R.drawable.favicon_makaba, null);
     }
+
+    private static final HttpWrongResponseDetector hashwallDetector = new HttpWrongResponseDetector() {
+        @Override
+        public void check(final HttpResponseModel model) {
+            for (Header header: model.headers) {
+                if (header.getName().equalsIgnoreCase("Set-Cookie")) {
+                    Matcher m = PATTERN_HASHWALL_COOKIE.matcher(header.getValue());
+                    if (m.find()) {
+                        HttpWrongResponseException e = new HttpWrongResponseException("Hashwall" + m.group(1));
+                        e.setHtmlBytes(HttpStreamer.tryGetBytes(model.stream));
+                        throw e;
+                    }
+                }
+            }
+        }
+    };
+
+    private void handleWrongResponse(String url, HttpWrongResponseException e) throws HttpWrongResponseException, InteractiveException {
+        if (e.getMessage().startsWith("Hashwall")) {
+            String fixedUrl = fixRelativeUrl(url);
+            String html = e.getHtmlString();
+            String arguments = e.getMessage().substring(8);
+            InteractiveException hwe = HashwallExceptionAntiDDOS.newInstance(fixedUrl, arguments, html, getChanName());
+            if (hwe != null) throw hwe;
+            else throw new HttpWrongResponseException(resources.getString(R.string.error_cloudflare_antiddos));
+        }
+        throw e;
+    }
+
+    private void checkForHashwall(String url, HttpResponseModel model) throws HttpWrongResponseException, InteractiveException {
+        try {
+            hashwallDetector.check(model);
+        } catch (HttpWrongResponseException e) {
+            handleWrongResponse(url, e);
+        }
+    }
     
     @Override
     protected void initHttpClient() {
@@ -142,6 +186,16 @@ public class MakabaModule extends CloudflareChanModule {
                 USERCODE_COOKIE_NAME,
                 preferences.getString(getSharedKey(PREF_KEY_USERCODE_COOKIE_VALUE), null));
         setPasscodeCookie();
+        if (canHashwall()) {
+            String name = preferences.getString(getSharedKey(PREF_KEY_HASHWALL_COOKIE_NAME), null);
+            String value = preferences.getString(getSharedKey(PREF_KEY_HASHWALL_COOKIE_VALUE), null);
+            String domain = preferences.getString(getSharedKey(PREF_KEY_HASHMWALL_COOKIE_DOMAIN), null);
+            if (name != null && value != null && domain != null) {
+                BasicClientCookie c = new BasicClientCookie(name, value);
+                c.setDomain(domain);
+                httpClient.getCookieStore().addCookie(c);
+            }
+        }
     }
     
     private void updateDomain(String domain, boolean useHttps) {
@@ -164,10 +218,17 @@ public class MakabaModule extends CloudflareChanModule {
     @Override
     public void saveCookie(Cookie cookie) {
         super.saveCookie(cookie);
-        if (cookie != null && cookie.getName().equals(USERCODE_COOKIE_NAME)) {
-            preferences.edit().
-                    putString(getSharedKey(PREF_KEY_USERCODE_COOKIE_DOMAIN), cookie.getDomain()).
-                    putString(getSharedKey(PREF_KEY_USERCODE_COOKIE_VALUE), cookie.getValue()).commit();
+        if (cookie != null) {
+            if (cookie.getName().equals(USERCODE_COOKIE_NAME)) {
+                preferences.edit().
+                        putString(getSharedKey(PREF_KEY_USERCODE_COOKIE_DOMAIN), cookie.getDomain()).
+                        putString(getSharedKey(PREF_KEY_USERCODE_COOKIE_VALUE), cookie.getValue()).commit();
+            } else if (canHashwall() && "Hashwall".equals(cookie.getComment())) {
+                preferences.edit().
+                        putString(getSharedKey(PREF_KEY_HASHWALL_COOKIE_NAME), cookie.getName()).
+                        putString(getSharedKey(PREF_KEY_HASHWALL_COOKIE_VALUE), cookie.getValue()).
+                        putString(getSharedKey(PREF_KEY_HASHMWALL_COOKIE_DOMAIN), cookie.getDomain()).commit();
+            }
         }
     }
     
@@ -179,6 +240,9 @@ public class MakabaModule extends CloudflareChanModule {
             remove(getSharedKey(PREF_KEY_USERCODE_COOKIE_VALUE)).
             remove(getSharedKey(PREF_KEY_NOCAPTCHA_COOKIE_DOMAIN)).
             remove(getSharedKey(PREF_KEY_NOCAPTCHA_COOKIE_VALUE)).
+            remove(getSharedKey(PREF_KEY_HASHWALL_COOKIE_NAME)).
+            remove(getSharedKey(PREF_KEY_HASHWALL_COOKIE_VALUE)).
+            remove(getSharedKey(PREF_KEY_HASHMWALL_COOKIE_DOMAIN)).
             commit();
     }
 
@@ -194,7 +258,7 @@ public class MakabaModule extends CloudflareChanModule {
                 USERCODE_NOCAPTCHA_COOKIE_NAME,
                 preferences.getString(getSharedKey(PREF_KEY_NOCAPTCHA_COOKIE_VALUE), null));
     }
-    
+
     private void addMobileAPIPreference(PreferenceGroup group) {
         final Context context = group.getContext();
         CheckBoxPreference mobileAPIPref = new LazyPreferences.CheckBoxPreference(context);
@@ -315,6 +379,7 @@ public class MakabaModule extends CloudflareChanModule {
             if (response.statusCode != 301 && response.statusCode != 302) {
                 if (response.stream == null)
                     throw new HttpRequestException(new NullPointerException());
+                checkForHashwall(url, response);
                 ByteArrayOutputStream output = new ByteArrayOutputStream(1024);
                 IOUtils.copyStream(response.stream, output);
                 String html = new String(output.toByteArray());
@@ -600,12 +665,14 @@ public class MakabaModule extends CloudflareChanModule {
                     addString("json", "1").
                     build();
             HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntity).build();
-            JSONObject response;
+            JSONObject response = null;
             try {
-                response = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, true);
+                response = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, true, hashwallDetector);
             } catch (HttpWrongStatusCodeException e) {
                 checkCloudflareError(e, url);
                 throw e;
+            } catch (HttpWrongResponseException he) {
+                handleWrongResponse(url, he);
             }
             if (listener != null) listener.setIndeterminate();
             JSONArray posts = response.getJSONArray("posts");
@@ -718,6 +785,7 @@ public class MakabaModule extends CloudflareChanModule {
         if (model.captchaAnswer.equals("") && !usercode_nocaptcha.equals("")) {
             postEntityBuilder.addString("usercode", usercode_nocaptcha);
         }
+        String recaptcha2 = null;
         if (usercode_nocaptcha.equals("")) {
             switch (captchaType) {
                 case CAPTCHA_2CHAPTCHA:
@@ -728,15 +796,15 @@ public class MakabaModule extends CloudflareChanModule {
                     break;
                 case CAPTCHA_RECAPTCHA:
                 case CAPTCHA_RECAPTCHA_FALLBACK:
-                    String response = Recaptcha2solved.pop(captchaId);
-                    if (response == null) {
+                    recaptcha2 = Recaptcha2solved.pop(captchaId);
+                    if (recaptcha2 == null) {
                         boolean fallback = getUsingCaptchaType() == CAPTCHA_RECAPTCHA_FALLBACK;
                         throw Recaptcha2.obtain(domainUrl, captchaId, null, CHAN_NAME, fallback);
                     }
                     postEntityBuilder.
                         addString("captcha_type", "recaptcha").
                         addString("2chaptcha_id", captchaId).
-                        addString("g-recaptcha-response", response);
+                        addString("g-recaptcha-response", recaptcha2);
                     break;
                 case CAPTCHA_MAILRU:
                     if (captchaMailRuId != null) {
@@ -770,10 +838,13 @@ public class MakabaModule extends CloudflareChanModule {
         HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build()).build();
         String response = null;
         try {
-            response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, null, task, true);
+            response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, null, task, true, hashwallDetector);
         } catch (HttpWrongStatusCodeException e) {
             checkCloudflareError(e, url);
             throw e;
+        } catch (HttpWrongResponseException he) {
+            if (recaptcha2 != null) Recaptcha2solved.push(captchaId, recaptcha2);
+            handleWrongResponse(url, he);
         }
         saveUsercodeCookie();
         JSONObject makabaResult = new JSONObject(response);
@@ -819,10 +890,12 @@ public class MakabaModule extends CloudflareChanModule {
         HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build()).setNoRedirect(true).build();
         String response = null;
         try {
-            response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, null, task, true);
+            response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, null, task, true, hashwallDetector);
         } catch (HttpWrongStatusCodeException e) {
             checkCloudflareError(e, url);
             throw e;
+        } catch (HttpWrongResponseException he) {
+            handleWrongResponse(url, he);
         }
         try {
             JSONObject json = new JSONObject(response);
@@ -833,7 +906,7 @@ public class MakabaModule extends CloudflareChanModule {
             throw new Exception(response);
         }
     }
-    
+
     @Override
     public String buildUrl(UrlPageModel model) throws IllegalArgumentException {
         if (!model.chanName.equals(CHAN_NAME)) throw new IllegalArgumentException("wrong chan");
@@ -934,5 +1007,35 @@ public class MakabaModule extends CloudflareChanModule {
             }
         }
         return model;
+    }
+
+    @Override
+    protected JSONObject downloadJSONObject(String url, boolean checkIfModified, ProgressListener listener, CancellableTask task) throws Exception {
+        if (!canHashwall()) return super.downloadJSONObject(url, checkIfModified, listener, task);
+        HttpRequestModel rqModel = HttpRequestModel.builder().setGET().setCheckIfModified(checkIfModified).build();
+        try {
+            JSONObject object = HttpStreamer.getInstance().getJSONObjectFromUrl(url, rqModel, httpClient, listener, task, false, hashwallDetector);
+            if (task != null && task.isCancelled()) throw new Exception("interrupted");
+            if (listener != null) listener.setIndeterminate();
+            return object;
+        } catch (HttpWrongResponseException e) {
+            handleWrongResponse(url, e);
+            return null;
+        }
+    }
+
+    @Override
+    protected JSONArray downloadJSONArray(String url, boolean checkIfModified, ProgressListener listener, CancellableTask task) throws Exception {
+        if (!canHashwall()) return super.downloadJSONArray(url, checkIfModified, listener, task);
+        HttpRequestModel rqModel = HttpRequestModel.builder().setGET().setCheckIfModified(checkIfModified).build();
+        try {
+            JSONArray array = HttpStreamer.getInstance().getJSONArrayFromUrl(url, rqModel, httpClient, listener, task, false, hashwallDetector);
+            if (task != null && task.isCancelled()) throw new Exception("interrupted");
+            if (listener != null) listener.setIndeterminate();
+            return array;
+        } catch (HttpWrongResponseException e) {
+            handleWrongResponse(url, e);
+            return null;
+        }
     }
 }
