@@ -185,10 +185,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="tbpchan.net" />
                 <data android:host="www.tbpchan.net" />
 
-                <data android:host="lolifox.cc" />
-                <data android:host="www.lolifox.cc" />
-                <data android:host="wn3ghyuon5eaqyxi7yauald3d53gsxrkanzpu2qdyc54vobif2qutsid.onion" />
-                <data android:host="www.wn3ghyuon5eaqyxi7yauald3d53gsxrkanzpu2qdyc54vobif2qutsid.onion" />
+                <data android:host="lolifox.club" />
+                <data android:host="www.lolifox.club" />
+                <data android:host="kdrlbdzp2kzhofos5nfzd7ohz6f6n4fuwrkhs7adgx3l7rvhlqna3cad.onion" />
+                <data android:host="www.kdrlbdzp2kzhofos5nfzd7ohz6f6n4fuwrkhs7adgx3l7rvhlqna3cad.onion" />
 
                 <data android:host="wizchan.org" />
                 <data android:host="www.wizchan.org" />
