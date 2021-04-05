@@ -377,9 +377,18 @@ public class MakabaModule extends CloudflareChanModule {
         try {
             response = HttpStreamer.getInstance().getFromUrl(url, request, httpClient, null, task);
             if (response.statusCode != 301 && response.statusCode != 302) {
+                if (response.statusCode == 303) {
+                    HttpResponseModel redirectResponse = null;
+                    try {
+                        redirectResponse = HttpStreamer.getInstance().getFromUrl(
+                                fixRelativeUrl(response.locationHeader), HttpRequestModel.DEFAULT_GET, httpClient, listener, task);
+                        checkForHashwall(url, redirectResponse);
+                    } finally {
+                        if (redirectResponse != null) redirectResponse.release();
+                    }
+                }
                 if (response.stream == null)
                     throw new HttpRequestException(new NullPointerException());
-                checkForHashwall(url, response);
                 ByteArrayOutputStream output = new ByteArrayOutputStream(1024);
                 IOUtils.copyStream(response.stream, output);
                 String html = new String(output.toByteArray());
@@ -887,7 +896,7 @@ public class MakabaModule extends CloudflareChanModule {
                 addString("thread", model.threadNumber).
                 addString("comment", ">>" + model.postNumber + " " + model.reportReason);
         
-        HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build()).setNoRedirect(true).build();
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build()).build();
         String response = null;
         try {
             response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, null, task, true, hashwallDetector);
