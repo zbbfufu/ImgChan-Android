@@ -91,8 +91,9 @@ public class InfinityModule extends AbstractVichanModule {
         public FastHtmlTagParser.TagsPair replace(FastHtmlTagParser.TagsPair source) {
             if (source.openTag.equals("<p class=\"body-line ltr quote\">")) {
                 return new FastHtmlTagParser.TagsPair("<span class=\"quote\">", "</span><br />");
-            }
-            return new FastHtmlTagParser.TagsPair("", "<br />");
+            } else if (source.openTag.equals("<p class=\"body-line ltr rquote\">")) {
+                return new FastHtmlTagParser.TagsPair("<font color=\"#E0727F\">", "</font><br />");
+            } else return new FastHtmlTagParser.TagsPair("", "<br />");
         }
     };
     
