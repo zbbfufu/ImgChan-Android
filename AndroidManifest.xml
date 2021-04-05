@@ -78,6 +78,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="owlchan.ru" />
                 <data android:host="www.owlchan.ru" />
                 <data android:host="ii.yakuji.moe" />
+                <data android:host="014chan.org" />
+                <data android:host="www.014chan.org" />
                 
                 <data android:host="horochan.ru" />
                 
@@ -235,6 +237,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
                 <data android:host="haibane.ru" />
                 <data android:host="haibanej33s4gfts.onion" />
+
+                <data android:host="smuglo.li" />
+                <data android:host="www.smuglo.li" />
+                <data android:host="smugloli.net" />
+                <data android:host="www.smugloli.net" />
+                <data android:host="bhm5koavobq353j54qichcvzr6uhtri6x4bjjy4xkybgvxkzuslzcqid.onion" />
+                <data android:host="www.bhm5koavobq353j54qichcvzr6uhtri6x4bjjy4xkybgvxkzuslzcqid.onion" />
                 <!-- end of domains -->
             </intent-filter>
             <intent-filter>

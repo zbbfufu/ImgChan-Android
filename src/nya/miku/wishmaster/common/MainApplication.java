@@ -122,6 +122,7 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.cirno.CirnoArchiveModule",
             "nya.miku.wishmaster.chans.monaba.HaibaneModule",
             "nya.miku.wishmaster.chans.cirno.Chan014Module",
+            "nya.miku.wishmaster.chans.infinity.SmugModule",
     };
     
     private static MainApplication instance;
