@@ -93,17 +93,16 @@ public class FourchanJsonMapper {
         model.trip = object.optString("trip", "");
         String capcode = object.optString("capcode", "none");
         if (!capcode.equals("none")) model.trip += "##"+capcode;
-        String countryIcon = object.optString("country", "");
-        boolean troll = false;
-        if (countryIcon.equals("") && object.has("troll_country")) {
-            countryIcon = object.optString("troll_country", "");
-            troll = true;
-        }
-        if (!countryIcon.equals("")) {
-            BadgeIconModel icon = new BadgeIconModel();
-            icon.source = "s.4cdn.org/image/country/" + (troll ? "troll/" : "") + countryIcon.toLowerCase(Locale.US) + ".gif";
-            icon.description = object.optString("country_name");
-            model.icons = new BadgeIconModel[] { icon };
+        if (object.has("board_flag") || object.has("country")) {
+            boolean custom = object.has("board_flag");
+            String flagId = custom ? object.optString("board_flag") : object.optString("country");
+            if (flagId.length() > 0) {
+                BadgeIconModel icon = new BadgeIconModel();
+                icon.source = (custom ? "s.4cdn.org/image/flags/" + boardName + "/" : "s.4cdn.org/image/country/")
+                        + flagId.toLowerCase(Locale.US) + ".gif";
+                icon.description = custom ? object.optString("flag_name") : object.optString("country_name");
+                model.icons = new BadgeIconModel[] { icon };
+            }
         }
         model.op = false;
         String id = object.optString("id", "");
