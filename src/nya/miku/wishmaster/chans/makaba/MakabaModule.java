@@ -124,7 +124,7 @@ public class MakabaModule extends CloudflareChanModule {
     }
 
     public boolean canHashwall() {
-        return true;
+        return false;
     }
     
     @Override
@@ -377,7 +377,7 @@ public class MakabaModule extends CloudflareChanModule {
         try {
             response = HttpStreamer.getInstance().getFromUrl(url, request, httpClient, null, task);
             if (response.statusCode != 301 && response.statusCode != 302) {
-                if (response.statusCode == 303) {
+                if (canHashwall() && response.statusCode == 303) {
                     HttpResponseModel redirectResponse = null;
                     try {
                         redirectResponse = HttpStreamer.getInstance().getFromUrl(
@@ -676,7 +676,8 @@ public class MakabaModule extends CloudflareChanModule {
             HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntity).build();
             JSONObject response = null;
             try {
-                response = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, true, hashwallDetector);
+                response = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, true,
+                        (canHashwall() ? hashwallDetector : null));
             } catch (HttpWrongStatusCodeException e) {
                 checkCloudflareError(e, url);
                 throw e;
@@ -847,7 +848,8 @@ public class MakabaModule extends CloudflareChanModule {
         HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build()).build();
         String response = null;
         try {
-            response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, null, task, true, hashwallDetector);
+            response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, null, task, true,
+                    (canHashwall() ? hashwallDetector : null));
         } catch (HttpWrongStatusCodeException e) {
             checkCloudflareError(e, url);
             throw e;
@@ -899,7 +901,8 @@ public class MakabaModule extends CloudflareChanModule {
         HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build()).build();
         String response = null;
         try {
-            response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, null, task, true, hashwallDetector);
+            response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, null, task, true,
+                    (canHashwall() ? hashwallDetector : null));
         } catch (HttpWrongStatusCodeException e) {
             checkCloudflareError(e, url);
             throw e;
