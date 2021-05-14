@@ -297,15 +297,16 @@ public class InfinityModule extends AbstractVichanModule {
         String tim = object.optString("tim", "");
         String ext = object.optString("ext", "");
         if (attachment != null && tim.length() > 0 && ext.length() > 0) {
-            String thumbLocation = tim.length() == 64 ? "/file_store/thumb/" : "/" + boardName + "/thumb/";
-            String fileLocation = tim.length() == 64 ? "/file_store/" : "/" + boardName + "/src/";
-            String thumbnailExt = ext;
-            if (tim.length() != 64 || attachment.type == AttachmentModel.TYPE_VIDEO) {
-                thumbnailExt = ".jpg";
+            boolean newPath = object.optInt("fpath", 0) == 1;
+            String thumbLocation = newPath ? "/file_store/thumb/" : "/" + boardName + "/thumb/";
+            String fileLocation = newPath ? "/file_store/" : "/" + boardName + "/src/";
+            if (isSpoiler || attachment.type == AttachmentModel.TYPE_AUDIO
+                    || attachment.type == AttachmentModel.TYPE_OTHER_FILE) {
+                attachment.thumbnail = null;
+            } else {
+                String thumbnailExt = newPath && attachment.type != AttachmentModel.TYPE_VIDEO ? ext : ".jpg";
+                attachment.thumbnail = thumbLocation + tim + thumbnailExt;
             }
-            attachment.thumbnail = isSpoiler || attachment.type == AttachmentModel.TYPE_AUDIO
-                    || attachment.type == AttachmentModel.TYPE_OTHER_FILE ? null
-                    : thumbLocation + tim + thumbnailExt;
             attachment.path = fileLocation + tim + ext;
             if (getUsingDomain().equals(DEFAULT_DOMAIN) || getUsingDomain().equals(ONION_DOMAIN)) {
                 attachment.thumbnail = getMediaUrl(attachment.thumbnail);
