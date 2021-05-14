@@ -54,17 +54,19 @@ public class TohnoChanModule extends AbstractKusabaModule {
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "vg", "Video Games", "Media/Entertainment", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "foe", "Touhou", "Media/Entertainment", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "mp3", "Music", "Media/Entertainment", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "kf", "Kemono Friends", "Media/Entertainment", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "vn", "Visual Novels", "Media/Entertainment", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "fig", "Collectibles", "Hobbies/Interests", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "navi", "Science & technology", "Hobbies/Interests", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "cr", "Creativity", "Hobbies/Interests", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "so", "Ronery", "General discussion", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "mai", "Waifu", "General discussion", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "ot", "Otaku Tangents", "Broad General discussion", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "ns", "Hentai", "Other", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "ot", "Otaku Tangents", "General discussion", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "ns", "Hentai", "Other", true),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "kf", "Kemono Friends", "Other", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "pic", "Dump", "Other", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "lol", "Funposting", "Other", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "tat", "Debates", "Other", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "fb", "Feedback", "Other", false),
     };
     
     public TohnoChanModule(SharedPreferences preferences, Resources resources) {
