@@ -574,8 +574,9 @@ public class MakabaModule extends CloudflareChanModule {
                     } catch (Exception e) {
                         Logger.e(TAG, e);
                     }
-                    model.isSticky = curThread.optInt("sticky") != 0;
-                    model.isClosed = curThread.optInt("closed") != 0;
+                    model.isSticky = curThread.optInt("sticky", 0) != 0;
+                    model.isClosed = curThread.optInt("closed", 0) != 0;
+                    model.isCyclical = curThread.optInt("endless", 0) != 0;
                     model.posts = new PostModel[] { mapPostModel(curThread, boardName) };
                     result[i] = model;
                 }
