@@ -69,7 +69,11 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
     public AbstractInstant0chan(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
     }
-    
+
+    protected boolean availableUserboardsList() {
+        return true;
+    }
+
     @Override
     public SimpleBoardModel[] getBoardsList(ProgressListener listener, CancellableTask task, SimpleBoardModel[] oldBoardsList) throws Exception {
         List<SimpleBoardModel> boardsList = new ArrayList<>();
@@ -92,19 +96,21 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
                 }
             }
         } catch (Exception e) {}
-        url = getUsingUrl() + "boards20.json";
-        try {
-            json = downloadJSONArray(url, false, listener, task);
-            for (int i=0; i<json.length(); ++i) {
-                SimpleBoardModel model = new SimpleBoardModel();
-                model.chan = getChanName();
-                model.boardName = json.getJSONObject(i).getString("name");
-                model.boardDescription = StringEscapeUtils.unescapeHtml4(json.getJSONObject(i).optString("desc", model.boardName));
-                model.boardCategory = "2.0";
-                model.nsfw = true;
-                boardsList.add(model);
-            }
-        } catch (Exception e) {}
+        if (availableUserboardsList()) {
+            url = getUsingUrl() + "boards20.json";
+            try {
+                json = downloadJSONArray(url, false, listener, task);
+                for (int i=0; i<json.length(); ++i) {
+                    SimpleBoardModel model = new SimpleBoardModel();
+                    model.chan = getChanName();
+                    model.boardName = json.getJSONObject(i).getString("name");
+                    model.boardDescription = StringEscapeUtils.unescapeHtml4(json.getJSONObject(i).optString("desc", model.boardName));
+                    model.boardCategory = "2.0";
+                    model.nsfw = true;
+                    boardsList.add(model);
+                }
+            } catch (Exception e) {}
+        }
         return boardsList.toArray(new SimpleBoardModel[0]);
     }
     

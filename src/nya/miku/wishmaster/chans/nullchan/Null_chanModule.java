@@ -75,6 +75,11 @@ public class Null_chanModule extends AbstractInstant0chan {
     }
 
     @Override
+    protected boolean availableUserboardsList() {
+        return false;
+    }
+
+    @Override
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         BoardModel model = super.getBoard(shortName, listener, task);
         model.attachmentsMaxCount = 4;
