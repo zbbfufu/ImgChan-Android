@@ -312,6 +312,7 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
         private static final char[] FILTER_ATTACHMENT_CLOSE = "</figcaption>".toCharArray();
         private static final char[] FILTER_EMBEDDED_OPEN = "<figure class=\"multiembed video-embed\"".toCharArray();
         private static final char[] FILTER_EMBEDDED_CLOSE = "</figure>".toCharArray();
+        private static final char[] FILTER_THREAD_STATUS = "class=\"posthead ".toCharArray();
         
         private static final Pattern PATTERN_EMBEDDED_URL =
                 Pattern.compile("<a.+?href=\"(.+?)\".*?>(.+?)?</a>", Pattern.DOTALL);
@@ -339,6 +340,7 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
         private int curNumberPos = 0;
         private int curAttachmentPos = 0;
         private int curEmbedPos = 0;
+        private int curThreadStatusPos = 0;
         
         public Instant0chanReader(InputStream in, DateFormat dateFormat, boolean canCloudflare) {
             super(in, dateFormat, canCloudflare, ~FLAG_HANDLE_EMBEDDED_POST_POSTPROCESS);
@@ -361,7 +363,19 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
             } else {
                 if (curNumberPos != 0) curNumberPos = ch == FILTER_POST_NUMBER[0] ? 1 : 0;
             }
-            
+
+            if (ch == FILTER_THREAD_STATUS[curThreadStatusPos]) {
+                ++curThreadStatusPos;
+                if (curThreadStatusPos == FILTER_THREAD_STATUS.length) {
+                    String status = readUntilSequence("\"".toCharArray());
+                    if (status.contains("locked")) currentThread.isClosed = true;
+                    if (status.contains("stickied")) currentThread.isSticky = true;
+                    curThreadStatusPos = 0;
+                }
+            } else {
+                if (curThreadStatusPos != 0) curThreadStatusPos = ch == FILTER_THREAD_STATUS[0] ? 1 : 0;
+            }
+
             if (ch == FILTER_ATTACHMENT_OPEN[curAttachmentPos]) {
                 ++curAttachmentPos;
                 if (curAttachmentPos == FILTER_ATTACHMENT_OPEN.length) {
