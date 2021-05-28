@@ -23,8 +23,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.text.DateFormat;
+import java.text.DateFormatSymbols;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -56,11 +59,13 @@ import nya.miku.wishmaster.api.util.RegexUtils;
 import nya.miku.wishmaster.api.util.UrlPathUtils;
 import nya.miku.wishmaster.api.util.WakabaReader;
 import nya.miku.wishmaster.api.util.WakabaUtils;
+import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
 import nya.miku.wishmaster.lib.org_json.JSONArray;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
 public abstract class AbstractInstant0chan extends AbstractKusabaModule {
+    private static final String TAG = "AbstractInstant0chan";
     public AbstractInstant0chan(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
     }
@@ -256,10 +261,10 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
     
     @Override
     protected List<? extends NameValuePair> getReportFormAllValues(DeletePostModel model) {
-        List<NameValuePair> pairs = new ArrayList<NameValuePair>();
+        List<NameValuePair> pairs = new ArrayList<>();
         pairs.add(new BasicNameValuePair("board", model.boardName));
         pairs.add(new BasicNameValuePair("post[]", model.postNumber));
-        pairs.add(new BasicNameValuePair("reportpost", "Отправить"));
+        pairs.add(new BasicNameValuePair("reportpost", "Пожаловаться"));
         return pairs;
     }
     
@@ -313,9 +318,22 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
         private static final Pattern PATTERN_EMBEDDED_THUMBNAIL =
                 Pattern.compile("<img class=\"embed-thumbnail\".+?src=\"(.+?)\"", Pattern.DOTALL);
         private static final DateFormat DATE_FORMAT;
+        private static final DateFormat DATE_FORMAT_OLD;
         static {
-            DATE_FORMAT = new SimpleDateFormat("yy/MM/dd(EEE)HH:mm", Locale.US);
+            DateFormatSymbols symbols = new DateFormatSymbols();
+            symbols.setShortMonths(new String[] {
+                    "Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"
+            });
+            DATE_FORMAT = new SimpleDateFormat("yyyy MMM dd HH:mm:ss", symbols) {
+                @Override
+                public Date parse(String date) throws ParseException {
+                    return super.parse(date.replaceAll("(?:\\D+)(\\d.+)", "$1"));
+                }
+            };
             DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT+3"));
+
+            DATE_FORMAT_OLD = new SimpleDateFormat("yy/MM/dd(EEE)HH:mm", Locale.US);
+            DATE_FORMAT_OLD.setTimeZone(TimeZone.getTimeZone("GMT+3"));
         }
         
         private int curNumberPos = 0;
@@ -367,8 +385,18 @@ public abstract class AbstractInstant0chan extends AbstractKusabaModule {
         
         @Override
         protected void parseDate(String date) {
-            date = date.replace("&#35;", "");
-            super.parseDate(date);
+            date = RegexUtils.removeHtmlTags(date).trim();
+            if (date.length() > 0) {
+                try {
+                    currentPost.timestamp = dateFormat.parse(date).getTime();
+                } catch (Exception e) {
+                    try {
+                        currentPost.timestamp = DATE_FORMAT_OLD.parse(date).getTime();
+                    } catch (Exception e2) {
+                        Logger.e(TAG, "cannot parse date; make sure you choose the right DateFormat for this chan", e);
+                    }
+                }
+            }
         }
         
         protected void parseEmbedded(String data) {
