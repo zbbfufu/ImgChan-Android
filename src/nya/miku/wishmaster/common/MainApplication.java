@@ -92,6 +92,7 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.allchan.AllchanModule",
             "nya.miku.wishmaster.chans.ponyach.PonyachModule",
             "nya.miku.wishmaster.chans.nullchan.NullchanccModule",
+            "nya.miku.wishmaster.chans.nullchan.Null_chanModule",
             "nya.miku.wishmaster.chans.nullchan.NullchanoneModule",
             "nya.miku.wishmaster.chans.dvachnet.DvachnetModule",
             "nya.miku.wishmaster.chans.mentachsu.MentachsuModule",
