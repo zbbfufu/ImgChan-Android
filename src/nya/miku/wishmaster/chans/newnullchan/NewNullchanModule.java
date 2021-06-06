@@ -74,9 +74,9 @@ import nya.miku.wishmaster.lib.org_json.JSONObject;
 
 public class NewNullchanModule extends CloudflareChanModule {
 
-    static final String CHAN_NAME = "0chan.pl";
-    private static final String DEFAULT_DOMAIN = "www.0chan.pl";
-    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, "0chan.pl" };
+    static final String CHAN_NAME = "ochan.ru";
+    private static final String DEFAULT_DOMAIN = "ochan.ru";
+    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN };
 
     private static final Pattern BOARD_PATTERN = Pattern.compile("(\\w+)");
     private static final Pattern THREADPAGE_PATTERN = Pattern.compile("(\\w+)/(\\d+)(?:#(\\d+))?");
@@ -144,7 +144,7 @@ public class NewNullchanModule extends CloudflareChanModule {
 
     @Override
     public String getDisplayingName() {
-        return "Øчан (0chan.pl)";
+        return "Øчан (ochan.ru)";
     }
 
     @Override
