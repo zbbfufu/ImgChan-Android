@@ -124,7 +124,7 @@ public class MakabaModule extends CloudflareChanModule {
     }
 
     public boolean canHashwall() {
-        return false;
+        return true;
     }
     
     @Override
