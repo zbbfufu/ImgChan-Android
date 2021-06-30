@@ -23,6 +23,7 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
+import android.text.TextUtils;
 
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
@@ -31,7 +32,8 @@ import nya.miku.wishmaster.api.models.BoardModel;
 
 public class Null_chanModule extends AbstractInstant0chan {
     private static final String CHAN_NAME = "2.0-chan.ru";
-    private static final String DOMAIN = "2.0-chan.ru";
+    private static final String DEFAULT_DOMAIN = "2.0-chan.ru";
+    private static final String PREF_KEY_DOMAIN = "PREF_KEY_DOMAIN";
 
     public Null_chanModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -66,7 +68,15 @@ public class Null_chanModule extends AbstractInstant0chan {
 
     @Override
     protected String getUsingDomain() {
-        return DOMAIN;
+        String domain = preferences.getString(getSharedKey(PREF_KEY_DOMAIN), DEFAULT_DOMAIN);
+        return TextUtils.isEmpty(domain) ? DEFAULT_DOMAIN : domain;
+    }
+
+    @Override
+    protected String[] getAllDomains() {
+        if (!getChanName().equals(CHAN_NAME) || getUsingDomain().equals(DEFAULT_DOMAIN))
+            return super.getAllDomains();
+        return new String[] { DEFAULT_DOMAIN, getUsingDomain() };
     }
 
     @Override
