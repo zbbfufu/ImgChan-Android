@@ -25,8 +25,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -111,10 +112,10 @@ public class MakabaModule extends CloudflareChanModule {
     private int captchaType;
 
     
-    /** карта досок из списка mobile.fcgi */
+    /** карта досок из списка boards.json (содержит только базовые параметры) */
     private Map<String, BoardModel> boardsMap = null;
-    /** дополнительная карта досок (для досок, которые отсутствуют в карте из mobile.fcgi) */
-    private Map<String, BoardModel> customBoardsMap = new HashMap<String, BoardModel>();
+    /** полноценная карта досок (содержит параметры посещенных досок) */
+    private Map<String, BoardModel> customBoardsMap = new HashMap<>();
     
     public MakabaModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -450,27 +451,31 @@ public class MakabaModule extends CloudflareChanModule {
     
     @Override
     public SimpleBoardModel[] getBoardsList(ProgressListener listener, CancellableTask task, SimpleBoardModel[] oldBoardsList) throws Exception {
-        List<SimpleBoardModel> list = new ArrayList<SimpleBoardModel>();
-        Map<String, BoardModel> newMap = new HashMap<String, BoardModel>();
-        
-        String url = domainUrl + "makaba/mobile.fcgi?task=get_boards";
-        
-        JSONObject mobileBoardsList = downloadJSONObject(url, (oldBoardsList != null && this.boardsMap != null), listener, task);
-        if (mobileBoardsList == null) return oldBoardsList;
-        
-        Iterator<String> it = mobileBoardsList.keys();
-        while (it.hasNext()) {
-            JSONArray category = mobileBoardsList.getJSONArray(it.next());
-            for (int i=0; i<category.length(); ++i) {
-                JSONObject currentBoard = category.getJSONObject(i);
-                BoardModel model = mapBoardModel(currentBoard, true, resources);
-                newMap.put(model.boardName, model);
-                list.add(new SimpleBoardModel(model));
-            }
+        List<SimpleBoardModel> list = new ArrayList<>();
+        Map<String, BoardModel> newMap = new HashMap<>();
+
+        String url = domainUrl + "boards.json";
+
+        JSONObject response = downloadJSONObject(url, (oldBoardsList != null && this.boardsMap != null), listener, task);
+        if (response == null) return oldBoardsList;
+
+        JSONArray boardsList = response.getJSONArray("boards");
+
+        for (int i = 0, len=boardsList.length(); i < len; i++) {
+            JSONObject currentBoard = boardsList.getJSONObject(i);
+            BoardModel model = mapBoardModel(currentBoard, true, resources);
+            newMap.put(model.boardName, model);
+            list.add(new SimpleBoardModel(model));
         }
-        
         this.boardsMap = newMap;
-        
+
+        Collections.sort(list, new Comparator<SimpleBoardModel>() {
+            @Override
+            public int compare(SimpleBoardModel o1, SimpleBoardModel o2) {
+                return o1.boardName.compareTo(o2.boardName);
+            }
+        });
+
         SimpleBoardModel[] result = new SimpleBoardModel[list.size()];
         boolean[] copied = new boolean[list.size()];
         int curIndex = 0;
@@ -487,30 +492,17 @@ public class MakabaModule extends CloudflareChanModule {
                 result[curIndex++] = list.get(i);
             }
         }
-        
+
         return result;
     }
 
     @Override
     public BoardModel getBoard(String shortName, ProgressListener listener, CancellableTask task) throws Exception {
         try {
-            if (this.boardsMap == null) {
-                try {
-                    getBoardsList(listener, task, null);
-                } catch (Exception e) {
-                    Logger.d(TAG, "cannot update boards list from mobile.fcgi");
-                }
-            }
-            if (this.boardsMap != null) {
-                if (this.boardsMap.containsKey(shortName)) {
-                    return this.boardsMap.get(shortName);
-                }
-            }
-            
             if (this.customBoardsMap.containsKey(shortName)) {
                 return this.customBoardsMap.get(shortName);
             }
-            
+
             String url = domainUrl + shortName + "/index.json";
             JSONObject json;
             try {
@@ -524,6 +516,18 @@ public class MakabaModule extends CloudflareChanModule {
             return result;
         } catch (Exception e) {
             Logger.e(TAG, e);
+            if (this.boardsMap == null) {
+                try {
+                    getBoardsList(listener, task, null);
+                } catch (Exception e2) {
+                    Logger.d(TAG, "cannot update boards list");
+                }
+            }
+            if (this.boardsMap != null) {
+                if (this.boardsMap.containsKey(shortName)) {
+                    return this.boardsMap.get(shortName);
+                }
+            }
             return defaultBoardModel(shortName, resources);
         }
     }
@@ -534,14 +538,14 @@ public class MakabaModule extends CloudflareChanModule {
         String url = domainUrl + boardName + "/" + (page == 0 ? "index" : Integer.toString(page)) + ".json";
         JSONObject index = downloadJSONObject(url, (oldList != null), listener, task);
         if (index == null) return oldList;
-        
+
         try { // кэширование модели BoardModel во время загрузки списка тредов
             BoardModel boardModel = mapBoardModel(index, false, resources);
             if (boardName.equals(boardModel.boardName)) {
                 this.customBoardsMap.put(boardModel.boardName, boardModel);
             }
         } catch (Exception e) { /* если не получилось сейчас замапить модель доски, и фиг с ней */ }
-        
+
         JSONArray threads = index.getJSONArray("threads");
         ThreadModel[] result = new ThreadModel[threads.length()];
         for (int i=0; i<threads.length(); ++i) {
@@ -595,7 +599,7 @@ public class MakabaModule extends CloudflareChanModule {
     public PostModel[] getPostsList(String boardName, String threadNumber, ProgressListener listener, CancellableTask task, PostModel[] oldList)
             throws Exception {
         boolean mobileAPI = preferences.getBoolean(getSharedKey(PREF_KEY_MOBILE_API), true);
-        if (!mobileAPI) {
+        if (!mobileAPI || oldList == null || oldList.length == 0) {
             String url = domainUrl + boardName + "/res/" + threadNumber + ".json";
             JSONObject object = downloadJSONObject(url, (oldList != null), listener, task);
             if (object == null) return oldList;
@@ -610,48 +614,29 @@ public class MakabaModule extends CloudflareChanModule {
             return posts;
         }
         try {
-            String lastPost = threadNumber;
-            if (oldList != null && oldList.length > 0) {
-                lastPost = oldList[oldList.length-1].number;
+            String lastPost = oldList[oldList.length-1].number;
+            String url = domainUrl + "api/mobile/v2/after/" + boardName + "/" + threadNumber + "/" + lastPost;
+            JSONObject object = downloadJSONObject(url, false, listener, task);
+            if (object.getInt("result") == 0) {
+                JSONObject makabaError = object.getJSONObject("error");
+                String reason = makabaError.getString("message");
+                throw new Exception(reason);
             }
-            String url = domainUrl + "makaba/mobile.fcgi?task=get_thread&board=" + boardName + "&thread=" + threadNumber + "&num=" + lastPost;
-            JSONArray newPostsArray = downloadJSONArray(url, (oldList != null), listener, task);
-            if (newPostsArray == null) return oldList;
+            JSONArray newPostsArray = object.getJSONArray("posts");
             PostModel[] newPosts = new PostModel[newPostsArray.length()];
             for (int i=0; i<newPostsArray.length(); ++i) {
                 newPosts[i] = mapPostModel(newPostsArray.getJSONObject(i), boardName);
             }
-            if (oldList == null || oldList.length == 0) {
-                return newPosts;
-            } else {
-                long lastNum = Long.parseLong(lastPost);
-                ArrayList<PostModel> list = new ArrayList<PostModel>(Arrays.asList(oldList));
-                for (int i=0; i<newPosts.length; ++i) {
-                    if (Long.parseLong(newPosts[i].number) > lastNum) {
-                        list.add(newPosts[i]);
-                    }
+            long lastNum = Long.parseLong(lastPost);
+            ArrayList<PostModel> list = new ArrayList<>(Arrays.asList(oldList));
+            for (PostModel newPost : newPosts) {
+                if (Long.parseLong(newPost.number) > lastNum) {
+                    list.add(newPost);
                 }
-                return list.toArray(new PostModel[list.size()]);
             }
+            return list.toArray(new PostModel[0]);
         } catch (JSONException e) {
-            String lastPost = threadNumber;
-            if (oldList != null && oldList.length > 0) {
-                lastPost = oldList[oldList.length-1].number;
-            }
-            String url = domainUrl + "makaba/mobile.fcgi?task=get_thread&board=" + boardName + "&thread=" + threadNumber + "&num=" + lastPost;
-            JSONObject makabaError = downloadJSONObject(url, (oldList != null), listener, task);
-            Integer code = makabaError.has("Code") ? makabaError.getInt("Code") : null;
-            if (code != null && code.equals(Integer.valueOf(-404))) code = 404;
-            String error = code != null ? code.toString() : null;
-            String reason = makabaError.has("Error") ? makabaError.getString("Error") : null;
-            if (reason != null) {
-                if (error != null) {
-                    error += ": " + reason;
-                } else {
-                    error = reason;
-                }
-            }
-            throw error == null ? e : new Exception(error);
+            throw new Exception("Mobile API error");
         }
     }
 
