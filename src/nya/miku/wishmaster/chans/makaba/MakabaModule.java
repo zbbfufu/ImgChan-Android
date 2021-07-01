@@ -421,9 +421,9 @@ public class MakabaModule extends CloudflareChanModule {
 
     private int getUsingCaptchaType() {
         String key = preferences.getString(getSharedKey(PREF_KEY_CAPTCHA_TYPE), CAPTCHA_TYPE_DEFAULT);
-        if (Arrays.asList(CAPTCHA_TYPES_KEYS).indexOf(key) == -1) key = CAPTCHA_TYPE_DEFAULT;
+        if (!Arrays.asList(CAPTCHA_TYPES_KEYS).contains(key)) key = CAPTCHA_TYPE_DEFAULT;
         switch (key) {
-            case "2chaptcha":
+            case "2chcaptcha":
                 return CAPTCHA_2CHAPTCHA;
             case "recaptcha":
                 return CAPTCHA_RECAPTCHA;
@@ -432,13 +432,13 @@ public class MakabaModule extends CloudflareChanModule {
             case "mailru":
                 return CAPTCHA_MAILRU;
         }
-        throw new IllegalStateException();
+        throw new IllegalStateException("wrong captcha settings");
     }
 
     private String getUsingCaptchaKey() {
         switch(getUsingCaptchaType()) {
             case CAPTCHA_2CHAPTCHA:
-                return "2chaptcha";
+                return "2chcaptcha";
             case CAPTCHA_RECAPTCHA:
             case CAPTCHA_RECAPTCHA_FALLBACK:
                 return "recaptcha";
@@ -690,16 +690,15 @@ public class MakabaModule extends CloudflareChanModule {
         
         String url = domainUrl + "api/captcha/" + captchaKey + "/id?board=" + boardName + (threadNumber != null ? "&thread=" + threadNumber : "");
         JSONObject response = downloadJSONObject(url, false, listener, task);
-        String id = response.optString("id");
         switch (response.optInt("result", -1)) {
             case 1: //Enabled
                 CaptchaModel captchaModel;
                 captchaMailRuId = null;
                 this.captchaType = captchaType;
-                this.captchaId = id;
+                captchaId = response.optString("id");
                 switch (captchaType) {
                     case CAPTCHA_2CHAPTCHA:
-                        url = domainUrl + "api/captcha/" + captchaKey + "/image/" + id;
+                        url = domainUrl + "api/captcha/" + captchaKey + "/show?id=" + captchaId;
                         captchaModel = downloadCaptcha(url, listener, task);
                         captchaModel.type = CaptchaModel.TYPE_NORMAL_DIGITS;
                         return captchaModel;
@@ -758,18 +757,6 @@ public class MakabaModule extends CloudflareChanModule {
     @Override
     public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
         String usercode_nocaptcha = preferences.getString(getSharedKey(PREF_KEY_NOCAPTCHA_COOKIE_VALUE), "");
-        if (captchaType == CAPTCHA_2CHAPTCHA && usercode_nocaptcha.equals("")) {
-            String checkCaptchaUrl = domainUrl + "api/captcha/2chaptcha/check/" + captchaId + "?value=" + model.captchaAnswer;
-            JSONObject captchaResult;
-            try {
-                captchaResult = downloadJSONObject(checkCaptchaUrl, false, listener, task);
-                if (captchaResult.getInt("result") == 0) {
-                    throw new Exception(captchaResult.getString("description"));
-                }
-            } catch (JSONException e) {
-                Logger.e(TAG, e);
-            }
-        }
 
         String url = domainUrl + "makaba/posting.fcgi?json=1";
         ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
@@ -786,9 +773,9 @@ public class MakabaModule extends CloudflareChanModule {
             switch (captchaType) {
                 case CAPTCHA_2CHAPTCHA:
                     postEntityBuilder.
-                        addString("captcha_type", "2chaptcha").
-                        addString("2chaptcha_id", captchaId).
-                        addString("2chaptcha_value", model.captchaAnswer);
+                        addString("captcha_type", "2chcaptcha").
+                        addString("2chcaptcha_id", captchaId).
+                        addString("2chcaptcha_value", model.captchaAnswer);
                     break;
                 case CAPTCHA_RECAPTCHA:
                 case CAPTCHA_RECAPTCHA_FALLBACK:
@@ -799,7 +786,7 @@ public class MakabaModule extends CloudflareChanModule {
                     }
                     postEntityBuilder.
                         addString("captcha_type", "recaptcha").
-                        addString("2chaptcha_id", captchaId).
+                        addString("2chcaptcha_id", captchaId).
                         addString("g-recaptcha-response", recaptcha2);
                     break;
                 case CAPTCHA_MAILRU:
@@ -807,7 +794,7 @@ public class MakabaModule extends CloudflareChanModule {
                         postEntityBuilder.addString("captcha_id", captchaMailRuId);
                         postEntityBuilder.addString("captcha_value", model.captchaAnswer);
                         postEntityBuilder.addString("captcha_type", "mailru");
-                        postEntityBuilder.addString("2chaptcha_id", captchaId);
+                        postEntityBuilder.addString("2chcaptcha_id", captchaId);
                     }
                     break;
             }
