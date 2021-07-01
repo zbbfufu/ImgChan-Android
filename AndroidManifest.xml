@@ -146,9 +146,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 
                 <data android:host="ochan.ru" />
                 <data android:host="www.ochan.ru" />
-                
-                <data android:host="0chan.cc" />
-                <data android:host="www.0chan.cc" />
 
                 <data android:host="metatorrkdagnx2njwvnzqeclsk3qbwabr6hori4vmivj25qy6s6gsad.onion" />
                 <data android:host="www.metatorrkdagnx2njwvnzqeclsk3qbwabr6hori4vmivj25qy6s6gsad.onion" />
@@ -190,16 +187,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="tbpchan.net" />
                 <data android:host="www.tbpchan.net" />
 
-                <data android:host="lolifox.club" />
-                <data android:host="www.lolifox.club" />
-                <data android:host="kdrlbdzp2kzhofos5nfzd7ohz6f6n4fuwrkhs7adgx3l7rvhlqna3cad.onion" />
-                <data android:host="www.kdrlbdzp2kzhofos5nfzd7ohz6f6n4fuwrkhs7adgx3l7rvhlqna3cad.onion" />
-
                 <data android:host="wizchan.org" />
                 <data android:host="www.wizchan.org" />
-
-                <data android:host="tumba.ch" />
-                <data android:host="www.tumba.ch" />
 
                 <data android:host="lampach.net" />
                 <data android:host="www.lampach.net" />
