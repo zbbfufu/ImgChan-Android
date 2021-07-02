@@ -18,11 +18,14 @@
 
 package nya.miku.wishmaster.chans.nullchan;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.preference.EditTextPreference;
 import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
+import android.text.InputType;
 import android.text.TextUtils;
 
 import nya.miku.wishmaster.R;
@@ -54,11 +57,22 @@ public class Null_chanModule extends AbstractInstant0chan {
         return ResourcesCompat.getDrawable(resources, R.drawable.favicon_0chan_1, null);
     }
 
+    private void addDomainPreference(PreferenceGroup group) {
+        Context context = group.getContext();
+        EditTextPreference domainPref = new EditTextPreference(context);
+        domainPref.setTitle(R.string.pref_domain);
+        domainPref.setDialogTitle(R.string.pref_domain);
+        domainPref.setKey(getSharedKey(PREF_KEY_DOMAIN));
+        domainPref.getEditText().setHint(DEFAULT_DOMAIN);
+        domainPref.getEditText().setSingleLine();
+        domainPref.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        group.addPreference(domainPref);
+    }
+
     @Override
     public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
-        addHttpsPreference(preferenceGroup, true);
-        addProxyPreferences(preferenceGroup);
-        addClearCookiesPreference(preferenceGroup);
+        addDomainPreference(preferenceGroup);
+        super.addPreferencesOnScreen(preferenceGroup);
     }
 
     @Override
