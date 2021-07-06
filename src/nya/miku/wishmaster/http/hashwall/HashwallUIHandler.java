@@ -21,16 +21,14 @@ package nya.miku.wishmaster.http.hashwall;
 import android.app.Activity;
 
 import cz.msebera.android.httpclient.cookie.Cookie;
-import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.HttpChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
-import nya.miku.wishmaster.http.client.ExtendedHttpClient;
 import nya.miku.wishmaster.http.interactive.InteractiveException;
 
 
-public class HashwallChallengeUIHandler {
-    private HashwallChallengeUIHandler() {}
+public class HashwallUIHandler {
+    private HashwallUIHandler() {}
         
     /**
      * Обработать исключение-запрос проверки Hashwall.
@@ -46,22 +44,25 @@ public class HashwallChallengeUIHandler {
     static void handleHashwall(final HashwallExceptionAntiDDOS e, final HttpChanModule chan, final Activity activity, final CancellableTask task,
                                 final InteractiveException.Callback callback) {
         if (task.isCancelled()) return;
-        String result = HashwallChallengeSolver.bruteForceHash(e.getChallenge(), e.getPassPhrase(), e.getUpperBound());
-        if (result == null && !task.isCancelled()) {
-            activity.runOnUiThread(new Runnable() {
+
+        if (!HashwallChecker.getInstance().isAvaibleAntiDDOS()) {
+            //если анти ддос проверка уже проводится другим потоком, тогда подождем завершения и объявим успех
+            //в случае, если проверка была по тому же ChanModule, проверка уже будет пройдена
+            //в противном случае на следующей попытке (закачки) сайт выкинет исключение снова
+            //и мы сможем обработать исключение для этого чана на свободном HashwallChecker
+            while (!HashwallChecker.getInstance().isAvaibleAntiDDOS()) Thread.yield();
+            if (!task.isCancelled()) activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    callback.onError(activity.getString(R.string.error_cloudflare_antiddos));
+                    callback.onSuccess();
                 }
             });
+            return;
         }
-        Cookie hwCookie = HashwallChallengeChecker.getInstance().checkSolution(e,
-                (ExtendedHttpClient) chan.getHttpClient(), task, result);
+        Cookie hwCookie = HashwallChecker.getInstance().checkAntiDDOS(e,
+                chan.getHttpClient(), task, activity);
         if (hwCookie != null) {
-            BasicClientCookie c = new BasicClientCookie(hwCookie.getName(), hwCookie.getValue());
-            c.setDomain(hwCookie.getDomain());
-            c.setComment("Hashwall");
-            chan.saveCookie(c);
+            chan.saveCookie(hwCookie);
             if (!task.isCancelled()) {
                 activity.runOnUiThread(new Runnable() {
                     @Override
