@@ -104,7 +104,20 @@ public class FourchanJsonMapper {
                 model.icons = new BadgeIconModel[] { icon };
             }
         }
-        model.op = false;
+        int passYear = object.optInt("since4pass", 0);
+        if (passYear > 0) {
+            BadgeIconModel icon = new BadgeIconModel();
+            icon.source = "s.4cdn.org/image/minileaf.gif";
+            icon.description = "Pass user since " + passYear;
+            if (model.icons != null) {
+                BadgeIconModel[] newIcons = new BadgeIconModel[model.icons.length + 1];
+                System.arraycopy(model.icons, 0, newIcons, 0, model.icons.length);
+                newIcons[model.icons.length] = icon;
+                model.icons = newIcons;
+            } else {
+                model.icons = new BadgeIconModel[] { icon };
+            }
+        }
         String id = object.optString("id", "");
         model.sage = id.equalsIgnoreCase("Heaven");
         if (!id.equals("")) model.name += (" ID:" + id);
