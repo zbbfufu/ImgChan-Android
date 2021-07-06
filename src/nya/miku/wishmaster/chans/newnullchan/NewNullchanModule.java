@@ -81,7 +81,6 @@ public class NewNullchanModule extends CloudflareChanModule {
     private static final Pattern BOARD_PATTERN = Pattern.compile("(\\w+)");
     private static final Pattern THREADPAGE_PATTERN = Pattern.compile("(\\w+)/(\\d+)(?:#(\\d+))?");
     private static final String CAPTCHA_BASE64_PREFIX = "data:image/png;base64,";
-    private static final String DISCLAIMER_COOKIE_NAME = "disclaimer";
     private static final String PREF_KEY_DOMAIN = "domain";
     
     private static String sessionId = null;
@@ -174,25 +173,6 @@ public class NewNullchanModule extends CloudflareChanModule {
 
     private boolean useHttps() {
         return useHttps(true);
-    }
-
-    @Override
-    protected void initHttpClient() {
-        super.initHttpClient();
-        setDisclaimerCookie();
-    }
-
-    private void setDisclaimerCookie() {
-        BasicClientCookie c = new BasicClientCookie(DISCLAIMER_COOKIE_NAME, "1");
-        c.setDomain(getUsingDomain());
-        c.setPath("/");
-        httpClient.getCookieStore().addCookie(c);
-    }
-
-    @Override
-    public void clearCookies() {
-        super.clearCookies();
-        setDisclaimerCookie();
     }
 
     private String getUsingDomain() {
