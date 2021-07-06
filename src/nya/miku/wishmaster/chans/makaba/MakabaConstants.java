@@ -95,5 +95,5 @@ public class MakabaConstants {
     public static final String USERCODE_COOKIE_NAME = "usercode_auth";
     public static final String USERCODE_NOCAPTCHA_COOKIE_NAME = "passcode_auth";
 
-    public static final Pattern PATTERN_HASHWALL_COOKIE = Pattern.compile("([A-Za-z0-9]+=[A-Ha-h0-9]{40});");
+    public static final Pattern PATTERN_HASHWALL_COOKIE = Pattern.compile("[A-Za-z0-9]+=[A-Ha-h0-9]{40,}");
 }

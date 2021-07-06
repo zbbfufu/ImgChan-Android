@@ -146,25 +146,22 @@ public class MakabaModule extends CloudflareChanModule {
     private static final HttpWrongResponseDetector hashwallDetector = new HttpWrongResponseDetector() {
         @Override
         public void check(final HttpResponseModel model) {
+            if (model.statusCode == 303 && model.locationHeader != null) {
+                throw new HttpWrongResponseException("Hashwall");
+            }
             for (Header header: model.headers) {
                 if (header.getName().equalsIgnoreCase("Set-Cookie")) {
                     Matcher m = PATTERN_HASHWALL_COOKIE.matcher(header.getValue());
-                    if (m.find()) {
-                        HttpWrongResponseException e = new HttpWrongResponseException("Hashwall" + m.group(1));
-                        e.setHtmlBytes(HttpStreamer.tryGetBytes(model.stream));
-                        throw e;
-                    }
+                    if (m.find()) throw new HttpWrongResponseException("Hashwall");
                 }
             }
         }
     };
 
     private void handleWrongResponse(String url, HttpWrongResponseException e) throws HttpWrongResponseException, InteractiveException {
-        if (e.getMessage().startsWith("Hashwall")) {
+        if ("Hashwall".equals(e.getMessage())) {
             String fixedUrl = fixRelativeUrl(url);
-            String html = e.getHtmlString();
-            String arguments = e.getMessage().substring(8);
-            InteractiveException hwe = HashwallExceptionAntiDDOS.newInstance(fixedUrl, arguments, html, getChanName());
+            InteractiveException hwe = HashwallExceptionAntiDDOS.newInstance(fixedUrl, getChanName());
             if (hwe != null) throw hwe;
             else throw new HttpWrongResponseException(resources.getString(R.string.error_cloudflare_antiddos));
         }
@@ -378,16 +375,7 @@ public class MakabaModule extends CloudflareChanModule {
         try {
             response = HttpStreamer.getInstance().getFromUrl(url, request, httpClient, null, task);
             if (response.statusCode != 301 && response.statusCode != 302) {
-                if (canHashwall() && response.statusCode == 303) {
-                    HttpResponseModel redirectResponse = null;
-                    try {
-                        redirectResponse = HttpStreamer.getInstance().getFromUrl(
-                                fixRelativeUrl(response.locationHeader), HttpRequestModel.DEFAULT_GET, httpClient, listener, task);
-                        checkForHashwall(url, redirectResponse);
-                    } finally {
-                        if (redirectResponse != null) redirectResponse.release();
-                    }
-                }
+                if (canHashwall()) checkForHashwall(url, response);
                 if (response.stream == null)
                     throw new HttpRequestException(new NullPointerException());
                 ByteArrayOutputStream output = new ByteArrayOutputStream(1024);
@@ -659,7 +647,7 @@ public class MakabaModule extends CloudflareChanModule {
                     addString("find", searchRequest).
                     addString("json", "1").
                     build();
-            HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntity).build();
+            HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntity).setNoRedirect(true).build();
             JSONObject response = null;
             try {
                 response = HttpStreamer.getInstance().getJSONObjectFromUrl(url, request, httpClient, listener, task, true,
@@ -871,7 +859,7 @@ public class MakabaModule extends CloudflareChanModule {
                 addString("thread", model.threadNumber).
                 addString("comment", ">>" + model.postNumber + " " + model.reportReason);
         
-        HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build()).build();
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build()).setNoRedirect(true).build();
         String response = null;
         try {
             response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, null, task, true,
