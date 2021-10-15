@@ -373,7 +373,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <string name="error_unknown">An unknown error occurred</string>
     <string name="error_deserialization">Error while deserialization</string>
-    <string name="error_cloudflare_antiddos">Unable to pass Cloudflare anti-DDOS checking</string>
+    <string name="error_antiddos">Unable to pass anti-DDOS checking</string>
     <string name="error_ssl">SSL/HTTPS Error</string>
     <string name="error_connection">Unable to connect to server</string>
     <string name="error_connection_timeout">Connection timed out</string>

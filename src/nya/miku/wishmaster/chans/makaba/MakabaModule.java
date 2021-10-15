@@ -163,7 +163,7 @@ public class MakabaModule extends CloudflareChanModule {
             String fixedUrl = fixRelativeUrl(url);
             InteractiveException hwe = HashwallExceptionAntiDDOS.newInstance(fixedUrl, getChanName());
             if (hwe != null) throw hwe;
-            else throw new HttpWrongResponseException(resources.getString(R.string.error_cloudflare_antiddos));
+            else throw new HttpWrongResponseException(resources.getString(R.string.error_antiddos));
         }
         throw e;
     }

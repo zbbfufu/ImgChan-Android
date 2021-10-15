@@ -7,11 +7,12 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.HttpChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
-import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.common.MainApplication;
 import nya.miku.wishmaster.http.interactive.MultipurposeException;
+import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
 
@@ -57,43 +58,43 @@ public class StormwallExceptionAntiDDOS extends MultipurposeException {
         }
     }
 
+    private static String encode(String s) {
+        Matcher matcher = Pattern.compile("([!'()*])").matcher(Uri.encode(s));
+        StringBuffer sb = new StringBuffer();
+        while (matcher.find())
+            matcher.appendReplacement(sb, "%" + Integer.toHexString((int) matcher.group(1).charAt(0)));
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    private void saveCookie(HttpChanModule chan, String name, String value) {
+        BasicClientCookie c = new BasicClientCookie(name, value);
+        c.setDomain(url.getHost());
+        chan.saveCookie(c);
+    }
+
     @Override
     public String handle(CancellableTask task) {
         try {
             HttpChanModule chan = (HttpChanModule) MainApplication.getInstance().getChanModule(chanName);
-            HttpClient http = chan.getHttpClient();
-            String answer = StormwallTokenGenerator.encrypt(input);
-            Logger.d(TAG, "Stormwall: input=" + input + "; answer=" + answer);
-            BasicClientCookie c;
-            c = new BasicClientCookie(STORMWALL_COOKIE_NAME1, answer);
-            c.setDomain(url.getHost());
-            chan.saveCookie(c);
-            Matcher matcher = Pattern.compile("([!'()*])")
-                    .matcher(Uri.encode(MainApplication.getInstance().settings.getUserAgentString()));
-            StringBuffer sb = new StringBuffer();
-            while (matcher.find()) {
-                matcher.appendReplacement(sb, "%" + Integer.toHexString((int) matcher.group(1).charAt(0)));
-            }
-            matcher.appendTail(sb);
-            c = new BasicClientCookie("_JUA__", sb.toString());
-            c.setDomain(url.getHost());
-            chan.saveCookie(c);
+            saveCookie(chan, STORMWALL_COOKIE_NAME1, StormwallTokenGenerator.encrypt(input));
+            saveCookie(chan, "_JUA__", encode(MainApplication.getInstance().settings.getUserAgentString()));
             LockSupport.parkNanos(1000000000);
-            HttpResponseModel model = HttpStreamer.getInstance().getFromUrl(url.toString(), null, http, null, null);
-            for (Header h: model.headers) {
-                Logger.d(TAG, "header: "+h.getName() + "=" + h.getValue());
-                if (h.getName().equalsIgnoreCase(STORMWALL_COOKIE_NAME2)) {
+            HttpClient http = chan.getHttpClient();
+            HttpRequestModel request = HttpRequestModel.builder().setGET().setNoRedirect(true).build();
+            HttpResponseModel response = HttpStreamer.getInstance().getFromUrl(url.toString(), request, http, null, null);
+            for (Header h: response.headers) {
+                if (h.getName().equalsIgnoreCase("Set-Cookie")) {
                     Matcher m = PATTERN_COOKIE_VALUE2.matcher(h.getValue());
                     if (m.find()) {
-                        c = new BasicClientCookie(STORMWALL_COOKIE_NAME2, m.group(1));
-                        c.setDomain(url.getHost());
-                        chan.saveCookie(c);
-                        break;
+                        saveCookie(chan, STORMWALL_COOKIE_NAME2, m.group(1));
+                        response.release();
+                        return null;
                     }
                 }
             }
-            model.release();
-            return null;
+            response.release();
+            return MainApplication.getInstance().resources.getString(R.string.error_antiddos);
         } catch (Exception e) {
             return e.getMessage();
         }

@@ -380,7 +380,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <string name="error_unknown">Неизвестная ошибка</string>
     <string name="error_deserialization">Ошибка десериализации</string>
-    <string name="error_cloudflare_antiddos">Не удалось выполнить анти-DDOS проверку Cloudflare</string>
+    <string name="error_antiddos">Не удалось выполнить анти-DDOS проверку</string>
     <string name="error_ssl">Ошибка SSL/HTTPS</string>
     <string name="error_connection">Ошибка при загрузке</string>
     <string name="error_connection_timeout">Время ожидания соединения истекло</string>
