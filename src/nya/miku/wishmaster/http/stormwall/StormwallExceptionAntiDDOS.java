@@ -1,6 +1,6 @@
 package nya.miku.wishmaster.http.stormwall;
 
-import android.app.Activity;
+import android.net.Uri;
 
 import java.net.URI;
 import java.util.concurrent.locks.LockSupport;
@@ -68,7 +68,14 @@ public class StormwallExceptionAntiDDOS extends MultipurposeException {
             c = new BasicClientCookie(STORMWALL_COOKIE_NAME1, answer);
             c.setDomain(url.getHost());
             chan.saveCookie(c);
-            c = new BasicClientCookie("_JUA__", MainApplication.getInstance().settings.getUserAgentString());
+            Matcher matcher = Pattern.compile("([!'()*])")
+                    .matcher(Uri.encode(MainApplication.getInstance().settings.getUserAgentString()));
+            StringBuffer sb = new StringBuffer();
+            while (matcher.find()) {
+                matcher.appendReplacement(sb, "%" + Integer.toHexString((int) matcher.group(1).charAt(0)));
+            }
+            matcher.appendTail(sb);
+            c = new BasicClientCookie("_JUA__", sb.toString());
             c.setDomain(url.getHost());
             chan.saveCookie(c);
             LockSupport.parkNanos(1000000000);

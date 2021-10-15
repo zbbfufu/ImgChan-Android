@@ -84,7 +84,7 @@ public abstract class StormwallChanModule extends AbstractChanModule {
                     try {
                         size = Integer.parseInt(header.getValue());
                     } catch (Exception e) {}
-                    if (size >= 1112 && size <= 1115) {
+                    if (size >= 1100 && size <= 1150) {
                         contentLength = true;
                     }
                 }
