@@ -92,7 +92,6 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.allchan.AllchanModule",
             "nya.miku.wishmaster.chans.ponyach.PonyachModule",
             "nya.miku.wishmaster.chans.nullchan.Null_chanModule",
-            "nya.miku.wishmaster.chans.nullchan.NullchanoneModule",
             "nya.miku.wishmaster.chans.dvachnet.DvachnetModule",
             "nya.miku.wishmaster.chans.mentachsu.MentachsuModule",
             "nya.miku.wishmaster.chans.synch.SynchModule",
@@ -118,9 +117,11 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.kakashinenpo.KakashiNenpoModule",
             "nya.miku.wishmaster.chans.uboachan.UboachanModule",
             "nya.miku.wishmaster.chans.cirno.CirnoArchiveModule",
-            "nya.miku.wishmaster.chans.monaba.HaibaneModule",
             "nya.miku.wishmaster.chans.cirno.Chan014Module",
             "nya.miku.wishmaster.chans.infinity.SmugModule",
+            "nya.miku.wishmaster.chans.chaosfm.ChaosFmModule",
+            "nya.miku.wishmaster.chans.newnullchan.FoxhoundModule",
+            "nya.miku.wishmaster.chans.newnullchan.NullchanLifeModule",
     };
     
     private static MainApplication instance;

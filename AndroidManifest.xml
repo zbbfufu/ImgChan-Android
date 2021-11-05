@@ -146,9 +146,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 
                 <data android:host="ochan.ru" />
                 <data android:host="www.ochan.ru" />
-
-                <data android:host="metatorrkdagnx2njwvnzqeclsk3qbwabr6hori4vmivj25qy6s6gsad.onion" />
-                <data android:host="www.metatorrkdagnx2njwvnzqeclsk3qbwabr6hori4vmivj25qy6s6gsad.onion" />
                 
                 <data android:host="2.0-chan.ru" />
                 
@@ -171,7 +168,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="2ch.hk" />
                 <data android:host="www.2ch.hk" />
                 <data android:host="2ch.pm" />
-                <data android:host="2-ch.so" />
+                <data android:host="2-ch.ru" />
                 <data android:host="2ch.re" />
                 <data android:host="2ch.tf" />
                 <data android:host="2ch.wf" />
@@ -224,15 +221,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="uboachan.net" />
                 <data android:host="www.uboachan.net" />
 
-                <data android:host="haibane.ru" />
-                <data android:host="haibanej33s4gfts.onion" />
-
                 <data android:host="smuglo.li" />
                 <data android:host="www.smuglo.li" />
                 <data android:host="smugloli.net" />
                 <data android:host="www.smugloli.net" />
                 <data android:host="bhm5koavobq353j54qichcvzr6uhtri6x4bjjy4xkybgvxkzuslzcqid.onion" />
                 <data android:host="www.bhm5koavobq353j54qichcvzr6uhtri6x4bjjy4xkybgvxkzuslzcqid.onion" />
+
+                <data android:host="chaos.fm" />
+
+                <data android:host="foxhound.cc" />
+                <data android:host="www.foxhound.cc" />
+                <data android:host="6k5boa4nveidv7cdpjminvak6y4dklvhbpsiuhndnzuxbfyraxtlftad.onion" />
+                <data android:host="www.6k5boa4nveidv7cdpjminvak6y4dklvhbpsiuhndnzuxbfyraxtlftad.onion" />
+
+                <data android:host="0chan.life" />
+                <data android:host="www.0chan.life" />
+                <data android:host="nullchanxrt7ecw7sifwei466qli3sku725tusz22w22opkfcxksinyd.onion" />
+                <data android:host="www.nullchanxrt7ecw7sifwei466qli3sku725tusz22w22opkfcxksinyd.onion" />
                 <!-- end of domains -->
             </intent-filter>
             <intent-filter>
