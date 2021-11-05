@@ -40,15 +40,15 @@ public class NewNullchanJsonMapper {
     private static final Pattern SPOILER_MARK_PATTERN = Pattern.compile("<mark>(.*?)</mark>", Pattern.DOTALL);
     private static final Pattern BLOCKQUOTE_MARK_PATTERN = Pattern.compile("<blockquote>(.*?)</blockquote>");
 
-    static BoardModel mapBoardModel(JSONObject object) {
-        BoardModel model = getDefaultBoardModel(object.getString("dir"));
+    static BoardModel mapBoardModel(String chanName, JSONObject object) {
+        BoardModel model = getDefaultBoardModel(chanName, object.getString("dir"));
         model.boardDescription = object.optString("name", model.boardName);
         return model;
     }
 
-    static BoardModel getDefaultBoardModel(String boardName) {
+    static BoardModel getDefaultBoardModel(String chanName, String boardName) {
         BoardModel model = new BoardModel();
-        model.chan = NewNullchanModule.CHAN_NAME;
+        model.chan = chanName;
         model.boardName = boardName;
         model.boardDescription = boardName;
         model.boardCategory = null;
@@ -80,7 +80,7 @@ public class NewNullchanJsonMapper {
     }
 
     static Map<String, List<String>> buildReplyMap(JSONArray posts, String opPost) {
-        HashMap<String, List<String>> result = new HashMap<String, List<String>>();
+        HashMap<String, List<String>> result = new HashMap<>();
         for (int i = 0; i < posts.length(); i++) {
             String postNumber = posts.getJSONObject(i).optString("id");
             if (opPost.equals(postNumber)) continue;
@@ -109,11 +109,17 @@ public class NewNullchanJsonMapper {
     static PostModel mapPostModel(JSONObject object, boolean useHttps, String board, NewNullchanModule chan, Map<String, List<String>> replyMap) {
         PostModel model = new PostModel();
         model.name = "";
+        JSONObject identity = object.optJSONObject("identity");
+        if (identity != null) {
+            model.name = identity.optString("name");
+            model.trip = identity.optString("address");
+        }
         model.number = object.optString("id");
         model.comment = object.optString("messageHtml");
+        model.sage = object.optBoolean("sage", false);
         model.op = object.optBoolean("isOpPost", false);
         model.deleted = object.optBoolean("isDeleted", false);
-        model.timestamp = object.optLong("date") * 1000;
+        model.timestamp = object.optLong("date") * 1000L;
         model.parentThread = object.optString("threadId");
         List<String> replies = null;
         if (replyMap != null) replies = replyMap.get(model.number);
@@ -190,7 +196,7 @@ public class NewNullchanJsonMapper {
                     }
             }
             attachment.type = AttachmentModel.TYPE_OTHER_NOTFILE;
-            attachment.originalName = embed.optString("title");
+            attachment.originalName = embed.optString("title", null);
             attachment.size = -1;
         } else {
             JSONObject original = images.getJSONObject("original");

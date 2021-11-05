@@ -83,27 +83,27 @@ public class NewNullchanModule extends CloudflareChanModule {
     private static final String CAPTCHA_BASE64_PREFIX = "data:image/png;base64,";
     private static final String PREF_KEY_DOMAIN = "domain";
     
-    private static String sessionId = null;
-    private static HashMap<String, String> captchas = null;
-    private static HashMap<String, String> imageTokens = null;
-    private static HashMap<String, String> threadOppost = null;
-    private static HashMap<String, String> boardCursors = null;
-    private Map<String, BoardModel> boardsMap = null;
+    protected String sessionId = null;
+    protected HashMap<String, String> captchas = null;
+    protected HashMap<String, String> imageTokens = null;
+    protected HashMap<String, String> threadOppost = null;
+    protected HashMap<String, String> boardCursors = null;
+    protected Map<String, BoardModel> boardsMap = null;
 
     public NewNullchanModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
-        if (captchas == null) captchas = new HashMap<String, String>();
-        if (imageTokens == null) imageTokens = new HashMap<String, String>();
-        if (threadOppost == null) threadOppost = new HashMap<String, String>();
-        if (boardCursors == null) boardCursors = new HashMap<String, String>();
+        if (captchas == null) captchas = new HashMap<>();
+        if (imageTokens == null) imageTokens = new HashMap<>();
+        if (threadOppost == null) threadOppost = new HashMap<>();
+        if (boardCursors == null) boardCursors = new HashMap<>();
     }
 
-    public static void putCaptcha(String captchaID, String answer) {
-        if (captchas == null) captchas = new HashMap<String, String>();
+    public void putCaptcha(String captchaID, String answer) {
+        if (captchas == null) captchas = new HashMap<>();
         captchas.put(captchaID, answer);
     }
 
-    private void updateSession(ProgressListener listener, CancellableTask task) throws Exception {
+    protected void updateSession(ProgressListener listener, CancellableTask task) throws Exception {
         String url = getUsingUrl() + "api/session";
         if (sessionId == null) {
             HttpResponseModel response = null;
@@ -171,33 +171,33 @@ public class NewNullchanModule extends CloudflareChanModule {
         addClearCookiesPreference(preferenceGroup);
     }
 
-    private boolean useHttps() {
+    protected boolean useHttps() {
         return useHttps(true);
     }
 
-    private String getUsingDomain() {
+    protected String getUsingDomain() {
         String domain = preferences.getString(getSharedKey(PREF_KEY_DOMAIN), DEFAULT_DOMAIN);
         return TextUtils.isEmpty(domain) ? DEFAULT_DOMAIN : domain;
     }
 
-    private String[] getAllDomains() {
+    protected String[] getAllDomains() {
         String domain = getUsingDomain();
         for (String d : DOMAINS) if (domain.equals(d)) return DOMAINS;
         String[] domains = new String[DOMAINS.length + 1];
-        for (int i=0; i<DOMAINS.length; ++i) domains[i] = DOMAINS[i];
+        System.arraycopy(DOMAINS, 0, domains, 0, DOMAINS.length);
         domains[DOMAINS.length] = domain;
         return domains;
     }
 
-    private String getUsingUrl() {
+    protected String getUsingUrl() {
         return (useHttps() ? "https://" : "http://") + getUsingDomain() + "/";
     }
 
     @Override
     public SimpleBoardModel[] getBoardsList(ProgressListener listener, CancellableTask task, SimpleBoardModel[] oldBoardsList) throws Exception {
         updateSession(listener, task);
-        List<SimpleBoardModel> list = new ArrayList<SimpleBoardModel>();
-        Map<String, BoardModel> newMap = new HashMap<String, BoardModel>();
+        List<SimpleBoardModel> list = new ArrayList<>();
+        Map<String, BoardModel> newMap = new HashMap<>();
 
         String url = getUsingUrl() + "api/board/list";
         JSONObject boardsJson = downloadJSONObject(url, (oldBoardsList != null && boardsMap != null), listener, task);
@@ -205,13 +205,14 @@ public class NewNullchanModule extends CloudflareChanModule {
         JSONArray boards = boardsJson.getJSONArray("boards");
 
         for (int i = 0, len = boards.length(); i < len; ++i) {
-            BoardModel model = NewNullchanJsonMapper.mapBoardModel(boards.getJSONObject(i));
+            BoardModel model = NewNullchanJsonMapper.mapBoardModel(getChanName(), boards.getJSONObject(i));
+            model.chan = getChanName();
             newMap.put(model.boardName, model);
             list.add(new SimpleBoardModel(model));
         }
 
         boardsMap = newMap;
-        return list.toArray(new SimpleBoardModel[list.size()]);
+        return list.toArray(new SimpleBoardModel[0]);
     }
 
     @Override
@@ -223,7 +224,7 @@ public class NewNullchanModule extends CloudflareChanModule {
             }
         }
         if (boardsMap != null && boardsMap.containsKey(shortName)) return boardsMap.get(shortName);
-        return NewNullchanJsonMapper.getDefaultBoardModel(shortName);
+        return NewNullchanJsonMapper.getDefaultBoardModel(getChanName(), shortName);
     }
 
     @Override
@@ -268,18 +269,17 @@ public class NewNullchanModule extends CloudflareChanModule {
         return result;
     }
 
-    private PostModel[] updateAttachmentLinks(PostModel[] mergedPosts, List<PostModel> newPosts) {
+    private void updateAttachmentLinks(PostModel[] mergedPosts, List<PostModel> newPosts) {
         int start = 0;
         for (PostModel post : newPosts) {
             for (int i = start; i < mergedPosts.length; i++) {
-                if (mergedPosts[i].number == post.number) {
+                if (mergedPosts[i].number.equals(post.number)) {
                     mergedPosts[i].attachments = post.attachments;
                     start = i + 1;
                     break;
                 }
             }
         }
-        return mergedPosts;
     }
 
     @Override
@@ -298,7 +298,7 @@ public class NewNullchanModule extends CloudflareChanModule {
         if (oldList != null) {
             List<PostModel> newPosts = Arrays.asList(result);
             result = ChanModels.mergePostsLists(Arrays.asList(oldList), Arrays.asList(result));
-            result = updateAttachmentLinks(result, newPosts);
+            updateAttachmentLinks(result, newPosts);
         }
         threadOppost.put(result[0].parentThread, result[0].number);
         return result;
@@ -322,7 +322,7 @@ public class NewNullchanModule extends CloudflareChanModule {
         return null;
     }
 
-    private String uploadFile(File attachment, ProgressListener listener, CancellableTask task) throws Exception {
+    protected String uploadFile(File attachment, ProgressListener listener, CancellableTask task) throws Exception {
         updateSession(listener, task);
         if (imageTokens.containsKey(attachment.getPath()))
             return imageTokens.get(attachment.getPath());
@@ -330,7 +330,7 @@ public class NewNullchanModule extends CloudflareChanModule {
         ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task);
         postEntityBuilder.addFile("file", attachment);
         HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build()).build();
-        String response = null;
+        String response;
         try {
             response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, null, task, true);
         } catch (HttpWrongStatusCodeException e) {
@@ -353,12 +353,12 @@ public class NewNullchanModule extends CloudflareChanModule {
         return token;
     }
 
-    private String validateCaptcha(String captchaID, ProgressListener listener, CancellableTask task) {
+    protected String validateCaptcha(String captchaID, ProgressListener listener, CancellableTask task) {
         if (captchaID == null) return null;
         String captchaAnswer = captchas.get(captchaID);
         if (captchaAnswer == null) return null;
         String url = getUsingUrl() + "api/captcha?captcha=" + captchaID + "&answer=" + Uri.encode(captchaAnswer) + "&session=" + sessionId;
-        JSONObject response = null;
+        JSONObject response;
         try {
             response = downloadJSONObject(url, false, listener, task);
         } catch (Exception e) {
@@ -370,9 +370,9 @@ public class NewNullchanModule extends CloudflareChanModule {
         return captchaID;
     }
 
-    private JSONObject getPost(String postId, ProgressListener listener, CancellableTask task) {
+    protected JSONObject getPost(String postId, ProgressListener listener, CancellableTask task) {
         String url = getUsingUrl() + "api/post?post=" + postId + "&session=" + sessionId;
-        JSONObject response = null;
+        JSONObject response;
         try {
             response = downloadJSONObject(url, false, listener, task);
         } catch (Exception e) {
@@ -381,7 +381,7 @@ public class NewNullchanModule extends CloudflareChanModule {
         return response.optJSONObject("post");
     }
 
-    private String getOpPostID(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
+    protected String getOpPostID(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
         String parent = threadOppost.get(model.threadNumber);
         if (parent == null) {
             PostModel[] parentThread = getPostsList(model.boardName, model.threadNumber, listener, task, null);
@@ -417,7 +417,7 @@ public class NewNullchanModule extends CloudflareChanModule {
             if (matcher.find()) {
                 parent = matcher.group(1);
                 JSONObject post = getPost(parent, listener, task);
-                if (post.optString("threadId").equals(model.threadNumber)) {
+                if (post != null && model.threadNumber.equals(post.optString("threadId"))) {
                     comment = matcher.replaceFirst("");
                 } else {
                     parent = getOpPostID(model, listener, task);
@@ -551,7 +551,7 @@ public class NewNullchanModule extends CloudflareChanModule {
         path = path.toLowerCase(Locale.US);
 
         UrlPageModel model = new UrlPageModel();
-        model.chanName = CHAN_NAME;
+        model.chanName = getChanName();
         try {
             if (path.length() == 0 || path.equals("/") || path.equals("index.html")) {
                 model.type = UrlPageModel.TYPE_INDEXPAGE;
@@ -591,7 +591,7 @@ public class NewNullchanModule extends CloudflareChanModule {
         return model;
     }
 
-    class ExtendedCaptchaModel extends CaptchaModel {
+    static class ExtendedCaptchaModel extends CaptchaModel {
         public String captchaID = "";
     }
 
