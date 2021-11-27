@@ -78,11 +78,9 @@ public class InfinityModule extends AbstractVichanModule {
     private static final String CHAN_NAME = "8chan";
     private static final String DEFAULT_DOMAIN = "8kun.top";
     private static final String SYSTEM_DOMAIN = "sys.8kun.top";
-    private static final String MEDIA_DOMAIN = "media.8kun.top";
-    //private static final String MEDIA2_DOMAIN = "media2.8kun.top";
+    private static final String MEDIA_DOMAIN = "media.128ducks.com";
     private static final String ONION_DOMAIN = "8kun.top.qulatc2tl34vwefcc2pbsxi7vennhbew57jbl2d3pbhvjhozkoizdoqd.onion";
     private static final String ONION_SYSTEM_DOMAIN = "sys.8kun.top.qulatc2tl34vwefcc2pbsxi7vennhbew57jbl2d3pbhvjhozkoizdoqd.onion";
-    private static final String ONION_MEDIA_DOMAIN = "media.8kun.top.qulatc2tl34vwefcc2pbsxi7vennhbew57jbl2d3pbhvjhozkoizdoqd.onion";
     private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN, "jthnx5wyvjvzsxtu.onion", "8ch.net", "8kun.net" };
     
     private static final String[] ATTACHMENT_FORMATS = new String[] { "jpg", "jpeg", "gif", "png", "webm", "mp4", "swf", "pdf" };
@@ -178,9 +176,7 @@ public class InfinityModule extends AbstractVichanModule {
 
     private String getMediaUrl(String urlPath) {
         if (urlPath == null) return null;
-        String mediaDomain = preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) ?
-                ONION_MEDIA_DOMAIN : MEDIA_DOMAIN;
-        return fixRelativeUrl(urlPath).replaceFirst(getUsingDomain(), mediaDomain);
+        return fixRelativeUrl(urlPath).replaceFirst(getUsingDomain(), MEDIA_DOMAIN);
     }
     
     @Override
@@ -316,31 +312,7 @@ public class InfinityModule extends AbstractVichanModule {
         }
         return null;
     }
-/*
-    @Override
-    public void downloadFile(String url, OutputStream out, ProgressListener listener, CancellableTask task) throws Exception {
-        String fixedUrl = fixRelativeUrl(url);
-        try {
-            super.downloadFile(fixedUrl, out, listener, task);
-        } catch (HttpWrongStatusCodeException e) {
-            if (e.getStatusCode() == 404 && (url.contains("/file_store/") || url.contains("/src/"))) {
-                switch (Uri.parse(fixedUrl).getHost()) {
-                    case MEDIA_DOMAIN:
-                        downloadFile(fixedUrl.replaceFirst(MEDIA_DOMAIN, MEDIA2_DOMAIN), out, listener, task);
-                        break;
-                    case MEDIA2_DOMAIN:
-                        downloadFile(fixedUrl.replaceFirst(MEDIA2_DOMAIN, DEFAULT_DOMAIN), out, listener, task);
-                        break;
-                    default:
-                        throw e;
-                }
-            } else {
-                throw e;
-            }
-        }
-    }
-*/
-    
+
     @Override
     public ThreadModel[] getThreadsList(String boardName, int page, ProgressListener listener, CancellableTask task, ThreadModel[] oldList)
             throws Exception {
