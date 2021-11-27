@@ -36,10 +36,10 @@ public class MakabaConstants {
 
     /** все зеркала харкача*/
     public static final List<String> DOMAINS_LIST = Arrays.asList(
-            "2ch.hk", "2ch.pm", "2-ch.so", "2ch.re", "2ch.tf", "2ch.wf", "2ch.yt");
+            "2ch.hk", "2ch.life", "2ch.pm", "2-ch.ru");
 
     /** подсказка в меню настроек */
-    public static final String DOMAINS_HINT = "2ch.hk, 2ch.pm, 2ch.re, 2ch.tf, 2ch.wf, 2ch.yt, 2-ch.ru";
+    public static final String DOMAINS_HINT = "2ch.hk, 2ch.life";
 
     /** доски без шок контента (SFW) */
     public static final List<String> SFW_BOARDS = Arrays.asList(

@@ -118,11 +118,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 
                 <data android:host="kohlchan.net" />
                 <data android:host="kohlkanal.net" />
-                <data android:host="kohlchanagb7ih5g.onion" />
+                <data android:host="kohlchan.top" />
                 <data android:host="kohlchanvwpfx6hthoti5fvqsjxgcwm3tmddvpduph5fqntv5affzfqd.onion" />
                 <data android:host="www.kohlchan.net" />
                 <data android:host="www.kohlkanal.net" />
-                <data android:host="www.kohlchanagb7ih5g.onion" />
+                <data android:host="www.kohlchan.top" />
                 <data android:host="www.kohlchanvwpfx6hthoti5fvqsjxgcwm3tmddvpduph5fqntv5affzfqd.onion" />
                 
                 <data android:host="ernstchan.xyz" />
@@ -131,7 +131,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="7chan.org" />
                 
                 <data android:host="pl.vichan.net" />
-                <data android:host="vichan6jaktoao2o.onion" />
+                <data android:host="2ms63yt7ax2bvbkaren5xp7hsuu4httz554bk6wzwwh6zzfxtchqakqd.onion" />
                 
                 <data android:host="sushigirl.us" />
                 <data android:host="www.sushigirl.us" />
@@ -167,19 +167,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 
                 <data android:host="2ch.hk" />
                 <data android:host="www.2ch.hk" />
-                <data android:host="2ch.pm" />
+                <data android:host="2ch.life" />
                 <data android:host="2-ch.ru" />
-                <data android:host="2ch.re" />
-                <data android:host="2ch.tf" />
-                <data android:host="2ch.wf" />
-                <data android:host="2ch.yt" />
                 
                 <data android:host="arhivach.net" />
                 <data android:host="www.arhivach.net" />
                 <data android:host="arhivach.ng" />
                 <data android:host="www.arhivach.ng" />
-                <data android:host="arhivachovtj2jrp.onion" />
-                <data android:host="www.arhivachovtj2jrp.onion" />
+                <data android:host="arhivachqqqvwqcotafhk4ks2he56seuwcshpayrm5myeq45vlff44yd.onion" />
+                <data android:host="www.arhivachqqqvwqcotafhk4ks2he56seuwcshpayrm5myeq45vlff44yd.onion" />
                 
                 <data android:host="tbpchan.net" />
                 <data android:host="www.tbpchan.net" />
@@ -206,6 +202,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="www.endchan5doxvprs5.onion" />
                 <data android:host="s6424n4x4bsmqs27.onion" />
                 <data android:host="www.s6424n4x4bsmqs27.onion" />
+                <data android:host="enxx3byspwsdo446jujc52ucy2pf5urdbhqw3kbsfhlfjwmbpj5smdad.onion" />
+                <data android:host="www.enxx3byspwsdo446jujc52ucy2pf5urdbhqw3kbsfhlfjwmbpj5smdad.onion" />
 
                 <data android:host="2--ch.ru" />
                 <data android:host="www.2--ch.ru" />

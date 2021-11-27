@@ -40,8 +40,8 @@ import nya.miku.wishmaster.api.util.LazyPreferences;
 public class VichanModule extends AbstractVichanModule {
     private static final String CHAN_NAME = "pl.vichan.net";
     private static final String DEFAULT_DOMAIN = "pl.vichan.net";
-    private static final String ONION_DOMAIN = "vichan6jaktoao2o.onion";
-    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN, "vichan.org" };
+    private static final String ONION_DOMAIN = "2ms63yt7ax2bvbkaren5xp7hsuu4httz554bk6wzwwh6zzfxtchqakqd.onion";
+    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN, "vichan.org", "vichan6jaktoao2o.onion" };
     private static final SimpleBoardModel[] BOARDS = new SimpleBoardModel[] {
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "3", "BEBIN", "Ogólne", true),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "b", "Radom", "Ogólne", true),
