@@ -363,7 +363,8 @@ public class HtmlBuilder implements Closeable {
                 } catch (Exception e) { /* ignore */ }
             }
             
-            m.appendReplacement(sb, url.equals(found) ? group : (group.substring(0, oldPos) + url + group.substring(oldPos + oldLen)));
+            m.appendReplacement(sb, Matcher.quoteReplacement(url.equals(found) ? group
+                    : (group.substring(0, oldPos) + url + group.substring(oldPos + oldLen))));
         } while (m.find());
         m.appendTail(sb);
         return sb.toString();
