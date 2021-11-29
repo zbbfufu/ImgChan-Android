@@ -392,7 +392,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         model.isSticky = object.optBoolean("pinned", false);
         model.isClosed = object.optBoolean("locked", false);
         model.isCyclical = object.optBoolean("cyclic", false);
-        model.postsCount = object.optInt("ommitedPosts");
+        model.postsCount = object.optInt("omittedPosts");
         return model;
     }
 
