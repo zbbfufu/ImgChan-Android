@@ -306,10 +306,12 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
             curThread.posts[0] = mapPostModel(thread);
             curThread.threadNumber = curThread.posts[0].number;
             curThread.posts[0].parentThread = curThread.threadNumber;
-            for (int j = 0, plen = posts.length(); j < plen; ++j) {
+            int plen = posts.length();
+            for (int j = 0; j < plen; ++j) {
                 curThread.posts[j + 1] = mapPostModel(posts.getJSONObject(j));
                 curThread.posts[j + 1].parentThread = curThread.threadNumber;
             }
+            if (curThread.postsCount == 0 && plen > 0) curThread.postsCount = plen + 1;
             result[i] = curThread;
         }
         return result;
