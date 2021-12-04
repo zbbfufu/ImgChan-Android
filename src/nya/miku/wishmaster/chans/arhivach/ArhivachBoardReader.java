@@ -114,12 +114,11 @@ public class ArhivachBoardReader implements Closeable {
     
     private final Reader _in;
     
-    private StringBuilder readBuffer = new StringBuilder();
+    private final StringBuilder readBuffer = new StringBuilder();
     private List<ThreadModel> threads;
     private ThreadModel currentThread;
     private List<PostModel> postsBuf;
     private PostModel currentPost;
-    private StringBuilder omittedDigitsBuffer = new StringBuilder();
     private List<AttachmentModel> currentAttachments;
     
     
@@ -133,13 +132,13 @@ public class ArhivachBoardReader implements Closeable {
     
     
     public ThreadModel[] readPage() throws IOException {
-        threads = new ArrayList<ThreadModel>();
+        threads = new ArrayList<>();
         initThreadModel();
         initPostModel();
         skipUntilSequence(DATA_START);
         readData();
 
-        return threads.toArray(new ThreadModel[threads.size()]);
+        return threads.toArray(new ThreadModel[0]);
     }
     
     private void readData() throws IOException {
@@ -168,20 +167,19 @@ public class ArhivachBoardReader implements Closeable {
     private void initThreadModel() {
         currentThread = new ThreadModel();
         currentThread.postsCount = 0;
-        currentThread.attachmentsCount = 0;
-        postsBuf = new ArrayList<PostModel>();
+        postsBuf = new ArrayList<>();
     }
     
     private void initPostModel() {
         currentPost = new PostModel();
         currentPost.number = "unknown";
         currentPost.trip = "";
-        currentAttachments = new ArrayList<AttachmentModel>();
+        currentAttachments = new ArrayList<>();
     }
     
     private void finalizeThread() {
         if (postsBuf.size() > 0) {
-            currentThread.posts = postsBuf.toArray(new PostModel[postsBuf.size()]);
+            currentThread.posts = postsBuf.toArray(new PostModel[0]);
             currentThread.threadNumber = currentThread.posts[0].number;
             for (PostModel post : currentThread.posts) post.parentThread = currentThread.threadNumber;
             threads.add(currentThread);
@@ -191,8 +189,7 @@ public class ArhivachBoardReader implements Closeable {
     
     private void finalizePost() {
         if (currentPost.number != null && currentPost.number.length() > 0) {
-            ++currentThread.postsCount;
-            currentPost.attachments = currentAttachments.toArray(new AttachmentModel[currentAttachments.size()]);
+            currentPost.attachments = currentAttachments.toArray(new AttachmentModel[0]);
             if (currentPost.name == null) currentPost.name = "";
             if (currentPost.subject == null) currentPost.subject = "";
             if (currentPost.comment == null) currentPost.comment = "";
@@ -239,11 +236,11 @@ public class ArhivachBoardReader implements Closeable {
     
     protected void parseTags(String s) {
         Matcher matcher = Pattern.compile("<a[^>]*>([^<]*)</a>",Pattern.MULTILINE).matcher(s);
-        String tags="";
+        StringBuilder tagsBuilder = new StringBuilder();
         while (matcher.find()) {
-            tags+="["+matcher.group(1)+"]";
+            tagsBuilder.append('[').append(matcher.group(1)).append(']');
         }
-        currentPost.name=tags;
+        currentPost.name = tagsBuilder.toString();
     }
     
     protected void readPost() throws IOException {
@@ -266,29 +263,22 @@ public class ArhivachBoardReader implements Closeable {
             currentPost.comment = commentData;
         }
     }
-    
-    private void parseOmittedString(String omitted) {
-        int postsOmitted = -1;
-        int filesOmitted = -1;
-        Matcher matcher = Pattern.compile("(\\d+)").matcher(omitted);
-        String Omitted = "";
-        if (matcher.find()) Omitted = matcher.group(0);
 
-        try {
-            int parsedValue = Integer.parseInt(Omitted);
-            omittedDigitsBuffer.setLength(0);
-            postsOmitted = parsedValue - 1;
-        } catch (NumberFormatException e) {}
-        if (postsOmitted > 0) currentThread.postsCount += postsOmitted;
-        if (filesOmitted > 0) currentThread.attachmentsCount += filesOmitted;
+    private void parseOmittedString(String omitted) {
+        Matcher matcher = Pattern.compile("(\\d+)").matcher(omitted);
+        if (matcher.find()) {
+            try {
+                currentThread.postsCount = Integer.parseInt(matcher.group(1));
+            } catch (NumberFormatException e) { /* ignored */ }
+        }
     }
-    
+
     private void parseAttachment() throws IOException {
         skipUntilSequence(FILTERS_OPEN[FILTER_ATTACHMENT_ORIGINAL]);
         String attachment = readUntilSequence(FILTERS_CLOSE[FILTER_ATTACHMENT_ORIGINAL]);
         
-        String thumbnail="";
-        String original="";
+        String thumbnail = "";
+        String original = "";
         
         Matcher matcher = URL_PATTERN.matcher(attachment);
         if (matcher.find()) original = matcher.group(1);
@@ -297,23 +287,37 @@ public class ArhivachBoardReader implements Closeable {
         matcher = URL_PATTERN.matcher(attachment);
         if (matcher.find()) thumbnail = matcher.group(1);
         
-        if ((original.length()>0)) {
+        if (original.length() > 0) {
             AttachmentModel model = new AttachmentModel();
-            model.type = AttachmentModel.TYPE_OTHER_FILE;
             model.size = -1;
             model.width = -1;
             model.height = -1;
             model.path = original;
-            if (thumbnail.length()>0)
+            if (thumbnail.length() > 0)
                 model.thumbnail = thumbnail;
             else
                 model.thumbnail = original;
             String ext = model.path.substring(model.path.lastIndexOf('.') + 1).toLowerCase(Locale.US);
-            if (ext.equals("png") || ext.equals("jpg") || ext.equals("jpeg")) model.type = AttachmentModel.TYPE_IMAGE_STATIC;
-            else if (ext.equals("gif")) model.type = AttachmentModel.TYPE_IMAGE_GIF;
-            else if (ext.equals("webm") || ext.equals("mp4")) model.type = AttachmentModel.TYPE_VIDEO;
-            else if (ext.equals("mp3") || ext.equals("ogg")) model.type = AttachmentModel.TYPE_AUDIO;
-            ++currentThread.attachmentsCount;
+            switch (ext) {
+                case "png":
+                case "jpg":
+                case "jpeg":
+                    model.type = AttachmentModel.TYPE_IMAGE_STATIC;
+                    break;
+                case "gif":
+                    model.type = AttachmentModel.TYPE_IMAGE_GIF;
+                    break;
+                case "webm":
+                case "mp4":
+                    model.type = AttachmentModel.TYPE_VIDEO;
+                    break;
+                case "mp3":
+                case "ogg":
+                    model.type = AttachmentModel.TYPE_AUDIO;
+                    break;
+                default:
+                    model.type = AttachmentModel.TYPE_OTHER_FILE;
+            }
             currentAttachments.add(model);
         }
     }
