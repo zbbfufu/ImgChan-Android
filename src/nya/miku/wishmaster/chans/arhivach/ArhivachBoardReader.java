@@ -51,8 +51,8 @@ public class ArhivachBoardReader implements Closeable {
     private static final TimeZone TIME_ZONE = TimeZone.getTimeZone("GMT");
     
     private static final Pattern URL_PATTERN =
-            Pattern.compile("((https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])");
-    
+            Pattern.compile("((?:https?:)?/[-a-zA-Z0-9+&@#/%?=~_|!:,.;]+[-a-zA-Z0-9+&@#/%=~_|])");
+
     private static final char[] DATA_START = "id=\"thread_row_".toCharArray();
     
     private static final int FILTER_THREAD_END = 0;

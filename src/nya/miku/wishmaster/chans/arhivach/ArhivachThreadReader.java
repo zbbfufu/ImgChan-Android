@@ -62,7 +62,7 @@ public class ArhivachThreadReader  implements Closeable {
     }
 
     private static final Pattern URL_PATTERN =
-            Pattern.compile("((https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])");
+            Pattern.compile("((?:https?:)?/[-a-zA-Z0-9+&@#/%?=~_|!:,.;]+[-a-zA-Z0-9+&@#/%=~_|])");
     private static final Pattern ATTACHMENT_PX_SIZE_PATTERN = Pattern.compile("(\\d+)\\s*[x×х]\\s*(\\d+)"); // \u0078 \u00D7 \u0445
     private static final Pattern ATTACHMENT_SIZE_PATTERN =
             Pattern.compile("([\\d.]+)\\s*([кkмm])?[бb]", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
