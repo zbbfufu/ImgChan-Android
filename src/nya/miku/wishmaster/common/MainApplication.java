@@ -120,7 +120,6 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.cirno.Chan014Module",
             "nya.miku.wishmaster.chans.infinity.SmugModule",
             "nya.miku.wishmaster.chans.chaosfm.ChaosFmModule",
-            "nya.miku.wishmaster.chans.newnullchan.FoxhoundModule",
             "nya.miku.wishmaster.chans.newnullchan.NullchanLifeModule",
     };
     
