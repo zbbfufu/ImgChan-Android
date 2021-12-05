@@ -74,16 +74,12 @@ public class AllchanModule extends CloudflareChanModule {
     private static final String CHAN_NAME = "allchan.su";
     private static final String DOMAIN = "allchan.su";
     
-    private static final String[] CAPTCHA_TYPES = new String[] {
-            "Node captcha", "Google Recaptcha 2", "Google Recaptcha 2 (fallback)", "Google Recaptcha" };
-    private static final String[] CAPTCHA_TYPES_KEYS = new String[] {
-            "node-captcha", "recaptcha", "recaptcha-fallback", "recaptchav1" };
+    private static final String[] CAPTCHA_TYPES = new String[] { "Node captcha", "Google Recaptcha 2" };
+    private static final String[] CAPTCHA_TYPES_KEYS = new String[] { "node-captcha", "recaptcha" };
     private static final String CAPTCHA_TYPE_DEFAULT = "node-captcha";
     
     private static final int CAPTCHA_NODE = 1;
     private static final int CAPTCHA_RECAPTCHA = 2;
-    private static final int CAPTCHA_RECAPTCHA_FALLBACK = 3;
-    private static final int CAPTCHA_RECAPTCHA_V1 = 4;
     
     private static final String RECAPTCHA_PUBLIC_KEY = "6LfKRgcTAAAAAIe-bmV_pCbMzvKvBZGbZNRsfmED";
     
@@ -106,7 +102,6 @@ public class AllchanModule extends CloudflareChanModule {
     
     private int captchaType;
     private String nodeCaptchaKey;
-    private Recaptcha recaptchaV1;
     
     public AllchanModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -158,27 +153,6 @@ public class AllchanModule extends CloudflareChanModule {
         addHttpsPreference(preferenceGroup, true);
         addProxyPreferences(preferenceGroup);
         addClearCookiesPreference(preferenceGroup);
-        
-        final CheckBoxPreference proxyPreference = (CheckBoxPreference) preferenceGroup.findPreference(getSharedKey(PREF_KEY_USE_PROXY));
-        proxyPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {            
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                if (proxyPreference.isChecked() && captchaPreference.getValue().equals("recaptcha")) {
-                    captchaPreference.setValue("recaptcha-fallback");
-                }
-                return false;
-            }
-        });
-        captchaPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-                if (proxyPreference.isChecked() && newValue.equals("recaptcha")) {
-                    captchaPreference.setValue("recaptcha-fallback");
-                    return false;
-                }
-                return true;
-            }
-        });
     }
     
     private boolean loadOnlyNewPosts() {
@@ -193,10 +167,6 @@ public class AllchanModule extends CloudflareChanModule {
                 return CAPTCHA_NODE;
             case "recaptcha":
                 return CAPTCHA_RECAPTCHA;
-            case "recaptcha-fallback":
-                return CAPTCHA_RECAPTCHA_FALLBACK;
-            case "recaptchav1":
-                return CAPTCHA_RECAPTCHA_V1;
         }
         throw new IllegalStateException();
     }
@@ -499,23 +469,14 @@ public class AllchanModule extends CloudflareChanModule {
                 String captchaUrl = getUsingUrl() + "node-captcha/" + json.getString("fileName");
                 captchaModel = downloadCaptcha(captchaUrl, listener, task);
                 captchaModel.type = CaptchaModel.TYPE_NORMAL_DIGITS;
+                captchaModel.adaptable = false;
                 this.captchaType = captchaType;
                 this.nodeCaptchaKey = challenge;
                 return captchaModel;
             case CAPTCHA_RECAPTCHA:
-            case CAPTCHA_RECAPTCHA_FALLBACK:
                 this.captchaType = captchaType;
                 this.nodeCaptchaKey = null;
-                this.recaptchaV1 = null;
                 return null;
-            case CAPTCHA_RECAPTCHA_V1:
-                this.captchaType = captchaType;
-                this.nodeCaptchaKey = null;
-                this.recaptchaV1 = Recaptcha.obtain(RECAPTCHA_PUBLIC_KEY, task, httpClient, useHttps() ? "https" : "http");
-                captchaModel = new CaptchaModel();
-                captchaModel.type = CaptchaModel.TYPE_NORMAL;
-                captchaModel.bitmap = recaptchaV1.bitmap;
-                return captchaModel;
             default:
                 throw new IllegalStateException();
         }
@@ -534,20 +495,12 @@ public class AllchanModule extends CloudflareChanModule {
                 postEntityBuilder.addString("nodeCaptchaChallenge", nodeCaptchaKey).addString("nodeCaptchaResponse", model.captchaAnswer);
                 break;
             case CAPTCHA_RECAPTCHA:
-            case CAPTCHA_RECAPTCHA_FALLBACK:
                 postEntityBuilder.addString("captchaEngine", "google-recaptcha");
                 String response = Recaptcha2solved.pop(RECAPTCHA_PUBLIC_KEY);
                 if (response == null) {
-                    boolean fallback = getUsingCaptchaType() == CAPTCHA_RECAPTCHA_FALLBACK;
-                    throw Recaptcha2.obtain(getUsingUrl(), RECAPTCHA_PUBLIC_KEY, null, CHAN_NAME, fallback);
+                    throw Recaptcha2.obtain(getUsingUrl(), RECAPTCHA_PUBLIC_KEY, null, CHAN_NAME, false);
                 }
                 postEntityBuilder.addString("g-recaptcha-response", response);
-                break;
-            case CAPTCHA_RECAPTCHA_V1:
-                postEntityBuilder.
-                        addString("captchaEngine", "google-recaptcha-v1").
-                        addString("recaptcha_challenge_field", recaptchaV1.challenge).
-                        addString("recaptcha_response_field", model.captchaAnswer);
                 break;
         }
         postEntityBuilder.
