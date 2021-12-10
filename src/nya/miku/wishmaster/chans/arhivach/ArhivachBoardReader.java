@@ -235,10 +235,12 @@ public class ArhivachBoardReader implements Closeable {
     }
     
     protected void parseTags(String s) {
-        Matcher matcher = Pattern.compile("<a[^>]*>([^<]*)</a>",Pattern.MULTILINE).matcher(s);
+        Matcher matcher = Pattern.compile("<a[^>]*>(.*?)</a>", Pattern.MULTILINE).matcher(s);
         StringBuilder tagsBuilder = new StringBuilder();
         while (matcher.find()) {
-            tagsBuilder.append('[').append(matcher.group(1)).append(']');
+            tagsBuilder.append('[')
+                    .append(RegexUtils.removeHtmlTags(matcher.group(1)).trim())
+                    .append(']');
         }
         currentPost.name = tagsBuilder.toString();
     }
