@@ -6,8 +6,10 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.preference.CheckBoxPreference;
+import android.preference.EditTextPreference;
 import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
+import android.text.InputType;
 
 import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
@@ -38,6 +40,7 @@ public class NullchanLifeModule extends NewNullchanModule {
     private static final String ONION_DOMAIN = "nullchanxrt7ecw7sifwei466qli3sku725tusz22w22opkfcxksinyd.onion";
     private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN };
 
+    private static final String PREF_KEY_DOMAIN = "domain";
     private static final String PREF_KEY_USE_ONION = "PREF_KEY_USE_ONION";
 
     public NullchanLifeModule(SharedPreferences preferences, Resources resources) {
@@ -63,6 +66,15 @@ public class NullchanLifeModule extends NewNullchanModule {
     public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
         Context context = preferenceGroup.getContext();
         CheckBoxPreference httpsPref = addHttpsPreference(preferenceGroup, true);
+        EditTextPreference domainPref = new EditTextPreference(context);
+        domainPref.setTitle(R.string.pref_domain);
+        domainPref.setDialogTitle(R.string.pref_domain);
+        domainPref.setSummary(R.string.pref_domain);
+        domainPref.setKey(getSharedKey(PREF_KEY_DOMAIN));
+        domainPref.getEditText().setHint(DEFAULT_DOMAIN);
+        domainPref.getEditText().setSingleLine();
+        domainPref.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        preferenceGroup.addPreference(domainPref);
         CheckBoxPreference onionPref = new LazyPreferences.CheckBoxPreference(context);
         onionPref.setTitle(R.string.pref_use_onion);
         onionPref.setSummary(R.string.pref_use_onion_summary);
@@ -70,6 +82,7 @@ public class NullchanLifeModule extends NewNullchanModule {
         onionPref.setDefaultValue(false);
         onionPref.setDisableDependentsState(true);
         preferenceGroup.addPreference(onionPref);
+        domainPref.setDependency(getSharedKey(PREF_KEY_USE_ONION));
         httpsPref.setDependency(getSharedKey(PREF_KEY_USE_ONION));
         addProxyPreferences(preferenceGroup);
         addClearCookiesPreference(preferenceGroup);
@@ -77,12 +90,19 @@ public class NullchanLifeModule extends NewNullchanModule {
 
     @Override
     protected String getUsingDomain() {
-        return preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) ? ONION_DOMAIN : DEFAULT_DOMAIN;
+        String prefDomain = preferences.getString(getSharedKey(PREF_KEY_DOMAIN), "");
+        return preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) ? ONION_DOMAIN :
+                prefDomain.length() == 0 ? DEFAULT_DOMAIN : prefDomain;
     }
 
     @Override
     protected String[] getAllDomains() {
-        return DOMAINS;
+        String domain = getUsingDomain();
+        for (String d : DOMAINS) if (domain.equals(d)) return DOMAINS;
+        String[] domains = new String[DOMAINS.length + 1];
+        System.arraycopy(DOMAINS, 0, domains, 0, DOMAINS.length);
+        domains[DOMAINS.length] = domain;
+        return domains;
     }
 
     @Override
