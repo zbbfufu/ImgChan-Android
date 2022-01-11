@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.preference.EditTextPreference;
 import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
@@ -32,6 +33,8 @@ import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.BoardModel;
+import nya.miku.wishmaster.api.models.SendPostModel;
+import nya.miku.wishmaster.api.models.UrlPageModel;
 
 public class Null_chanModule extends AbstractInstant0chan {
     private static final String CHAN_NAME = "2.0-chan.ru";
@@ -109,6 +112,32 @@ public class Null_chanModule extends AbstractInstant0chan {
         model.attachmentsMaxCount = 4;
         model.defaultUserName = "Аноним";
         return model;
+    }
+
+    @Override
+    public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
+        String url = super.sendPost(model, listener, task);
+        try {
+            url = fixUrl(new String(url.getBytes("ISO-8859-1"), "UTF-8"));
+        } catch (Exception ignored) { /* ignored */ }
+        return url;
+    }
+
+    @Override
+    public String buildUrl(UrlPageModel model) throws IllegalArgumentException {
+        return fixUrl(super.buildUrl(model));
+    }
+
+    @Override
+    public UrlPageModel parseUrl(String url) throws IllegalArgumentException {
+        UrlPageModel model = super.parseUrl(url);
+        model.boardName = Uri.decode(model.boardName);
+        return model;
+    }
+
+    private String fixUrl(String url) {
+        //TODO: convert url path to percent-encoding
+        return url.replace("μ", "%CE%BC");
     }
 
 }
