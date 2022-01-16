@@ -35,10 +35,10 @@ public class CirnoBoards {
     private static final List<String> IICHAN_SPOILER_MARK_BOARDS = Arrays.asList("bro", "med", "tv", "a", "fi", "to", "vn", "vg");
     
     private static final List<String> IICHAN_READONLY_BOARDS = Arrays.asList(
-            "o", "w", "ma", "azu", "me", "hau", "sos", "mo", "sp", "bg", "ls", "maid", "ne", "fr", "an", "gf", "med");
+            "o", "w", "ma", "azu", "me", "hau", "sos", "mo", "sp", "bg", "ls", "maid", "ne", "fr", "an", "gf", "med", "tr", "sci");
     
-    private static final List<BoardModel> LIST_IICHAN = new ArrayList<BoardModel>();
-    private static final Map<String, BoardModel> MAP_IICHAN = new HashMap<String, BoardModel>();
+    private static final List<BoardModel> LIST_IICHAN = new ArrayList<>();
+    private static final Map<String, BoardModel> MAP_IICHAN = new HashMap<>();
     private static final SimpleBoardModel[] SIMPLE_ARRAY_IICHAN;
     
     static {
@@ -53,7 +53,6 @@ public class CirnoBoards {
         addBoard("bro", "My Little Pony", "Общее", "Эпплджек", false);
         addBoard("m", "Макросы/копипаста", "Общее", "Копипаста-гей", false);
         addBoard("mu", "Музыка", "Общее", "Виктор Цой", false);
-        addBoard("sci", "Наука", "Общее", "Гриша Перельман", false);
         addBoard("mi", "Оружие", "Общее", "Й. Швейк", false);
         addBoard("x", "Паранормальные явления", "Общее", "Эмма Ай", false);
         addBoard("r", "Просьбы", "Общее", "Аноним", false);
@@ -65,7 +64,6 @@ public class CirnoBoards {
         addBoard("es", "Бесконечное лето", "Игры", "Пионер", false);
         addBoard("vg", "Видеоигры", "Игры", "Марио", false);
         addBoard("au", "Автомобили", "Транспорт", "Джереми Кларксон", false);
-        addBoard("tr", "Транспорт", "Транспорт", "Аноним", false);
         addBoard("a", "Аниме и манга", "Японская культура", "Мокона", false);
         addBoard("aa", "Аниме-арт", "Японская культура", "Ракка", false);
         addBoard("vn", "Визуальные новеллы", "Японская культура", "Сэйбер", false);
@@ -94,7 +92,7 @@ public class CirnoBoards {
     }
     
     static boolean is410Board(String boardName) {
-        return IICHAN_BOARDS_410.indexOf(boardName) != -1;
+        return IICHAN_BOARDS_410.contains(boardName);
     }
     
     private static void addBoard(String name, String description, String category, String defaultPosterName, boolean nsfw) {
@@ -115,7 +113,7 @@ public class CirnoBoards {
         model.defaultUserName = defaultPosterName;
         model.bumpLimit = 500;
         
-        model.readonlyBoard = IICHAN_READONLY_BOARDS.indexOf(name) != -1;
+        model.readonlyBoard = IICHAN_READONLY_BOARDS.contains(name);
         model.requiredFileForNewThread = !name.equals("d");
         model.allowDeletePosts = !model.readonlyBoard;
         model.allowDeleteFiles = model.allowDeletePosts;
@@ -125,7 +123,7 @@ public class CirnoBoards {
         model.allowSage = false;
         model.allowEmails = false;
         model.ignoreEmailIfSage = false;
-        model.allowCustomMark = IICHAN_SPOILER_MARK_BOARDS.indexOf(name) != -1;
+        model.allowCustomMark = IICHAN_SPOILER_MARK_BOARDS.contains(name);
         model.customMarkDescription = "Spoiler";
         model.allowRandomHash = true;
         model.allowIcons = false;

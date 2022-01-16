@@ -285,6 +285,9 @@ public class CirnoModule extends StormwallChanModule {
                 ByteArrayOutputStream output = new ByteArrayOutputStream(1024);
                 IOUtils.copyStream(response.stream, output);
                 String htmlResponse = output.toString("UTF-8");
+                if (!htmlResponse.contains("<html")) {
+                    throw new Exception(htmlResponse);
+                }
                 if (!htmlResponse.contains("<blockquote")) {
                     int start = htmlResponse.indexOf("<h1 style=\"text-align: center\">");
                     if (start != -1) {
