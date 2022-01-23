@@ -368,13 +368,16 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
                 AttachmentModel attachment = new AttachmentModel();
                 attachment.thumbnail = thumb;
                 attachment.path = thumb;
-                if (thumb.contains("-")) {
-                    Matcher mimeMatcher = MIME_TYPE_PATTERN.matcher(thumb);
-                    if (mimeMatcher.find()) {
-                        String mime = mimeMatcher.group(1) + "/" + mimeMatcher.group(2);
-                        attachment.type = getAttachmentType(mime);
+                String mime = object.optString("mime", "");
+                if (mime.length() == 0 && thumb.contains("-")) { //before Lynxchan v2.3
+                    Matcher matcher = MIME_TYPE_PATTERN.matcher(thumb);
+                    if (matcher.find()) mime = matcher.group(1) + "/" + matcher.group(2);
+                }
+                if (mime.length() > 0) {
+                    attachment.type = getAttachmentType(mime);
+                    if (thumb.contains("/t_")) {
                         String ext = MimeTypes.toExtension(mime);
-                        if (ext != null) attachment.path = thumb.replace("t_", "") + "." + ext;
+                        if (ext != null) attachment.path = thumb.replace("/t_", "/") + "." + ext;
                     }
                 } else if (thumb.length() < 32) { //Internal static image (e.g. spoiler)
                     attachment.thumbnail = fixRelativeUrl(thumb); //fix equal hashes in cache
@@ -472,7 +475,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         return model;
     }
 
-    private int getAttachmentType(String mimeType) {
+    private static int getAttachmentType(String mimeType) {
         if (mimeType.startsWith("image/")) {
             if (mimeType.contains("gif")) return AttachmentModel.TYPE_IMAGE_GIF;
             if (mimeType.contains("svg")) return AttachmentModel.TYPE_IMAGE_SVG;
