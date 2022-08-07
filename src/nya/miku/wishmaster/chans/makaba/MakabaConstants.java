@@ -57,7 +57,7 @@ public class MakabaConstants {
             "b", "got", "nvr", "char", "catalog");
 
     public static final List<String> CATEGORIES = Arrays.asList(
-            "Тематика", "Творчество", "Техника и софт", "Игры", "Японская культура", "Разное", "Взрослым", "Политика", "Пробное");
+            "Тематика", "Творчество", "Техника и софт", "Игры", "Японская культура", "Разное", "Взрослым", "Политика", "Пользовательские");
 
     public static final String[] ATTACHMENT_FORMATS = new String[] { "jpg", "jpeg", "png", "gif", "webm", "mp4" };
 

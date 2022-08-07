@@ -50,7 +50,7 @@ public class MakabaJsonMapper {
     private static final Pattern ICON_PATTERN = Pattern.compile("<img.+?src=\"(.+?)\".+?(?:title=\"(.+?)\")?.*?/>");
     private static final Pattern HASH_LINK_PATTERN_1 = Pattern.compile("<a[^>]+href=\"(.+?/catalog.html)\"[^>]+title=\"([a-z]+)\"[^>]*>");
     private static final Pattern HASH_LINK_PATTERN_2 = Pattern.compile("<a[^>]+title=\"([a-z]+)\"[^>]+href=\"(.+?/catalog.html)\"[^>]*>");
-    
+
     static BoardModel defaultBoardModel(String boardName, Resources resources) {
         BoardModel model = new BoardModel();
         model.chan = CHAN_NAME;
@@ -76,109 +76,102 @@ public class MakabaJsonMapper {
         model.firstPage = 0;
         model.attachmentsFormatFilters = ATTACHMENT_FORMATS;
         model.markType = BoardModel.MARK_BBCODE;
-        
+
         model.boardName = boardName;
         model.boardDescription = boardName;
         model.boardCategory = "";
-        
+
         model.defaultUserName = "Аноним";
         model.bumpLimit = 500;
-        model.lastPage = 9;
-        
+        model.lastPage = BoardModel.LAST_PAGE_UNDEFINED;
+
         model.nsfw = !SFW_BOARDS.contains(model.boardName);
         model.requiredFileForNewThread = !NO_IMAGES_BOARDS.contains(model.boardName);
         model.attachmentsMaxCount = !NO_IMAGES_BOARDS.contains(model.boardName) ? 4 : 0;
         model.allowSubjects = !NO_SUBJECTS_BOARDS.contains(model.boardName);
         model.allowNames = !NO_USERNAMES_BOARDS.contains(model.boardName);
-        
-        return model;
-    }
-    
-    static BoardModel mapBoardModel(JSONObject source, boolean fromBoardsList, Resources resources) throws JSONException {
-        BoardModel model = defaultBoardModel(source.getString(fromBoardsList ? "id" : "Board"), resources);
-        model.defaultUserName = source.optString("default_name", model.defaultUserName);
-        model.bumpLimit = source.optInt("bump_limit", model.bumpLimit);
-        try {
-            model.allowNames = source.getInt("enable_names") == 1;
-        } catch (Exception ignored) {}
 
-        if (fromBoardsList) {
-            model.boardDescription = source.getString("name");
-            model.boardCategory = source.optString("category");
-        } else {
-            model.boardDescription = source.getString("BoardName");
-            model.boardCategory = null;
-            try {
-                model.lastPage = source.getJSONArray("pages").length() - 1;
-            } catch (Exception e) {
-                model.lastPage = BoardModel.LAST_PAGE_UNDEFINED;
-            }
-            try {
-                JSONArray iconsArray = source.getJSONArray("icons");
-                if (iconsArray.length() > 0) {
-                    String[] icons = new String[iconsArray.length() + 1];
-                    icons[0] = resources.getString(R.string.makaba_no_icon);
-                    for (int i=0; i<iconsArray.length(); ++i) {
-                        icons[iconsArray.getJSONObject(i).getInt("num")] = iconsArray.getJSONObject(i).getString("name");
-                    }
-                    for (String icon : icons) {
-                        if (icon == null) throw new Exception();
-                    }
-                    model.allowIcons = true;
-                    model.iconDescriptions = icons;
-                }
-            } catch (Exception e) { /* щито поделать, десу, получить список иконок не удалось, или их просто нет */ }
-        }
         return model;
     }
-    
+
+    static BoardModel mapBoardModel(JSONObject source, boolean fromBoardsList, Resources resources) throws JSONException {
+        if (!fromBoardsList) source = source.getJSONObject("board");
+
+        BoardModel model = defaultBoardModel(source.getString("id"), resources);
+        model.boardDescription = source.getString("name");
+        model.boardCategory = source.optString("category");
+
+        model.bumpLimit = source.optInt("bump_limit", model.bumpLimit);
+        model.allowNames = source.optBoolean("enable_names", model.allowNames);
+        model.lastPage = source.optInt("max_pages", model.lastPage);
+        model.defaultUserName = source.optString("default_name", model.defaultUserName);
+        try {
+            JSONArray iconsArray = source.getJSONArray("icons");
+            if (iconsArray.length() > 0) {
+                String[] icons = new String[iconsArray.length() + 1];
+                icons[0] = resources.getString(R.string.makaba_no_icon);
+                for (int i=0; i<iconsArray.length(); ++i) {
+                    icons[iconsArray.getJSONObject(i).getInt("num")] = iconsArray.getJSONObject(i).getString("name");
+                }
+                for (String icon : icons) {
+                    if (icon == null) throw new Exception();
+                }
+                model.allowIcons = true;
+                model.iconDescriptions = icons;
+            }
+        } catch (Exception e) { /* щито поделать, десу, получить список иконок не удалось, или их просто нет */ }
+        return model;
+    }
+
     static ThreadModel mapThreadModel(JSONObject source, String boardName) throws JSONException {
         ThreadModel model = new ThreadModel();
-        model.threadNumber = source.getString("thread_num");
-        model.postsCount = source.getInt("posts_count");
-        model.attachmentsCount = source.getInt("files_count");
+        model.threadNumber = source.optString("thread_num");
+        model.postsCount = source.optInt("posts_count");
+        model.attachmentsCount = source.optInt("files_count");
         JSONArray postsArray = source.getJSONArray("posts");
         model.postsCount += postsArray.length();
         model.posts = new PostModel[postsArray.length()];
         for (int i=0; i<postsArray.length(); ++i) {
             model.posts[i] = mapPostModel(postsArray.getJSONObject(i), boardName);
-            if (postsArray.getJSONObject(i).has("files")) {
-                model.attachmentsCount += postsArray.getJSONObject(i).getJSONArray("files").length();
-            }
         }
-        model.isSticky = getIntSafe(postsArray.getJSONObject(0), "sticky", 0) != 0;
-        model.isClosed = getIntSafe(postsArray.getJSONObject(0), "closed", 0) != 0;
-        model.isCyclical = getIntSafe(postsArray.getJSONObject(0), "endless", 0) != 0;
+        model.isSticky = postsArray.getJSONObject(0).optInt("sticky", 0) != 0;
+        model.isClosed = postsArray.getJSONObject(0).optInt("closed", 0) != 0;
+        model.isCyclical = postsArray.getJSONObject(0).optInt("endless", 0) != 0;
         return model;
     }
-    
+
     static PostModel mapPostModel(JSONObject source, String boardName) throws JSONException {
         PostModel model = new PostModel();
-        
-        try {
-            model.number = source.getString("num");
-        } catch (JSONException e) {
-            model.number = Long.toString(source.getLong("num"));
-        }
-        model.name = StringEscapeUtils.unescapeHtml4(RegexUtils.removeHtmlSpanTags(getStringSafe(source, "name", "")));
-        model.subject = StringEscapeUtils.unescapeHtml4(getStringSafe(source, "subject", ""));
-        model.comment = getStringSafe(source, "comment", "");
-        model.email = getStringSafe(source, "email", "");
+        model.number = source.optString("num");
+        model.name = StringEscapeUtils.unescapeHtml4(RegexUtils.removeHtmlSpanTags(source.optString("name", "")));
+        model.subject = StringEscapeUtils.unescapeHtml4(source.optString("subject", ""));
+        model.comment = source.optString("comment", "");
+        model.email = source.optString("email", "");
         if (model.email.startsWith("mailto:")) model.email = model.email.substring(7);
-        model.trip = getStringSafe(source, "trip", "");
+        model.trip = source.optString("trip", "");
         if (model.trip != null) {
-            if (model.trip.equals("!!%adm%!!")) model.trip = "## Abu ##";
-            else if (model.trip.equals("!!%mod%!!")) model.trip = "## Mod ##";
-            else if (model.trip.equals("!!%Inquisitor%!!")) model.trip = "## Applejack ##";
-            else if (model.trip.equals("!!%coder%!!")) model.trip = "## Кодер ##";
+            switch (model.trip) {
+                case "!!%adm%!!":
+                    model.trip = "## Abu ##";
+                    break;
+                case "!!%mod%!!":
+                    model.trip = "## Mod ##";
+                    break;
+                case "!!%Inquisitor%!!":
+                    model.trip = "## Applejack ##";
+                    break;
+                case "!!%coder%!!":
+                    model.trip = "## Кодер ##";
+                    break;
+            }
         }
-        model.icons = parseIcons(getStringSafe(source, "icon", ""));
-        model.op = getIntSafe(source, "op", 0) == 1;
-        model.sage = model.email.toLowerCase(Locale.US).contains("sage") || model.name.contains("ID:\u00A0Heaven");
-        model.timestamp = source.getLong("timestamp") * 1000;
-        model.parentThread = getStringSafe(source, "parent", model.number);
+        model.icons = parseIcons(source.optString("icon"));
+        model.op = source.optInt("op", 0) == 1;
+        model.sage = model.email.toLowerCase(Locale.US).equals("sage") || model.name.contains("ID:\u00A0Heaven");
+        model.timestamp = source.getLong("timestamp") * 1000L;
+        model.parentThread = source.optString("parent", model.number);
         if (model.parentThread.equals("0")) model.parentThread = model.number;
-        
+
         model.comment = model.comment.replace("\\r\\n", "").replace("\\t", "  ");
         if (model.number.equals(model.parentThread)) {
             String tag = source.optString("tags", "");
@@ -197,9 +190,8 @@ public class MakabaJsonMapper {
                 model.attachments[i] = mapAttachmentModel(filesArray.getJSONObject(i), boardName);
             }
         } else model.attachments = null;
-        
-        int banned = getIntSafe(source, "banned", 0);
-        switch (banned) {
+
+        switch (source.optInt("banned", 0)) {
             case 1:
                 model.comment = model.comment + "<br/><em><font color=\"red\">(Автор этого поста был забанен. Помянем.)</font></em>";
                 break;
@@ -210,7 +202,7 @@ public class MakabaJsonMapper {
         if (NO_SUBJECTS_BOARDS.contains(boardName)) model.subject = "";
         return model;
     }
-    
+
     static AttachmentModel mapAttachmentModel(JSONObject source, String boardName) throws JSONException {
         AttachmentModel model = new AttachmentModel();
         try {
@@ -235,11 +227,11 @@ public class MakabaJsonMapper {
         }
         return model;
     }
-    
+
     static BadgeIconModel[] parseIcons(String html) {
         if (html == null || html.length() == 0) return null;
         Matcher m = ICON_PATTERN.matcher(html);
-        List<BadgeIconModel> list = new ArrayList<BadgeIconModel>();
+        List<BadgeIconModel> list = new ArrayList<>();
         while (m.find()) {
             BadgeIconModel icon = new BadgeIconModel();
             icon.source = m.group(1);
@@ -248,23 +240,7 @@ public class MakabaJsonMapper {
         }
         return list.toArray(new BadgeIconModel[0]);
     }
-    
-    private static String getStringSafe(JSONObject object, String key, String defaultValue) {
-        try {
-            return object.getString(key);
-        } catch (Exception e) {
-            return defaultValue;
-        }
-    }
-    
-    private static int getIntSafe(JSONObject object, String key, int defaultValue) {
-        try {
-            return object.getInt(key);
-        } catch (Exception e) {
-            return defaultValue;
-        }
-    }
-    
+
     private static String fixAttachmentPath(String url, String boardName) {
         if (url.startsWith("://")) return "http" + url;
         if (url.startsWith("/") || url.startsWith("http://") || url.startsWith("https://")) {
