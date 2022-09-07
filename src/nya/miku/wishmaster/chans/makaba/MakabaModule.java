@@ -673,7 +673,7 @@ public class MakabaModule extends CloudflareChanModule {
                     case CAPTCHA_2CHAPTCHA:
                         url = domainUrl + "api/captcha/" + captchaKey + "/show?id=" + captchaId;
                         captchaModel = downloadCaptcha(url, listener, task);
-                        captchaModel.type = CaptchaModel.TYPE_NORMAL_DIGITS;
+                        captchaModel.type = CaptchaModel.TYPE_NORMAL;
                         return captchaModel;
                     case CAPTCHA_RECAPTCHA:
                     case CAPTCHA_RECAPTCHA_FALLBACK:
