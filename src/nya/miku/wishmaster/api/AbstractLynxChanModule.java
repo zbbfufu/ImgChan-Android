@@ -225,7 +225,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         model.allowDeleteFiles = model.allowDeletePosts;
         model.requiredFileForNewThread = settings.contains("requireThreadFile");
         model.allowRandomHash = settings.contains("uniqueFiles");
-        model.uniqueAttachmentNames = false;  //spoiler thumbs have same urls in different imageboards
+        model.uniqueAttachmentNames = true;
         model.attachmentsMaxCount = settings.contains("textBoard") ? 0 : model.attachmentsMaxCount;
         try {
             JSONArray flags = json.getJSONArray("flagData");
@@ -306,9 +306,18 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
             curThread.posts[0] = mapPostModel(thread);
             curThread.threadNumber = curThread.posts[0].number;
             curThread.posts[0].parentThread = curThread.threadNumber;
-            for (int j = 0, plen = posts.length(); j < plen; ++j) {
+            int plen = posts.length();
+            for (int j = 0; j < plen; ++j) {
                 curThread.posts[j + 1] = mapPostModel(posts.getJSONObject(j));
                 curThread.posts[j + 1].parentThread = curThread.threadNumber;
+                if (curThread.posts[j + 1].attachments != null
+                        && curThread.posts[j + 1].attachments.length > 0) {
+                    curThread.attachmentsCount += curThread.posts[j + 1].attachments.length;
+                }
+            }
+            if (curThread.postsCount == 0 && plen > 0) curThread.postsCount = plen + 1;
+            if (curThread.posts[0].attachments != null && curThread.posts[0].attachments.length > 0) {
+                curThread.attachmentsCount += curThread.posts[0].attachments.length;
             }
             result[i] = curThread;
         }
@@ -359,13 +368,16 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
                 AttachmentModel attachment = new AttachmentModel();
                 attachment.thumbnail = thumb;
                 attachment.path = thumb;
-                if (thumb.contains("-")) {
-                    Matcher mimeMatcher = MIME_TYPE_PATTERN.matcher(thumb);
-                    if (mimeMatcher.find()) {
-                        String mime = mimeMatcher.group(1) + "/" + mimeMatcher.group(2);
-                        attachment.type = getAttachmentType(mime);
+                String mime = object.optString("mime", "");
+                if (mime.length() == 0 && thumb.contains("-")) { //before Lynxchan v2.3
+                    Matcher matcher = MIME_TYPE_PATTERN.matcher(thumb);
+                    if (matcher.find()) mime = matcher.group(1) + "/" + matcher.group(2);
+                }
+                if (mime.length() > 0) {
+                    attachment.type = getAttachmentType(mime);
+                    if (thumb.contains("/t_")) {
                         String ext = MimeTypes.toExtension(mime);
-                        if (ext != null) attachment.path = thumb.replace("t_", "") + "." + ext;
+                        if (ext != null) attachment.path = thumb.replace("/t_", "/") + "." + ext;
                     }
                 } else if (thumb.length() < 32) { //Internal static image (e.g. spoiler)
                     attachment.thumbnail = fixRelativeUrl(thumb); //fix equal hashes in cache
@@ -392,7 +404,8 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         model.isSticky = object.optBoolean("pinned", false);
         model.isClosed = object.optBoolean("locked", false);
         model.isCyclical = object.optBoolean("cyclic", false);
-        model.postsCount = object.optInt("ommitedPosts");
+        model.postsCount = object.optInt("omittedPosts", object.optInt("ommitedPosts"));
+        model.attachmentsCount = object.optInt("omittedFiles");
         return model;
     }
 
@@ -462,7 +475,7 @@ public abstract class AbstractLynxChanModule extends AbstractWakabaModule {
         return model;
     }
 
-    private int getAttachmentType(String mimeType) {
+    private static int getAttachmentType(String mimeType) {
         if (mimeType.startsWith("image/")) {
             if (mimeType.contains("gif")) return AttachmentModel.TYPE_IMAGE_GIF;
             if (mimeType.contains("svg")) return AttachmentModel.TYPE_IMAGE_SVG;

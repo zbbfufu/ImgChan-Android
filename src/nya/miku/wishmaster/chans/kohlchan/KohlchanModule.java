@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceGroup;
@@ -49,6 +50,7 @@ import nya.miku.wishmaster.api.models.PostModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
 import nya.miku.wishmaster.api.models.UrlPageModel;
+import nya.miku.wishmaster.api.util.LazyPreferences;
 import nya.miku.wishmaster.api.util.RegexUtils;
 import nya.miku.wishmaster.api.util.UrlPathUtils;
 import nya.miku.wishmaster.api.util.WakabaUtils;
@@ -75,9 +77,9 @@ public class KohlchanModule extends AbstractLynxChanModule {
     private static final String DEFAULT_DOMAIN = "kohlchan.net";
     private static final String PREF_KEY_DOMAIN = "domain";
     private static final List<String> DOMAINS_LIST = Arrays.asList(
-            DEFAULT_DOMAIN, "kohlkanal.net", "kohlchanagb7ih5g.onion",
+            DEFAULT_DOMAIN, "kohlchan.top", "kohlkanal.net", "kohlchanagb7ih5g.onion",
             "kohlchanvwpfx6hthoti5fvqsjxgcwm3tmddvpduph5fqntv5affzfqd.onion");
-    private static final String DOMAINS_HINT = "kohlchan.net, kohlkanal.net, kohlchanagb7ih5g.onion, kohlchanvwpfx6hthoti5fvqsjxgcwm3tmddvpduph5fqntv5affzfqd.onion";
+    private static final String DOMAINS_HINT = "kohlchan.net, kohlchan.top, kohlchanvwpfx6hthoti5fvqsjxgcwm3tmddvpduph5fqntv5affzfqd.onion";
     
     private static final String[] ATTACHMENT_FORMATS = new String[] {
             "jpg", "jpeg", "bmp", "gif", "png", "webp", "mp3", "ogg", "flac", "opus", "webm", "mp4",
@@ -88,6 +90,7 @@ public class KohlchanModule extends AbstractLynxChanModule {
     private static final Pattern COOKIES_LINK_PATTERN = Pattern.compile("^addon.js/hashcash\\?action=save&b=([0-9a-f]{24})&h=([0-9a-f]{24})");
     private static final String PREF_KEY_EXTRA_COOKIE = "PREF_KEY_EXTRA_COOKIE";
     private static final String EXTRA_COOKIE_NAME = "extraCookie";
+    private static final String PREF_KEY_UNIX_FILENAMES = "PREF_KEY_UNIX_FILENAMES";
     
     private String domain;
     private Map<String, String> captchas = new HashMap<>();
@@ -146,6 +149,13 @@ public class KohlchanModule extends AbstractLynxChanModule {
     @Override
     public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
         addDomainPreferences(preferenceGroup);
+        final Context context = preferenceGroup.getContext();
+        CheckBoxPreference unixFilenamesPref = new LazyPreferences.CheckBoxPreference(context);
+        unixFilenamesPref.setTitle(R.string.kohl_prefs_unix_filenames);
+        unixFilenamesPref.setSummary(R.string.kohl_prefs_unix_filenames_summary);
+        unixFilenamesPref.setKey(getSharedKey(PREF_KEY_UNIX_FILENAMES));
+        unixFilenamesPref.setDefaultValue(false);
+        preferenceGroup.addPreference(unixFilenamesPref);
         super.addPreferencesOnScreen(preferenceGroup);
     }
 
@@ -291,6 +301,14 @@ public class KohlchanModule extends AbstractLynxChanModule {
         }
         model.comment = RegexUtils.replaceAll(model.comment, INVALID_LESSER_THAN_PATTERN, "&lt;$1");
         model.comment = RegexUtils.replaceAll(model.comment, LINE_BREAK_PATTERN, "<br/>");
+
+        if (model.attachments != null && model.timestamp > 0
+                && preferences.getBoolean(getSharedKey(PREF_KEY_UNIX_FILENAMES), false)) {
+            for (int i=0; i<model.attachments.length; i++) {
+                String ext = model.attachments[i].path.substring(model.attachments[i].path.lastIndexOf('.'));
+                model.attachments[i].path += "/dl/" + model.timestamp + i + ext;
+            }
+        }
         return model;
     }
 

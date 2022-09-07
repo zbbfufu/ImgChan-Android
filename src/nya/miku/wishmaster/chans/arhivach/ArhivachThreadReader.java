@@ -62,7 +62,7 @@ public class ArhivachThreadReader  implements Closeable {
     }
 
     private static final Pattern URL_PATTERN =
-            Pattern.compile("((https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])");
+            Pattern.compile("((?:https?:)?/[-a-zA-Z0-9+&@#/%?=~_|!:,.;]+[-a-zA-Z0-9+&@#/%=~_|])");
     private static final Pattern ATTACHMENT_PX_SIZE_PATTERN = Pattern.compile("(\\d+)\\s*[x×х]\\s*(\\d+)"); // \u0078 \u00D7 \u0445
     private static final Pattern ATTACHMENT_SIZE_PATTERN =
             Pattern.compile("([\\d.]+)\\s*([кkмm])?[бb]", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
@@ -161,7 +161,7 @@ public class ArhivachThreadReader  implements Closeable {
 
     private final Reader _in;
 
-    private StringBuilder readBuffer = new StringBuilder();
+    private final StringBuilder readBuffer = new StringBuilder();
     private List<ThreadModel> threads;
     private ThreadModel currentThread;
     private List<PostModel> postsBuf;
@@ -179,13 +179,13 @@ public class ArhivachThreadReader  implements Closeable {
 
 
     public ThreadModel[] readPage() throws IOException {
-        threads = new ArrayList<ThreadModel>();
+        threads = new ArrayList<>();
         initThreadModel();
         initPostModel();
         skipUntilSequence(DATA_START);
         readData();
 
-        return threads.toArray(new ThreadModel[threads.size()]);
+        return threads.toArray(new ThreadModel[0]);
     }
 
     private void readData() throws IOException {
@@ -215,19 +215,19 @@ public class ArhivachThreadReader  implements Closeable {
         currentThread = new ThreadModel();
         currentThread.postsCount = 0;
         currentThread.attachmentsCount = 0;
-        postsBuf = new ArrayList<PostModel>();
+        postsBuf = new ArrayList<>();
     }
 
     private void initPostModel() {
         currentPost = new PostModel();
         currentPost.number = "unknown";
         currentPost.trip = "";
-        currentAttachments = new ArrayList<AttachmentModel>();
+        currentAttachments = new ArrayList<>();
     }
 
     private void finalizeThread() {
         if (postsBuf.size() > 0) {
-            currentThread.posts = postsBuf.toArray(new PostModel[postsBuf.size()]);
+            currentThread.posts = postsBuf.toArray(new PostModel[0]);
             currentThread.threadNumber = currentThread.posts[0].number;
             for (PostModel post : currentThread.posts) post.parentThread = currentThread.threadNumber;
             threads.add(currentThread);
@@ -238,7 +238,7 @@ public class ArhivachThreadReader  implements Closeable {
     private void finalizePost() {
         if (currentPost.number != null && currentPost.number.length() > 0) {
             ++currentThread.postsCount;
-            currentPost.attachments = currentAttachments.toArray(new AttachmentModel[currentAttachments.size()]);
+            currentPost.attachments = currentAttachments.toArray(new AttachmentModel[0]);
             if (currentPost.name == null) currentPost.name = "";
             if (currentPost.subject == null) currentPost.subject = "";
             if (currentPost.comment == null) currentPost.comment = "";
@@ -372,7 +372,6 @@ public class ArhivachThreadReader  implements Closeable {
                     break;
                 default:
                     model.type = AttachmentModel.TYPE_OTHER_FILE;
-                    break;
             }
             matcher = ATTACHMENT_PX_SIZE_PATTERN.matcher(metaData);
             if (matcher.find()) {
@@ -410,7 +409,7 @@ public class ArhivachThreadReader  implements Closeable {
             icon.description = matcher.group(2);
             int size = currentPost.icons == null ? 0 : currentPost.icons.length;
             BadgeIconModel[] icons = new BadgeIconModel[size + 1];
-            for (int i = 0; i < size; i++) icons[i] = currentPost.icons[i];
+            if (size > 0) System.arraycopy(currentPost.icons, 0, icons, 0, size);
             icons[size] = icon;
             currentPost.icons = icons;
         }
