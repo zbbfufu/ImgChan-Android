@@ -97,10 +97,10 @@ public class OwlchanModule extends AbstractKusabaModule {
     protected boolean canHttps() {
         return true;
     }
-    
+
     @Override
-    protected boolean useHttpsDefaultValue() {
-        return false;
+    protected boolean canCloudflare() {
+        return true;
     }
     
     @Override
