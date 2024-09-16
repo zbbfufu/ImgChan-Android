@@ -33,9 +33,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.CRC32;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.HttpHeaders;
+import cz.msebera.android.httpclient.client.entity.EntityBuilder;
 import cz.msebera.android.httpclient.message.BasicHeader;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.CloudflareChanModule;
@@ -85,6 +87,7 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
 import android.text.InputType;
+import android.util.Base64;
 
 /**
  * Класс, осуществляющий взаимодействия с АИБ 2ch.hk (движок makaba)
@@ -108,6 +111,9 @@ public class MakabaModule extends CloudflareChanModule {
     /** тип текущей капчи*/
     private int captchaType;
 
+    private String emojiCaptchaSolvedId;
+    private int emojiCaptchaClickCount = 0;
+    private byte[][] emojiCaptchaCurrentButtons;
     
     /** основная карта досок */
     private Map<String, BoardModel> boardsMap = null;
@@ -411,6 +417,8 @@ public class MakabaModule extends CloudflareChanModule {
                 return CAPTCHA_RECAPTCHA_FALLBACK;
             case "mailru":
                 return CAPTCHA_MAILRU;
+            case "emoji":
+                return CAPTCHA_EMOJI;
         }
         throw new IllegalStateException("wrong captcha settings");
     }
@@ -424,6 +432,8 @@ public class MakabaModule extends CloudflareChanModule {
                 return "recaptcha";
             case CAPTCHA_MAILRU:
                 return "mailru";
+            case CAPTCHA_EMOJI:
+                return "emoji";
             default:
                 return CAPTCHA_TYPE_DEFAULT;
         }
@@ -660,8 +670,13 @@ public class MakabaModule extends CloudflareChanModule {
         }
         int captchaType = getUsingCaptchaType();
         String captchaKey = getUsingCaptchaKey();
-        
-        String url = domainUrl + "api/captcha/" + captchaKey + "/id?board=" + boardName + (threadNumber != null ? "&thread=" + threadNumber : "");
+
+        String url;
+
+        if(captchaType != CAPTCHA_EMOJI)
+            url = domainUrl + "api/captcha/" + captchaKey + "/id?board=" + boardName + (threadNumber != null ? "&thread=" + threadNumber : "");
+        else
+            url = domainUrl + "api/captcha/emoji/id?board=" + boardName + (threadNumber != null ? "&thread=" + threadNumber : "");
         JSONObject response = downloadJSONObject(url, false, listener, task);
         switch (response.optInt("result", -1)) {
             case 1: //Enabled
@@ -712,6 +727,32 @@ public class MakabaModule extends CloudflareChanModule {
                         captchaModel = new CaptchaModel();
                         captchaModel.type = CaptchaModel.TYPE_NORMAL;
                         captchaModel.bitmap = captchaBitmap;
+                        return captchaModel;
+                    case CAPTCHA_EMOJI:
+                        Logger.d(TAG, "new emojiCaptcha Id=" + captchaId);
+                        emojiCaptchaClickCount = 0;
+                        emojiCaptchaSolvedId = "";
+                        url = domainUrl + "api/captcha/emoji/show?id=" + captchaId;
+                        JSONObject emojiCaptchaStateResponse = downloadJSONObject(url, false, listener, task);
+                        String base64EncodedCaptcha = emojiCaptchaStateResponse.optString("image");
+                        byte[] decodedCaptchaBytes = android.util.Base64.decode(base64EncodedCaptcha, Base64.DEFAULT);
+                        captchaModel = new CaptchaModel();
+                        captchaModel.type = CaptchaModel.TYPE_NORMAL;
+                        captchaModel.bitmap = BitmapFactory.decodeByteArray(decodedCaptchaBytes, 0, decodedCaptchaBytes.length);
+                        captchaModel.emoji = true;
+                        captchaModel.emojiCaptchaButtons = new Bitmap[8];
+                        CRC32 crc = new CRC32();
+                        emojiCaptchaCurrentButtons = new byte[8][];
+                        for(int i = 0; i < 8; i++)
+                        {
+                            String base64EncodedCaptchaButton = emojiCaptchaStateResponse.getJSONArray("keyboard").optString(i);
+                            byte[] decodedCaptchaButtonBytes = android.util.Base64.decode(base64EncodedCaptchaButton, Base64.DEFAULT);
+                            emojiCaptchaCurrentButtons[i] = decodedCaptchaButtonBytes;
+                            crc.update(decodedCaptchaButtonBytes);
+                            Logger.d(TAG, "got step0 emojiCaptchaButton " + i + " hash=" + Long.toHexString(crc.getValue()));
+                            crc.reset();
+                            captchaModel.emojiCaptchaButtons[i] = BitmapFactory.decodeByteArray(decodedCaptchaButtonBytes, 0, decodedCaptchaButtonBytes.length);
+                        }
                         return captchaModel;
                     default:
                         throw new IllegalStateException();
@@ -770,6 +811,10 @@ public class MakabaModule extends CloudflareChanModule {
                         postEntityBuilder.addString("captcha_type", "mailru");
                         postEntityBuilder.addString("2chcaptcha_id", captchaId);
                     }
+                    break;
+                case CAPTCHA_EMOJI:
+                    postEntityBuilder.addString("captcha_type", "emoji_captcha");
+                    postEntityBuilder.addString("emoji_captcha_id", emojiCaptchaSolvedId);
                     break;
             }
         }
@@ -978,5 +1023,67 @@ public class MakabaModule extends CloudflareChanModule {
             handleWrongResponse(url, e);
             return null;
         }
+    }
+
+    public CaptchaModel clickEmojiCaptcha(int emojiIndex, ProgressListener listener, CancellableTask task)
+    {
+        CRC32 crc = new CRC32();
+        JSONObject object = new JSONObject();
+        object.accumulate("captchaTokenID", captchaId);
+        object.accumulate("emojiNumber", emojiIndex);
+        crc.update(emojiCaptchaCurrentButtons[emojiIndex]);
+        Logger.d(TAG, "clicked emojiCaptchaButton " + emojiIndex + " hash=" + Long.toHexString(crc.getValue()));
+        crc.reset();
+        String url = domainUrl + "api/captcha/emoji/click";
+        EntityBuilder builder = EntityBuilder.create();
+        builder.setText(object.toString());
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(builder.build()).build();
+        String response = null;
+        try {
+            response = HttpStreamer.getInstance().getStringFromUrl(url, request, httpClient, listener, task, true,
+                    (canHashwall() ? hashwallDetector : null));
+        } catch (Exception e) {
+            String s = e.getMessage();
+            String ss = e.toString();
+        }
+        JSONObject makabaResult = new JSONObject(response);
+
+        if(makabaResult.has("success") || makabaResult.has("image"))
+        {
+            emojiCaptchaClickCount++;
+            CaptchaModel captchaModel = new CaptchaModel();
+            captchaModel.type = CaptchaModel.TYPE_NORMAL;
+            captchaModel.emoji = true;
+            if(makabaResult.has("success")) {
+                emojiCaptchaSolvedId = makabaResult.optString("success");
+                captchaModel.emojiSuccess = true;
+                return captchaModel;
+            }
+
+            String base64EncodedCaptcha = makabaResult.optString("image");
+            byte[] decodedCaptchaBytes = android.util.Base64.decode(base64EncodedCaptcha, Base64.DEFAULT);
+            captchaModel.bitmap = BitmapFactory.decodeByteArray(decodedCaptchaBytes, 0, decodedCaptchaBytes.length);
+            captchaModel.emojiCaptchaButtons = new Bitmap[8];
+
+            emojiCaptchaCurrentButtons = new byte[8][];
+            for(int i = 0; i < 8; i++)
+            {
+                String base64EncodedCaptchaButton = makabaResult.getJSONArray("keyboard").optString(i);
+                byte[] decodedCaptchaButtonBytes = android.util.Base64.decode(base64EncodedCaptchaButton, Base64.DEFAULT);
+                emojiCaptchaCurrentButtons[i] = decodedCaptchaButtonBytes;
+                crc.update(decodedCaptchaButtonBytes);
+                Logger.d(TAG, "got step" + getClickCount() + " emojiCaptchaButton " + i + " hash=" + Long.toHexString(crc.getValue()));
+                crc.reset();
+                captchaModel.emojiCaptchaButtons[i] = BitmapFactory.decodeByteArray(decodedCaptchaButtonBytes, 0, decodedCaptchaButtonBytes.length);
+            }
+
+            return captchaModel;
+        }
+        return null;
+    }
+
+    public int getClickCount()
+    {
+        return emojiCaptchaClickCount;
     }
 }

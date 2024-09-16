@@ -64,15 +64,16 @@ public class MakabaConstants {
     public static final String[] CATALOG_TYPES = { "catalog", "catalog_num" };
     public static final String HASHTAG_PREFIX = "#";
 
-    public static final String[] CAPTCHA_TYPES = new String[] { "2chcaptcha", "Google Recaptcha 2", "Google Recaptcha 2 (fallback)", "Mail.ru NOCAPTCHA" };
-    public static final String[] CAPTCHA_TYPES_KEYS = new String[] { "2chcaptcha", "recaptcha", "recaptcha-fallback", "mailru" };
-    public static final String CAPTCHA_TYPE_DEFAULT = "2chcaptcha";
+    public static final String[] CAPTCHA_TYPES = new String[] { "2chcaptcha", "Google Recaptcha 2", "Google Recaptcha 2 (fallback)", "Mail.ru NOCAPTCHA", "Emoji Captcha" };
+    public static final String[] CAPTCHA_TYPES_KEYS = new String[] { "2chcaptcha", "recaptcha", "recaptcha-fallback", "mailru", "emoji" };
+    public static final String CAPTCHA_TYPE_DEFAULT = "emoji";
 
     public static final int CAPTCHA_2CHAPTCHA = 1;
     public static final int CAPTCHA_RECAPTCHA = 2;
     public static final int CAPTCHA_RECAPTCHA_FALLBACK = 3;
     public static final int CAPTCHA_MAILRU = 4;
-    public static final int CAPTCHA_DISABLED = 5;
+    public static final int CAPTCHA_DISABLED = 6;
+    public static final int CAPTCHA_EMOJI = 5;
 
     public static final String PREF_KEY_MOBILE_API = "mobile_api";
     public static final String PREF_KEY_USE_HTTPS_MAKABA = "use_https";

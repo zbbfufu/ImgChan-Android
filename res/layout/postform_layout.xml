@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -174,62 +175,199 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:src="@drawable/mark_code"
                 android:contentDescription="@string/mark_code" />
         </LinearLayout>
-        
-        <EditText 
+
+        <EditText
+            android:id="@+id/postform_comment_field"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            tools:ignore="InefficientWeight"
+            android:layout_height="400dp"
             android:layout_weight="1"
             android:gravity="top|start"
             android:hint="@string/postform_comment"
-            android:id="@+id/postform_comment_field"
             android:inputType="textLongMessage|textMultiLine|textCapSentences"
             android:maxLength="15000"
-            android:minLines="3" >
+            android:minLines="3"
+            tools:ignore="InefficientWeight">
+
             <requestFocus />
         </EditText>
-        
+
+        <LinearLayout
+            android:id="@+id/postform_emojicaptcha_buttons_layout"
+            android:layout_width="match_parent"
+            android:layout_height="43dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/postform_makaba_emojicaptcha_button_0"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:onClick="onClick"
+                android:src="@drawable/favicon_makaba"
+                android:tag="0" />
+
+            <ImageView
+                android:id="@+id/postform_makaba_emojicaptcha_button_1"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:onClick="onClick"
+                android:src="@drawable/favicon_makaba"
+                android:tag="1" />
+
+            <ImageView
+                android:id="@+id/postform_makaba_emojicaptcha_button_2"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:onClick="onClick"
+                android:src="@drawable/favicon_makaba"
+                android:tag="2" />
+
+            <ImageView
+                android:id="@+id/postform_makaba_emojicaptcha_button_3"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:onClick="onClick"
+                android:src="@drawable/favicon_makaba"
+                android:tag="3" />
+
+            <ImageView
+                android:id="@+id/postform_makaba_emojicaptcha_button_4"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:onClick="onClick"
+                android:src="@drawable/favicon_makaba"
+                android:tag="4" />
+
+            <ImageView
+                android:id="@+id/postform_makaba_emojicaptcha_button_5"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:onClick="onClick"
+                android:src="@drawable/favicon_makaba"
+                android:tag="5" />
+
+            <ImageView
+                android:id="@+id/postform_makaba_emojicaptcha_button_6"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:onClick="onClick"
+                android:src="@drawable/favicon_makaba"
+                android:tag="6" />
+
+            <ImageView
+                android:id="@+id/postform_makaba_emojicaptcha_button_7"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:onClick="onClick"
+                android:src="@drawable/favicon_makaba"
+                android:tag="7" />
+
+        </LinearLayout>
+
         <FrameLayout
+            android:id="@+id/postform_captcha_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/postform_captcha_layout" >
+            tools:visibility="visible">
+
             <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="90dp"
-                android:scaleType="fitCenter"
-                android:adjustViewBounds="true"
                 android:id="@+id/postform_captcha_view"
-                android:contentDescription="@string/captcha" />
+                android:layout_width="match_parent"
+                android:layout_height="70dp"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/captcha"
+                android:scaleType="fitCenter" />
+
             <ProgressBar
+                android:id="@+id/postform_captcha_loading"
                 style="?android:attr/progressBarStyleLarge"
                 android:layout_width="wrap_content"
-                android:layout_height="90dp"
-                android:id="@+id/postform_captcha_loading"
+                android:layout_height="70dp"
                 android:layout_gravity="center_horizontal"
                 android:indeterminate="true" />
+
         </FrameLayout>
-        
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center_horizontal|left"
             android:orientation="horizontal"
-            android:weightSum="5" >
-            <EditText 
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="3"
-                android:hint="@string/postform_captcha_hint"
-                android:id="@+id/postform_captcha_field"
-                android:imeOptions="flagNoExtractUi|flagNoFullscreen|actionSend"
-                android:singleLine="true" />
-            <Button
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:id="@+id/postform_send_button"
-                android:text="@string/postform_send" />
+            android:weightSum="5">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/postform_emojicaptcha_selected_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="left|center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:id="@+id/postform_emojicaptcha_selected_1"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1" />
+
+                    <ImageView
+                        android:id="@+id/postform_emojicaptcha_selected_2"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1" />
+
+                    <ImageView
+                        android:id="@+id/postform_emojicaptcha_selected_3"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1" />
+
+                </LinearLayout>
+
+                <EditText
+                    android:id="@+id/postform_captcha_field"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="@string/postform_captcha_hint"
+                    android:imeOptions="flagNoExtractUi|flagNoFullscreen|actionSend"
+                    android:singleLine="true"
+                    android:visibility="visible" />
+
+                <Button
+                    android:id="@+id/postform_send_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/postform_send" />
+
+            </LinearLayout>
+
         </LinearLayout>
-        
+
     </LinearLayout>
     
 </ScrollView>

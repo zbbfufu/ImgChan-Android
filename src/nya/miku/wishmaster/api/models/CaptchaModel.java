@@ -47,4 +47,24 @@ public class CaptchaModel {
      * Константное значение для обозначения типа капчи - числовая капча (допустимы только десятичные цифры)
      */
     public static final int TYPE_NORMAL_DIGITS = 1;
+
+    /**
+     * Это emoji-капча?
+     */
+    public boolean emoji = false;
+
+    /**
+     * Emoji-капча завершена?
+     */
+    public boolean emojiSuccess = false;
+
+    /**
+     * Кнопки emoji-капчи (пока что только на 2ch.hk)
+     */
+    public Bitmap[] emojiCaptchaButtons;
+
+    /**
+     * Изображения уже нажатых кнопок emoji-капчи (сохраняется при выходе с поля редактирования)
+     */
+    public Bitmap[] emojiCaptchaButtonsPressed;
 }
