@@ -57,7 +57,7 @@ android {
         }
     }
     defaultConfig {
-        minSdkVersion 4
+        minSdkVersion 8
         compileSdk 30
         targetSdk 30
     }
